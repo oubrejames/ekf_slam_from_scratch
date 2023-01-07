@@ -1,6 +1,4 @@
-# DLL files
 pycache/
 *.pyc
-
-# C extensions
 *.so
+log
