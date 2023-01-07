@@ -1,9 +1,0 @@
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/uninstall.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/nuturtle_description_uninstall.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/test.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/edit_cache.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/rebuild_cache.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/list_install_components.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/install.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/install/local.dir
-/home/oubre/slam_ws/src/nuturtle-oubrejames/nuturtle_description/build/CMakeFiles/install/strip.dir
