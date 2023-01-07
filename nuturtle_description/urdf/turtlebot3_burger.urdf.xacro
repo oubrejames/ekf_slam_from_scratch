@@ -77,11 +77,11 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/nuturtle_description
     <collision>
       <origin xyz="-0.032 0 0.070" rpy="0 0 0"/>
       <geometry>
-        <xacro:if value="${collision_radius &lt; 0}">
-          <box size="0.140 0.140 0.143"/>
+        <xacro:if value = "${collision_radius &gt; 0.0}">
+          <cylinder length="0.143" radius="${collision_radius}"/>
         </xacro:if>
-        <xacro:if value="${collision_radius &gt; 0}">
-          <cylinder length="0.143" radius="${collision_radius}" />
+        <xacro:if value = "${collision_radius &lt; 0.0}">
+          <box size="0.140 0.140 0.143"/>
         </xacro:if>
       </geometry>
     </collision>
