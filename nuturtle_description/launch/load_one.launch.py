@@ -3,7 +3,7 @@ from launch import LaunchDescription
 from launch.substitutions import Command, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, Shutdown
 from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
@@ -40,6 +40,7 @@ def generate_launch_description():
             name='rviz2',
             output='screen',
             arguments=['-d', LaunchConfiguration('rvizconfig')],
+            on_exit = Shutdown()
             ),
         
         DeclareLaunchArgument(
