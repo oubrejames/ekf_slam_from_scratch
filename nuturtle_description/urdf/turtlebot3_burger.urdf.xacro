@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!-- This code was modified from the ROBOTIS-GIT turtlebot3 Package
 01/07/2023
-https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/turtlebot3_description/urdf/turtlebot3_burger.urdf -->
+https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/nuturtle_description/urdf/turtlebot3_burger.urdf -->
 <robot name="turtlebot3_burger"
   xmlns:xacro="http://ros.org/wiki/xacro">
 
@@ -58,7 +58,7 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/turtlebot3_descripti
     <visual>
       <origin xyz="-0.032 0 0.0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_description/meshes/bases/burger_base.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://nuturtle_description/meshes/burger_base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="light_black"/>
     </visual>
@@ -88,7 +88,7 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/turtlebot3_descripti
     <visual>
       <origin xyz="0 0 0" rpy="1.57 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_description/meshes/wheels/left_tire.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://nuturtle_description/meshes/left_tire.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -118,7 +118,7 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/turtlebot3_descripti
     <visual>
       <origin xyz="0 0 0" rpy="1.57 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_description/meshes/wheels/right_tire.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://nuturtle_description/meshes/right_tire.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -176,7 +176,7 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/turtlebot3_descripti
     <visual>
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_description/meshes/sensors/lds.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://nuturtle_description/meshes/lds.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
