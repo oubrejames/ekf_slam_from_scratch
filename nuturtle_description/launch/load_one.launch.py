@@ -10,7 +10,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             name='color',
-            default_value='red',
+            default_value='purple',
             choices=[
                 'purple',
                 'red',
@@ -21,6 +21,7 @@ def generate_launch_description():
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
+            namespace = LaunchConfiguration('color'),
             parameters=[
                 {"robot_description" :
                 Command([ExecutableInPackage("xacro", "xacro"), " ",
@@ -49,6 +50,7 @@ def generate_launch_description():
         Node(
             package='rviz2',
             executable='rviz2',
+            namespace = LaunchConfiguration('color'),
             condition=(LaunchConfigurationEquals('use_rviz', 'true')),
             name='rviz2',
             output='screen',
@@ -67,6 +69,7 @@ def generate_launch_description():
         Node(
             package='joint_state_publisher',
             executable='joint_state_publisher',
+            namespace = LaunchConfiguration('color'),
             condition=(LaunchConfigurationEquals('use_jsp', 'true'))
             ),
     ])
