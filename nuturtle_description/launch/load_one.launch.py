@@ -1,12 +1,23 @@
 from launch import LaunchDescription
-from launch.substitutions import Command, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, PathJoinSubstitution, LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
 from launch.actions import DeclareLaunchArgument, Shutdown
 from launch.conditions import LaunchConfigurationEquals
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument(
+            name='color',
+            default_value='red',
+            choices=[
+                'purple',
+                'red',
+                'green',
+                'blue'],
+            description='Color of TurtleBot'),
+
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
@@ -14,8 +25,11 @@ def generate_launch_description():
                 {"robot_description" :
                 Command([ExecutableInPackage("xacro", "xacro"), " ",
                         PathJoinSubstitution(
-                        [FindPackageShare("nuturtle_description"), "urdf/turtlebot3_burger.urdf.xacro"])])}
-                    ]
+                        [FindPackageShare("nuturtle_description"), "urdf/turtlebot3_burger.urdf.xacro"]),
+                        " color:=",
+                        LaunchConfiguration('color')
+                        ])},
+                    ],
                     ),
 
         DeclareLaunchArgument(
@@ -41,7 +55,7 @@ def generate_launch_description():
             arguments=['-d', LaunchConfiguration('rvizconfig')],
             on_exit = Shutdown()
             ),
-        
+
         DeclareLaunchArgument(
             name='use_jsp',
             default_value='true',
