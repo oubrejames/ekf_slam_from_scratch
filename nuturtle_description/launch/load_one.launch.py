@@ -1,8 +1,8 @@
-from launch import LaunchDescription
+from launch import LaunchDescription, LaunchContext
 from launch.substitutions import Command, PathJoinSubstitution, LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
-from launch.actions import DeclareLaunchArgument, Shutdown
+from launch.actions import DeclareLaunchArgument, Shutdown, OpaqueFunction
 from launch.conditions import LaunchConfigurationEquals
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -23,14 +23,18 @@ def generate_launch_description():
             executable="robot_state_publisher",
             namespace = LaunchConfiguration('color'),
             parameters=[
-                {"robot_description" :
+                {"frame_prefix": 
+                    PathJoinSubstitution(
+                        [(LaunchConfiguration('color')),'']),
+                "robot_description" :
                 Command([ExecutableInPackage("xacro", "xacro"), " ",
                         PathJoinSubstitution(
                         [FindPackageShare("nuturtle_description"), "urdf/turtlebot3_burger.urdf.xacro"]),
                         " color:=",
                         LaunchConfiguration('color')
-                        ])},
-                    ],
+                        ]),
+                    }],
+                
                     ),
 
         DeclareLaunchArgument(
