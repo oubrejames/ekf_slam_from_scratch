@@ -5,6 +5,7 @@ from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
 from launch.actions import DeclareLaunchArgument, Shutdown, OpaqueFunction
 from launch.conditions import LaunchConfigurationEquals
 from launch_ros.parameter_descriptions import ParameterValue
+from launch.actions import SetLaunchConfiguration
 
 def generate_launch_description():
     return LaunchDescription([
@@ -34,7 +35,6 @@ def generate_launch_description():
                         LaunchConfiguration('color')
                         ]),
                     }],
-                
                     ),
 
         DeclareLaunchArgument(
@@ -45,11 +45,11 @@ def generate_launch_description():
                 'false'],
             description='Flag to enable rviz'),
 
-        DeclareLaunchArgument(
-            name='rvizconfig',
-            default_value=PathJoinSubstitution([
-                FindPackageShare("nuturtle_description"), "config/basic_purple.rviz"]),
-            description='Absolute path to rviz config file'),
+        SetLaunchConfiguration(name = 'rvizconfig',
+                               value = [FindPackageShare("nuturtle_description"),
+                                        TextSubstitution(text ='/config/basic_'), 
+                                        LaunchConfiguration('color'), 
+                                        TextSubstitution(text ='.rviz')]),
 
         Node(
             package='rviz2',
@@ -58,7 +58,8 @@ def generate_launch_description():
             condition=(LaunchConfigurationEquals('use_rviz', 'true')),
             name='rviz2',
             output='screen',
-            arguments=['-d', LaunchConfiguration('rvizconfig')],
+            arguments=['-d', LaunchConfiguration('rvizconfig')
+                                                 ],
             on_exit = Shutdown()
             ),
 
