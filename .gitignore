@@ -2,3 +2,4 @@ pycache/
 *.pyc
 *.so
 log
+turtlelib/rigid2d
