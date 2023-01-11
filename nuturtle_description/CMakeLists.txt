@@ -25,8 +25,8 @@ endif()
 
 # Add to share
 install(DIRECTORY
-  launch 
-  config 
+  launch
+  config
   urdf
   meshes
   DESTINATION share/nuturtle_description/
