@@ -31,56 +31,56 @@ std::istream & turtlelib::operator>>(std::istream & is, turtlelib::Vector2D & v)
     return is;
 }
 
-/// \brief a rigid body transformation in 2 dimensions
-class Transform2D
-{
-public:
-    /// \brief Create an identity transformation
-    Transform2D();
+// /// \brief a rigid body transformation in 2 dimensions
+// class Transform2D
+// {
+// public:
+//     /// \brief Create an identity transformation
+//     Transform2D();
 
-    /// \brief create a transformation that is a pure translation
-    /// \param trans - the vector by which to translate
-    explicit Transform2D(Vector2D trans);
+//     /// \brief create a transformation that is a pure translation
+//     /// \param trans - the vector by which to translate
+//     explicit Transform2D(Vector2D trans);
 
-    /// \brief create a pure rotation
-    /// \param radians - angle of the rotation, in radians
-    explicit Transform2D(double radians);
+//     /// \brief create a pure rotation
+//     /// \param radians - angle of the rotation, in radians
+//     explicit Transform2D(double radians);
 
-    /// \brief Create a transformation with a translational and rotational
-    /// component
-    /// \param trans - the translation
-    /// \param rot - the rotation, in radians
-    Transform2D(Vector2D trans, double radians);
+//     /// \brief Create a transformation with a translational and rotational
+//     /// component
+//     /// \param trans - the translation
+//     /// \param rot - the rotation, in radians
+//     Transform2D(Vector2D trans, double radians);
 
-    /// \brief apply a transformation to a Vector2D
-    /// \param v - the vector to transform
-    /// \return a vector in the new coordinate system
-    Vector2D operator()(Vector2D v) const;
+//     /// \brief apply a transformation to a Vector2D
+//     /// \param v - the vector to transform
+//     /// \return a vector in the new coordinate system
+//     Vector2D operator()(Vector2D v) const;
 
 
-    /// \brief invert the transformation
-    /// \return the inverse transformation. 
-    Transform2D inv() const;
+//     /// \brief invert the transformation
+//     /// \return the inverse transformation. 
+//     Transform2D inv() const;
 
-    /// \brief compose this transform with another and store the result 
-    /// in this object
-    /// \param rhs - the first transform to apply
-    /// \return a reference to the newly transformed operator
-    Transform2D & operator*=(const Transform2D & rhs);
+//     /// \brief compose this transform with another and store the result 
+//     /// in this object
+//     /// \param rhs - the first transform to apply
+//     /// \return a reference to the newly transformed operator
+//     Transform2D & operator*=(const Transform2D & rhs);
 
-    /// \brief the translational component of the transform
-    /// \return the x,y translation
-    Vector2D translation() const;
+//     /// \brief the translational component of the transform
+//     /// \return the x,y translation
+//     Vector2D translation() const;
 
-    /// \brief get the angular displacement of the transform
-    /// \return the angular displacement, in radians
-    double rotation() const;
+//     /// \brief get the angular displacement of the transform
+//     /// \return the angular displacement, in radians
+//     double rotation() const;
 
-    /// \brief \see operator<<(...) (declared outside this class)
-    /// for a description
-    friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
+//     /// \brief \see operator<<(...) (declared outside this class)
+//     /// for a description
+//     friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
 
-};
+// };
 
 
 // /// \brief should print a human readable version of the transform:
@@ -119,6 +119,7 @@ int main() {
     std::cout << "Enter a Vector2D: ";
     std::cin >> c1;
     std::cout << "x = " << c1.x << " y=" << c1.y << std::endl;
+    std::cout << c1 << std::endl;
 
     return 0;
 }

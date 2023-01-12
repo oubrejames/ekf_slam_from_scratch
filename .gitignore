@@ -3,4 +3,4 @@ pycache/
 *.so
 log
 turtlelib/rigid2d
-vscode/
+.vscode/
