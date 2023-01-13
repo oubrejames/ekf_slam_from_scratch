@@ -98,6 +98,10 @@ namespace turtlelib
     /// \brief a rigid body transformation in 2 dimensions
     class Transform2D
     {
+    private:
+        Vector2D trans_in;
+        double radians_in;
+
     public:
         /// \brief Create an identity transformation
         Transform2D();
@@ -120,7 +124,6 @@ namespace turtlelib
         /// \param v - the vector to transform
         /// \return a vector in the new coordinate system
         Vector2D operator()(Vector2D v) const;
-
 
         /// \brief invert the transformation
         /// \return the inverse transformation. 

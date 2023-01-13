@@ -3,11 +3,13 @@
 #include <cmath>
 #include <iostream>
 
+using turtlelib::Vector2D;
+using turtlelib::Transform2D;
 
 /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
 /// os - stream to output to
 /// v - the vector to print
-std::ostream & turtlelib::operator<<(std::ostream & os, const turtlelib::Vector2D & v){
+std::ostream & turtlelib::operator<<(std::ostream & os, const Vector2D & v){
     os << "[" << v.x << " " << v.y << "]";
     /// \TODO: Why do we return OS?
     return os; 
@@ -18,7 +20,7 @@ std::ostream & turtlelib::operator<<(std::ostream & os, const turtlelib::Vector2
 ///   [x y] or x y
 /// \param is - stream from which to read
 /// \param v [out] - output vector
-std::istream & turtlelib::operator>>(std::istream & is, turtlelib::Vector2D & v){
+std::istream & turtlelib::operator>>(std::istream & is, Vector2D & v){
     if (is.peek() == '['){ // If the first character input is a bracket
         is.get();               // Remove bracket
         is >> v.x;              // Store first component in v.x
@@ -31,58 +33,54 @@ std::istream & turtlelib::operator>>(std::istream & is, turtlelib::Vector2D & v)
     return is;
 }
 
-// /// \brief a rigid body transformation in 2 dimensions
-// class Transform2D
-// {
-// public:
-//     /// \brief Create an identity transformation
-//     Transform2D();
+namespace turtlelib{
+    // Return idenetity matrix if no input given
+    Transform2D::Transform2D() : trans_in{0.0, 0.0}, radians_in(0.0) {}
 
-//     /// \brief create a transformation that is a pure translation
-//     /// \param trans - the vector by which to translate
-//     explicit Transform2D(Vector2D trans);
+    // Create a pure translation rotation matrix
+    Transform2D::Transform2D(Vector2D trans) : trans_in{trans}, radians_in(0.0) {}
 
-//     /// \brief create a pure rotation
-//     /// \param radians - angle of the rotation, in radians
-//     explicit Transform2D(double radians);
+    // Create a pure rotation rotation matrix
+    Transform2D::Transform2D(double radians) : trans_in{0.0, 0.0}, radians_in(radians) {}
 
-//     /// \brief Create a transformation with a translational and rotational
-//     /// component
-//     /// \param trans - the translation
-//     /// \param rot - the rotation, in radians
-//     Transform2D(Vector2D trans, double radians);
+    // Create a translation + rotation rotation matrix
+    Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, radians_in(radians) {}
 
-//     /// \brief apply a transformation to a Vector2D
-//     /// \param v - the vector to transform
-//     /// \return a vector in the new coordinate system
-//     Vector2D operator()(Vector2D v) const;
+    Vector2D Transform2D::operator()(Vector2D v) const{
+        Vector2D new_vec={
+                std::cos(radians_in)*v.x-std::sin(radians_in)*v.y+v.x,
+                std::cos(radians_in)*v.y+std::sin(radians_in)*v.x+v.y
+        };
+        return new_vec;
+    }
 
+    Transform2D Transform2D::inv() const{
+        Transform2D inv_tf = {
+            {std::cos(radians_in)*(-trans_in.x)-std::sin(radians_in)*trans_in.y,
+             std::cos(radians_in)*(-trans_in.y)+std::sin(radians_in)*trans_in.x},
+            -radians_in
+            };
+            return inv_tf;
+    }
 
-//     /// \brief invert the transformation
-//     /// \return the inverse transformation. 
-//     Transform2D inv() const;
+    /// \brief compose this transform with another and store the result 
+    /// in this object
+    /// \param rhs - the first transform to apply
+    /// \return a reference to the newly transformed operator
+    Transform2D & Transform2D::operator*=(const Transform2D & rhs){
+        // Modify the x value
+        this->trans_in.x=std::cos(this->radians_in)*rhs.trans_in.x-
+                         std::sin(radians_in)*rhs.trans_in.y;
 
-//     /// \brief compose this transform with another and store the result 
-//     /// in this object
-//     /// \param rhs - the first transform to apply
-//     /// \return a reference to the newly transformed operator
-//     Transform2D & operator*=(const Transform2D & rhs);
+        // Modify the y value
+        this->trans_in.y=std::cos(this->radians_in)*rhs.trans_in.x-
+                         std::sin(radians_in)*rhs.trans_in.y;
 
-//     /// \brief the translational component of the transform
-//     /// \return the x,y translation
-//     Vector2D translation() const;
-
-//     /// \brief get the angular displacement of the transform
-//     /// \return the angular displacement, in radians
-//     double rotation() const;
-
-//     /// \brief \see operator<<(...) (declared outside this class)
-//     /// for a description
-//     friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
-
-// };
-
-
+        // Modify the theta value 
+        this->radians_in=std::acos(-std::sin(this->radians_in)*std::sin(rhs.radians_in)+
+                        std::cos(this->radians_in)*std::cos(rhs.radians_in));
+    }
+}
 // /// \brief should print a human readable version of the transform:
 // /// An example output:
 // /// deg: 90 x: 3 y: 5
@@ -121,5 +119,8 @@ int main() {
     std::cout << "x = " << c1.x << " y=" << c1.y << std::endl;
     std::cout << c1 << std::endl;
 
+    Transform2D test_tf = {c1, -9.5};
+    Transform2D inv = test_tf.inv();
+    // std::cout << "Inverse" << inv.tr << std::endl;
     return 0;
 }
