@@ -46,6 +46,7 @@ namespace turtlelib{
     // Create a translation + rotation rotation matrix
     Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, radians_in(radians) {}
 
+    /// \TODO: ADD COMMENT
     Vector2D Transform2D::operator()(Vector2D v) const{
         Vector2D new_vec={
                 std::cos(radians_in)*v.x-std::sin(radians_in)*v.y+v.x,
@@ -54,6 +55,7 @@ namespace turtlelib{
         return new_vec;
     }
 
+    /// \TODO: ADD COMMENT
     Transform2D Transform2D::inv() const{
         Transform2D inv_tf = {
             {std::cos(radians_in)*(-trans_in.x)-std::sin(radians_in)*trans_in.y,
@@ -63,10 +65,7 @@ namespace turtlelib{
             return inv_tf;
     }
 
-    /// \brief compose this transform with another and store the result 
-    /// in this object
-    /// \param rhs - the first transform to apply
-    /// \return a reference to the newly transformed operator
+    /// \TODO: ADD COMMENT
     Transform2D & Transform2D::operator*=(const Transform2D & rhs){
         // Modify the x value
         this->trans_in.x=std::cos(this->radians_in)*rhs.trans_in.x-
@@ -79,21 +78,34 @@ namespace turtlelib{
         // Modify the theta value 
         this->radians_in=std::acos(-std::sin(this->radians_in)*std::sin(rhs.radians_in)+
                         std::cos(this->radians_in)*std::cos(rhs.radians_in));
+        return *this;
+    }
+
+    // Return the translational component of the TF matrix
+    Vector2D Transform2D::translation() const{
+        /// TODO: is this right? should I actually perform a translation
+        return trans_in;
+    }
+
+    // Return the rotational component of the TF matrix
+    double Transform2D::rotation() const{
+        /// TODO: is this right? should I actually perform some operation
+        return radians_in;
     }
 }
-// /// \brief should print a human readable version of the transform:
-// /// An example output:
-// /// deg: 90 x: 3 y: 5
-// /// \param os - an output stream
-// /// \param tf - the transform to print
-// std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
 
-// /// \brief Read a transformation from stdin
-// /// Should be able to read input either as output by operator<< or
-// /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
-// /// For example:
-// /// 90 2 3
-// std::istream & operator>>(std::istream & is, Transform2D & tf);
+/// \TODO: ADD COMMENT
+std::ostream & turtlelib::operator<<(std::ostream & os, const Transform2D & tf){
+    os << "deg: " << tf.radians_in << " x: " << tf.trans_in.x << " y: " << tf.trans_in.y;
+    return os;
+}
+
+/// \brief Read a transformation from stdin
+/// Should be able to read input either as output by operator<< or
+/// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
+/// For example:
+/// 90 2 3
+std::istream & operator>>(std::istream & is, Transform2D & tf);
 
 // /// \brief multiply two transforms together, returning their composition
 // /// \param lhs - the left hand operand
@@ -121,6 +133,6 @@ int main() {
 
     Transform2D test_tf = {c1, -9.5};
     Transform2D inv = test_tf.inv();
-    // std::cout << "Inverse" << inv.tr << std::endl;
+    std::cout << "Inverse " << inv << std::endl;
     return 0;
 }
