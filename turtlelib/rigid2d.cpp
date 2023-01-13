@@ -3,37 +3,34 @@
 #include <cmath>
 #include <iostream>
 
-using turtlelib::Vector2D;
-using turtlelib::Transform2D;
-
-/// \brief output a 2 dimensional vector as [xcomponent ycomponent]
-/// os - stream to output to
-/// v - the vector to print
-std::ostream & turtlelib::operator<<(std::ostream & os, const Vector2D & v){
-    os << "[" << v.x << " " << v.y << "]";
-    /// \TODO: Why do we return OS?
-    return os; 
-}
-
-/// \brief input a 2 dimensional vector
-///   You should be able to read vectors entered as follows:
-///   [x y] or x y
-/// \param is - stream from which to read
-/// \param v [out] - output vector
-std::istream & turtlelib::operator>>(std::istream & is, Vector2D & v){
-    if (is.peek() == '['){ // If the first character input is a bracket
-        is.get();               // Remove bracket
-        is >> v.x;              // Store first component in v.x
-        is.get();               // Remove space
-        is >> v.y;              // Store seecond component in v.y
-    }
-    else{
-        is >> v.x >> v.y;
-    }
-    return is;
-}
-
 namespace turtlelib{
+    /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
+    /// os - stream to output to
+    /// v - the vector to print
+    std::ostream & operator<<(std::ostream & os, const Vector2D & v){
+        os << "[" << v.x << " " << v.y << "]";
+        /// \TODO: Why do we return OS?
+        return os; 
+    }
+
+    /// \brief input a 2 dimensional vector
+    ///   You should be able to read vectors entered as follows:
+    ///   [x y] or x y
+    /// \param is - stream from which to read
+    /// \param v [out] - output vector
+    std::istream & operator>>(std::istream & is, Vector2D & v){
+        if (is.peek() == '['){ // If the first character input is a bracket
+            is.get();               // Remove bracket
+            is >> v.x;              // Store first component in v.x
+            is.get();               // Remove space
+            is >> v.y;              // Store seecond component in v.y
+        }
+        else{
+            is >> v.x >> v.y;
+        }
+        return is;
+    }
+
     // Return idenetity matrix if no input given
     Transform2D::Transform2D() : trans_in{0.0, 0.0}, radians_in(0.0) {}
 
@@ -92,27 +89,32 @@ namespace turtlelib{
         /// TODO: is this right? should I actually perform some operation
         return radians_in;
     }
+
+
+    /// \TODO: ADD COMMENT
+    std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
+        os << "deg: " << tf.radians_in << " x: " << tf.trans_in.x << " y: " << tf.trans_in.y;
+        return os;
+    }
+
+    // Read a Transform2D as 3 numbers
+    std::istream & operator>>(std::istream & is, Transform2D & tf){
+        ///TODO: read in as output from operator<<
+        ///TODO: not sure if this is what he is asking for 
+        //Read input as 3 numbers (degrees dx dy)
+        //Because trans_in and radians_in are private, must use the getter function to obtain them
+        double deg = tf.rotation();
+        Vector2D tmp_trans = tf.translation();
+        is >> deg >> tmp_trans.x >> tmp_trans.y;
+        return is;
+    }
+
+    // Multiply 2 matrices and return the output
+    Transform2D operator*(Transform2D lhs, const Transform2D & rhs){
+        Transform2D output = lhs; // use output variable as to not change either argument after the operation
+        return output*=rhs;
+    }
 }
-
-/// \TODO: ADD COMMENT
-std::ostream & turtlelib::operator<<(std::ostream & os, const Transform2D & tf){
-    os << "deg: " << tf.radians_in << " x: " << tf.trans_in.x << " y: " << tf.trans_in.y;
-    return os;
-}
-
-/// \brief Read a transformation from stdin
-/// Should be able to read input either as output by operator<< or
-/// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
-/// For example:
-/// 90 2 3
-std::istream & operator>>(std::istream & is, Transform2D & tf);
-
-// /// \brief multiply two transforms together, returning their composition
-// /// \param lhs - the left hand operand
-// /// \param rhs - the right hand operand
-// /// \return the composition of the two transforms
-// /// HINT: This function should be implemented in terms of *=
-// Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
 int main() {
     // Variable declarations
@@ -131,8 +133,17 @@ int main() {
     std::cout << "x = " << c1.x << " y=" << c1.y << std::endl;
     std::cout << c1 << std::endl;
 
-    Transform2D test_tf = {c1, -9.5};
-    Transform2D inv = test_tf.inv();
+    turtlelib::Transform2D test_tf = {c1, -9.5};
+    turtlelib::Transform2D inv = test_tf.inv();
     std::cout << "Inverse " << inv << std::endl;
+
+    turtlelib::Transform2D test = {{4,5},9.0};
+    std::cout << "Testing transform2d cout: " << test << std::endl;
+
+
+    std::cout << "Enter Transform2d: ";
+    turtlelib::Transform2D tf;
+    std::cin >> tf;
+    std::cout << "The transformation matrix: " << tf << std::endl;
     return 0;
 }
