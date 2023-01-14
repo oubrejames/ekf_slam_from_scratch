@@ -66,11 +66,13 @@ namespace turtlelib{
     Transform2D & Transform2D::operator*=(const Transform2D & rhs){
         // Modify the x value
         this->trans_in.x=std::cos(this->radians_in)*rhs.trans_in.x-
-                         std::sin(radians_in)*rhs.trans_in.y;
+                         std::sin(radians_in)*rhs.trans_in.y +
+                         this->trans_in.x;
 
         // Modify the y value
-        this->trans_in.y=std::cos(this->radians_in)*rhs.trans_in.x-
-                         std::sin(radians_in)*rhs.trans_in.y;
+        this->trans_in.y=std::sin(this->radians_in)*rhs.trans_in.x+
+                         std::cos(radians_in)*rhs.trans_in.y+
+                         this->trans_in.y;
 
         // Modify the theta value 
         this->radians_in=std::acos(-std::sin(this->radians_in)*std::sin(rhs.radians_in)+
@@ -99,13 +101,27 @@ namespace turtlelib{
 
     // Read a Transform2D as 3 numbers
     std::istream & operator>>(std::istream & is, Transform2D & tf){
+        // & tf refers to a transform2D object, if you change the variable here, it will change the
+        // contents at that memory location 
+        // we are reading in the user input from the is stream via is >> output
+        // we can then make changes to the tf variable here to change it in memory
+        
+
         ///TODO: read in as output from operator<<
-        ///TODO: not sure if this is what he is asking for 
-        //Read input as 3 numbers (degrees dx dy)
-        //Because trans_in and radians_in are private, must use the getter function to obtain them
-        double deg = tf.rotation();
-        Vector2D tmp_trans = tf.translation();
-        is >> deg >> tmp_trans.x >> tmp_trans.y;
+            ///TODO: read cppreference.com on istream
+            ///TODO: make multiple istream things work
+        std::string tmp1, tmp2, tmp3;
+        double deg;
+        double x;
+        double y;
+        if (is.peek() == 'd'){ // If the first character input is a bracket
+            is >> tmp1 >> deg >> tmp2 >> x >> tmp3 >> y;
+        }
+        else{
+            is >> deg >> x >> y;
+        }
+        tf = Transform2D{{x,y}, deg};
+        
         return is;
     }
 
@@ -140,7 +156,7 @@ int main() {
     turtlelib::Transform2D test = {{4,5},9.0};
     std::cout << "Testing transform2d cout: " << test << std::endl;
 
-
+    //std::cin.sync();
     std::cout << "Enter Transform2d: ";
     turtlelib::Transform2D tf;
     std::cin >> tf;
