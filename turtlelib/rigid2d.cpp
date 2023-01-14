@@ -107,7 +107,6 @@ namespace turtlelib{
         // we are reading in the user input from the is stream via is >> output
         // we can then make changes to the tf variable here to change it in memory
         
-
         ///TODO: read in as output from operator<<
             ///TODO: read cppreference.com on istream
             ///TODO: make multiple istream things work
@@ -131,6 +130,24 @@ namespace turtlelib{
         Transform2D output = lhs; // use output variable as to not change either argument after the operation
         return output*=rhs;
     }
+
+    std::ostream & operator<<(std::ostream & os, const Twist2D & twist){
+        os << "[" << twist.w << " " << twist.x << " " << twist.y << "]";
+        return os; 
+    }
+
+    /// \TODO: doxygen
+    std::istream & operator>>(std::istream & is, Twist2D & twist){
+        if (is.peek() == '['){ // If the first character input is a bracket
+            is.get();               // Remove bracket
+            is >> twist.w >> twist.x >> twist.y;
+        }
+        else{
+            is >> twist.w >> twist.x >> twist.y;
+        }
+        return is;
+    }
+
 }
 
 int main() {
@@ -165,5 +182,14 @@ int main() {
     turtlelib::Transform2D tf;
     std::cin >> tf;
     std::cout << "The transformation matrix: " << tf << std::endl;
+
+    // Flush the istream to cin multiple times
+    std::cin.clear();
+    std::cin.ignore(INT_MAX, '\n');
+
+    turtlelib::Twist2D c2;
+    std::cout << "Enter a Twist2D: ";
+    std::cin >> c2;
+    std::cout << "the twist output: " << c2 << std::endl;
     return 0;
 }

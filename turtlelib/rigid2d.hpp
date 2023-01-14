@@ -171,7 +171,34 @@ namespace turtlelib
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
+//--------------------------------------------------------------------------------------------//
 
+    /// \brief 
+    struct Twist2D
+    {
+        /// \brief 
+        double w = 0.0;
+
+        /// \brief the x coordinate
+        double x = 0.0;
+
+        /// \brief the y coordinate
+        double y = 0.0;
+    };
+
+    /// \brief should print a human readable version of the transform:
+    /// An example output:
+    /// deg: 90 x: 3 y: 5
+    /// \param os - an output stream
+    /// \param tf - the transform to print
+    std::ostream & operator<<(std::ostream & os, const Twist2D & twist);
+
+    /// \brief Read a transformation from stdin
+    /// Should be able to read input either as output by operator<< or
+    /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
+    /// For example:
+    /// 90 2 3
+    std::istream & operator>>(std::istream & is, Transform2D & tf);
 
 }
 
