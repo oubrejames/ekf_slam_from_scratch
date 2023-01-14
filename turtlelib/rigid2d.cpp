@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cmath>
 #include <iostream>
+#include <limits.h>
 
 namespace turtlelib{
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
@@ -156,7 +157,10 @@ int main() {
     turtlelib::Transform2D test = {{4,5},9.0};
     std::cout << "Testing transform2d cout: " << test << std::endl;
 
-    //std::cin.sync();
+    // Flush the istream to cin multiple times
+    std::cin.clear();
+    std::cin.ignore(INT_MAX, '\n');
+
     std::cout << "Enter Transform2d: ";
     turtlelib::Transform2D tf;
     std::cin >> tf;
