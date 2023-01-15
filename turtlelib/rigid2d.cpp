@@ -94,13 +94,17 @@ namespace turtlelib{
     }
 
     /// \TODO: ADD COMMENT
-    void Transform2D::switch_twist_frame(Twist2D & og_twist){
-        og_twist.x=og_twist.w*trans_in.y+
+    Twist2D Transform2D::switch_twist_frame(Twist2D og_twist){
+        Twist2D new_twist;
+
+        new_twist.x=og_twist.w*trans_in.y+
                    std::cos(radians_in)*og_twist.x-
                    std::sin(radians_in)*og_twist.y;
-        og_twist.y=-og_twist.w*trans_in.x+
+
+        new_twist.y=-og_twist.w*trans_in.x+
                     og_twist.x*std::sin(radians_in)+
                     og_twist.y*std::cos(radians_in);
+        return new_twist;
     }
 
     /// \TODO: ADD COMMENT
@@ -157,48 +161,53 @@ namespace turtlelib{
         return is;
     }
 
+    /// \TODO: comment
+    Vector2D Vector2D::normalize(){
+        double mag = sqrt(x*x+y*y);
+        return Vector2D{x/mag, y/mag};
+    }
 }
 
-int main() {
-    // Variable declarations
-    double x=1.2;
-    double y=4.5;
+// int main() {
+//     // // Variable declarations
+//     // double x=1.2;
+//     // double y=4.5;
 
-    // Program code
-    int i = turtlelib::almost_equal(x,y);
-    printf("%d\n", i);
-    printf("Deg to rads: %f\n",turtlelib::deg2rad(90.0));
-    printf("Rad to deg: %f\n",turtlelib::rad2deg(3.14));
+//     // // Program code
+//     // int i = turtlelib::almost_equal(x,y);
+//     // printf("%d\n", i);
+//     // printf("Deg to rads: %f\n",turtlelib::deg2rad(90.0));
+//     // printf("Rad to deg: %f\n",turtlelib::rad2deg(3.14));
 
-    turtlelib::Vector2D c1;
-    std::cout << "Enter a Vector2D: ";
-    std::cin >> c1;
-    std::cout << "x = " << c1.x << " y=" << c1.y << std::endl;
-    std::cout << c1 << std::endl;
+//     // turtlelib::Vector2D c1;
+//     // std::cout << "Enter a Vector2D: ";
+//     // std::cin >> c1;
+//     // std::cout << "x = " << c1.x << " y=" << c1.y << std::endl;
+//     // std::cout << c1 << std::endl;
 
-    turtlelib::Transform2D test_tf = {c1, -9.5};
-    turtlelib::Transform2D inv = test_tf.inv();
-    std::cout << "Inverse " << inv << std::endl;
+//     // turtlelib::Transform2D test_tf = {c1, -9.5};
+//     // turtlelib::Transform2D inv = test_tf.inv();
+//     // std::cout << "Inverse " << inv << std::endl;
 
-    turtlelib::Transform2D test = {{4,5},9.0};
-    std::cout << "Testing transform2d cout: " << test << std::endl;
+//     // turtlelib::Transform2D test = {{4,5},9.0};
+//     // std::cout << "Testing transform2d cout: " << test << std::endl;
 
-    // Flush the istream to cin multiple times
-    std::cin.clear();
-    std::cin.ignore(INT_MAX, '\n');
+//     // // Flush the istream to cin multiple times
+//     // std::cin.clear();
+//     // std::cin.ignore(INT_MAX, '\n');
 
-    std::cout << "Enter Transform2d: ";
-    turtlelib::Transform2D tf;
-    std::cin >> tf;
-    std::cout << "The transformation matrix: " << tf << std::endl;
+//     // std::cout << "Enter Transform2d: ";
+//     // turtlelib::Transform2D tf;
+//     // std::cin >> tf;
+//     // std::cout << "The transformation matrix: " << tf << std::endl;
 
-    // Flush the istream to cin multiple times
-    std::cin.clear();
-    std::cin.ignore(INT_MAX, '\n');
+//     // // Flush the istream to cin multiple times
+//     // std::cin.clear();
+//     // std::cin.ignore(INT_MAX, '\n');
 
-    turtlelib::Twist2D c2;
-    std::cout << "Enter a Twist2D: ";
-    std::cin >> c2;
-    std::cout << "the twist output: " << c2 << std::endl;
-    return 0;
-}
+//     // turtlelib::Twist2D c2;
+//     // std::cout << "Enter a Twist2D: ";
+//     // std::cin >> c2;
+//     // std::cout << "the twist output: " << c2 << std::endl;
+//     return 0;
+// }

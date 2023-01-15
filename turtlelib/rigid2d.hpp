@@ -65,6 +65,10 @@ namespace turtlelib
 
         /// \brief the y coordinate
         double y = 0.0;
+
+        /// \brief normalize a Vector2D
+        /// \return the unit vector of a Vector2D
+        Vector2D normalize();
     };
 
     /// \brief 
@@ -156,7 +160,8 @@ namespace turtlelib
 
         /// \brief apply a transformation to a 2D twist
         /// \param og_twist - the twist to be transformed
-        void switch_twist_frame(Twist2D & og_twist);
+        /// \return the twist in the updated frame
+        Twist2D switch_twist_frame(Twist2D og_twist);
 
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
@@ -200,7 +205,8 @@ namespace turtlelib
     /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
     /// For example:
     /// 90 2 3
-    std::istream & operator>>(std::istream & is, Transform2D & tf);
+    //std::istream & operator>>(std::istream & is, Transform2D & tf);
+    std::istream & operator>>(std::istream & is, Twist2D & twist);
 
 }
 
