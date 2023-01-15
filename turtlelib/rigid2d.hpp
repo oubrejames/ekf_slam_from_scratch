@@ -67,7 +67,18 @@ namespace turtlelib
         double y = 0.0;
     };
 
+    /// \brief 
+    struct Twist2D
+    {
+        /// \brief 
+        double w = 0.0;
 
+        /// \brief the x coordinate
+        double x = 0.0;
+
+        /// \brief the y coordinate
+        double y = 0.0;
+    };
 
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
     /// os - stream to output to
@@ -143,6 +154,10 @@ namespace turtlelib
         /// \return the angular displacement, in radians
         double rotation() const;
 
+        /// \brief apply a transformation to a 2D twist
+        /// \param og_twist - the twist to be transformed
+        void switch_twist_frame(Twist2D & og_twist);
+
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
@@ -172,19 +187,6 @@ namespace turtlelib
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
 //--------------------------------------------------------------------------------------------//
-
-    /// \brief 
-    struct Twist2D
-    {
-        /// \brief 
-        double w = 0.0;
-
-        /// \brief the x coordinate
-        double x = 0.0;
-
-        /// \brief the y coordinate
-        double y = 0.0;
-    };
 
     /// \brief should print a human readable version of the transform:
     /// An example output:

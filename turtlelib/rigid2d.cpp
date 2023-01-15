@@ -93,6 +93,15 @@ namespace turtlelib{
         return radians_in;
     }
 
+    /// \TODO: ADD COMMENT
+    void Transform2D::switch_twist_frame(Twist2D & og_twist){
+        og_twist.x=og_twist.w*trans_in.y+
+                   std::cos(radians_in)*og_twist.x-
+                   std::sin(radians_in)*og_twist.y;
+        og_twist.y=-og_twist.w*trans_in.x+
+                    og_twist.x*std::sin(radians_in)+
+                    og_twist.y*std::cos(radians_in);
+    }
 
     /// \TODO: ADD COMMENT
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
