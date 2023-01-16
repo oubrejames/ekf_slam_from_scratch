@@ -11,9 +11,9 @@ int main() {
     Transform2D tab;
     std::cin >> tab;
 
-    // Flush the istream to cin multiple times
-    std::cin.clear();
-    std::cin.ignore(INT_MAX, '\n');
+    // // Flush the istream to cin multiple times
+    // std::cin.clear();
+    // std::cin.ignore(INT_MAX, '\n');
 
     std::cout <<"Enter transform T_{b,c}:" << std::endl;
     Transform2D tbc;
@@ -26,7 +26,7 @@ int main() {
     // Calclate Tac
     Transform2D tac = tab*tbc;
     // Calclate Tca
-    Transform2D tca = tcb*tba;
+    Transform2D tca = tac.inv();
 
     // Display the transformation matricies values
     std::cout << "T_{a,b}: " << tab << std::endl;
@@ -36,9 +36,9 @@ int main() {
     std::cout << "T_{a,c}: " << tac << std::endl;
     std::cout << "T_{c,a}: " << tca << std::endl;
 
-    // Flush the istream to cin multiple times
-    std::cin.clear();
-    std::cin.ignore(INT_MAX, '\n');
+    // // Flush the istream to cin multiple times
+    // std::cin.clear();
+    // std::cin.ignore(INT_MAX, '\n');
 
     std::cout <<"Enter vector v_b:" << std::endl;
     Vector2D vb;
@@ -58,18 +58,18 @@ int main() {
     std::cout << "v_b: " << vb << std::endl;
     std::cout << "v_c: " << vc << std::endl;
 
-    // Flush the istream to cin multiple times
-    std::cin.clear();
-    std::cin.ignore(INT_MAX, '\n');
+    // // Flush the istream to cin multiple times
+    // std::cin.clear();
+    // std::cin.ignore(INT_MAX, '\n');
 
     std::cout <<"Enter twist V_b:" << std::endl;
     Twist2D vb_twist;
     std::cin >> vb_twist;
 
     // Get vb in a frame
-    Twist2D va_twist = tab.switch_twist_frame(vb_twist);
+    Twist2D va_twist = tab(vb_twist);
     // Get vb in c frame
-    Twist2D vc_twist = tcb.switch_twist_frame(vb_twist);
+    Twist2D vc_twist = tcb(vb_twist);
 
     // Display the transformed twists
     std::cout << "V_a: " << va_twist << std::endl;

@@ -115,7 +115,7 @@ namespace turtlelib
     {
     private:
         Vector2D trans_in;
-        double radians_in;
+        double angle_in;
 
     public:
         /// \brief Create an identity transformation
@@ -140,6 +140,11 @@ namespace turtlelib
         /// \return a vector in the new coordinate system
         Vector2D operator()(Vector2D v) const;
 
+        /// \brief apply a transformation to a 2D twist
+        /// \param og_twist - the twist to be transformed
+        /// \return the twist in the updated frame
+        Twist2D operator()(Twist2D og_twist) const;
+
         /// \brief invert the transformation
         /// \return the inverse transformation. 
         Transform2D inv() const;
@@ -157,11 +162,6 @@ namespace turtlelib
         /// \brief get the angular displacement of the transform
         /// \return the angular displacement, in radians
         double rotation() const;
-
-        /// \brief apply a transformation to a 2D twist
-        /// \param og_twist - the twist to be transformed
-        /// \return the twist in the updated frame
-        Twist2D switch_twist_frame(Twist2D og_twist);
 
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
