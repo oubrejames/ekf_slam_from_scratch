@@ -58,17 +58,6 @@ namespace turtlelib{
     Twist2D Transform2D::operator()(Twist2D og_twist) const{
         Twist2D new_twist;
 
-        // new_twist.x=og_twist.w*std::sin(angle_in)+
-        //            std::cos(angle_in)*og_twist.x+
-        //            trans_in.y*og_twist.y;
-
-        // new_twist.y=og_twist.y;
-
-        // new_twist.w = og_twist.w*std::cos(angle_in)-
-        //               og_twist.x*std::sin(angle_in)+
-        //               og_twist.y*trans_in.x;
-
-
         new_twist.x=og_twist.w*trans_in.y+
                    std::cos(angle_in)*og_twist.x-
                    og_twist.y*std::sin(angle_in);
