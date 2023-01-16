@@ -4,6 +4,7 @@
 #include <limits.h>
 
 namespace turtlelib{
+
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
     /// os - stream to output to
     /// v - the vector to print
@@ -95,8 +96,7 @@ namespace turtlelib{
 
         // Modify the theta value 
         /// \test
-        this->angle_in=std::acos(-std::sin(angle_in)*std::sin(rhs.angle_in)+
-                        std::cos(angle_in)*std::cos(rhs.angle_in));
+        this->angle_in= fmod((angle_in+rhs.angle_in), 2*PI);
         return *this;
     }
 
@@ -157,7 +157,6 @@ namespace turtlelib{
 
     /// \TODO: doxygen
     std::istream & operator>>(std::istream & is, Twist2D & twist){
-        
         if (is.peek() == '['){ // If the first character input is a bracket
             is.get();               // Remove bracket
             is >> twist.w >> twist.x >> twist.y;

@@ -27,6 +27,7 @@ int main() {
     Transform2D tac = tab*tbc;
     // Calclate Tca
     Transform2D tca = tac.inv();
+    Transform2D tca2 = tcb*tba;
 
     // Display the transformation matricies values
     std::cout << "T_{a,b}: " << tab << std::endl;
@@ -35,7 +36,6 @@ int main() {
     std::cout << "T_{c,b}: " << tcb << std::endl;
     std::cout << "T_{a,c}: " << tac << std::endl;
     std::cout << "T_{c,a}: " << tca << std::endl;
-
     // // Flush the istream to cin multiple times
     // std::cin.clear();
     // std::cin.ignore(INT_MAX, '\n');
