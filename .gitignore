@@ -5,3 +5,4 @@ log
 turtlelib/rigid2d
 .vscode/
 turtlelib/frame_main
+turtlelib/build

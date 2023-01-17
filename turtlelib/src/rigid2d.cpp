@@ -41,10 +41,10 @@ namespace turtlelib{
     Transform2D::Transform2D(Vector2D trans) : trans_in{trans}, angle_in(0.0) {}
 
     // Create a pure rotation rotation matrix
-    Transform2D::Transform2D(double radians) : trans_in{0.0, 0.0}, angle_in(radians) {}
+    Transform2D::Transform2D(double radians) : trans_in{0.0, 0.0}, angle_in(deg2rad(radians)) {}
 
     // Create a translation + rotation rotation matrix
-    Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, angle_in(radians) {}
+    Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, angle_in(deg2rad(radians)) {}
 
     /// \TODO: ADD COMMENT
     Vector2D Transform2D::operator()(Vector2D v) const{
@@ -77,7 +77,7 @@ namespace turtlelib{
         Transform2D inv_tf = {
             {std::cos(angle_in)*(-trans_in.x)-std::sin(angle_in)*trans_in.y,
              std::cos(angle_in)*(-trans_in.y)+std::sin(angle_in)*trans_in.x},
-            -angle_in
+            -rad2deg(angle_in)
             };
             return inv_tf;
     }
@@ -138,7 +138,7 @@ namespace turtlelib{
         else{
             is >> deg >> x >> y;
         }
-        tf = Transform2D{{x,y},deg2rad(deg)};
+        tf = Transform2D{{x,y},deg};
         is.clear();
         is.ignore(INT_MAX, '\n');
         return is;
