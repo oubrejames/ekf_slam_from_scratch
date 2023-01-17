@@ -109,7 +109,7 @@ namespace turtlelib{
     // Return the rotational component of the TF matrix
     double Transform2D::rotation() const{
         /// TODO: is this right? should I actually perform some operation
-        return rad2deg(angle_in);
+        return angle_in;
     }
 
     /// \TODO: ADD COMMENT
