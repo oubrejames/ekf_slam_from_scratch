@@ -13,8 +13,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(talker src/nusim.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
+add_executable(nusim src/nusim.cpp)
+ament_target_dependencies(nusim rclcpp std_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -29,7 +29,7 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS
-  talker
+  nusim
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
