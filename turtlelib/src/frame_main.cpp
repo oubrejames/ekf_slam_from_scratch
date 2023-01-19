@@ -27,7 +27,6 @@ int main() {
     Transform2D tac = tab*tbc;
     // Calclate Tca
     Transform2D tca = tac.inv();
-    Transform2D tca2 = tcb*tba;
 
     // Display the transformation matricies values
     std::cout << "T_{a,b}: " << tab << std::endl;
