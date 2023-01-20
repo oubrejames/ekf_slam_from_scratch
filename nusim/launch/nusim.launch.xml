@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_description)/config/basic_all.rviz"/>
+
+  <node pkg="nusim" exec="nusim"/>
+
+
+</launch>
