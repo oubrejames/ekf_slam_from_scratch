@@ -12,9 +12,16 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(rosidl_default_runtime REQUIRED)
+
+
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 add_executable(nusim src/nusim.cpp)
-ament_target_dependencies(nusim rclcpp std_msgs)
+ament_target_dependencies(nusim rclcpp std_msgs std_srvs)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
