@@ -31,9 +31,9 @@ class MinimalPublisher : public rclcpp::Node
       hz_desc.description = "Frequency of the  timer in Hz";
       this->declare_parameter("Hz", 200.0, hz_desc);
       int hz = this->get_parameter("Hz").get_parameter_value().get<double>();
-
+      auto hz_in_ms = std::chrono::milliseconds((long)(1000/(hz)));
       timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(1/(hz*1000)), std::bind(&MinimalPublisher::timer_callback, this));
+      hz_in_ms, std::bind(&MinimalPublisher::timer_callback, this));
 
       reset_server_ = this->create_service<std_srvs::srv::Empty>(
         "~/reset",
@@ -48,24 +48,28 @@ class MinimalPublisher : public rclcpp::Node
 
       auto x0_desc = rcl_interfaces::msg::ParameterDescriptor{};
       x0_desc.description = "Initial x position of turtlebot";
-      this->declare_parameter("x0", 0.0, x0_desc);
-      turtle_x = this->get_parameter("x0").get_parameter_value().get<double>();
+      this->declare_parameter("x0", 0.3, x0_desc);
+      turtle_x0 = this->get_parameter("x0").get_parameter_value().get<double>();
+      turtle_x=turtle_x0;
 
       auto y0_desc = rcl_interfaces::msg::ParameterDescriptor{};
       y0_desc.description = "Initial y position of turtlebot";
       this->declare_parameter("y0", 0.0, y0_desc);
-      turtle_y = this->get_parameter("y0").get_parameter_value().get<double>();
+      turtle_y0 = this->get_parameter("y0").get_parameter_value().get<double>();
+      turtle_y=turtle_y0;
 
       auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor{};
       theta0_desc.description = "Initial theta position of turtlebot";
       this->declare_parameter("theta0", 0.0, theta0_desc);
-      turtle_theta = this->get_parameter("theta0").get_parameter_value().get<double>();
+      turtle_theta0 = this->get_parameter("theta0").get_parameter_value().get<double>();
+      turtle_theta=turtle_theta0;
     }
 
   private:
     uint64_t timestep = 0;
     geometry_msgs::msg::TransformStamped t;
     tf2::Quaternion q;
+    double turtle_x0, turtle_y0, turtle_theta0;
     double turtle_x, turtle_y, turtle_theta;
     
 
@@ -80,6 +84,9 @@ class MinimalPublisher : public rclcpp::Node
               const std::shared_ptr<std_srvs::srv::Empty::Response>)
     {
       timestep = 0;
+      turtle_x =turtle_x0;
+      turtle_y = turtle_y0;
+      turtle_theta = turtle_theta0;
     }
     
     void timer_callback()
