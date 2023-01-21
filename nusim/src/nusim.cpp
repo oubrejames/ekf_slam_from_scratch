@@ -27,8 +27,13 @@ class MinimalPublisher : public rclcpp::Node
     {
       time_publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
 
+      auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      hz_desc.description = "Frequency of the  timer in Hz";
+      this->declare_parameter("Hz", 200, hz_desc);
+      int hz = this->get_parameter("Hz").get_parameter_value().get<double>();
+
       timer_ = this->create_wall_timer(
-      5ms, std::bind(&MinimalPublisher::timer_callback, this));
+      std::chrono::milliseconds(1/(hz*1000)), std::bind(&MinimalPublisher::timer_callback, this));
 
       reset_server_ = this->create_service<std_srvs::srv::Empty>(
         "~/reset",
@@ -40,13 +45,28 @@ class MinimalPublisher : public rclcpp::Node
       teleport_server_ = this->create_service<nusim::srv::Teleport>(
         "~/teleport",
         std::bind(&MinimalPublisher::teleport, this, std::placeholders::_1, std::placeholders::_2));
+
+      auto x0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      x0_desc.description = "Initial x position of turtlebot";
+      this->declare_parameter("x0", 0.0, x0_desc);
+      turtle_x = this->get_parameter("x0").get_parameter_value().get<double>();
+
+      auto y0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      y0_desc.description = "Initial y position of turtlebot";
+      this->declare_parameter("y0", 0.0, y0_desc);
+      turtle_y = this->get_parameter("y0").get_parameter_value().get<double>();
+
+      auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      theta0_desc.description = "Initial theta position of turtlebot";
+      this->declare_parameter("theta", 0.0, theta0_desc);
+      turtle_theta = this->get_parameter("theta0").get_parameter_value().get<double>();
     }
 
   private:
     uint64_t timestep = 0;
     geometry_msgs::msg::TransformStamped t;
     tf2::Quaternion q;
-    double turtle_x=0.0, turtle_y=0.0, turtle_theta=0.0;
+    double turtle_x, turtle_y, turtle_theta;
     
 
     void teleport(const std::shared_ptr<nusim::srv::Teleport::Request> req,
