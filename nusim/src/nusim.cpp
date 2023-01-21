@@ -68,23 +68,25 @@ class NusimNode : public rclcpp::Node
 
       auto ob_x_desc = rcl_interfaces::msg::ParameterDescriptor();
       ob_x_desc.description = "List of x coordinates of obstacles";
-      this->declare_parameter("obstacles/x", std::vector<double> {0.0, 0.5, 1.0}, ob_x_desc);
+      this->declare_parameter("obstacles/x", std::vector<double> {}, ob_x_desc);
       obstacles_x = this->get_parameter("obstacles/x").get_parameter_value().get<std::vector<double>>();
 
 
       auto ob_y_desc = rcl_interfaces::msg::ParameterDescriptor();
       ob_y_desc.description = "List of y coordinates of obstacles";
-      this->declare_parameter("obstacles/y", std::vector<double> {0.0, 0.5, 1.0}, ob_y_desc);
+      this->declare_parameter("obstacles/y", std::vector<double> {}, ob_y_desc);
       obstacles_y = this->get_parameter("obstacles/y").get_parameter_value().get<std::vector<double>>();
 
       auto ob_r_desc = rcl_interfaces::msg::ParameterDescriptor();
       ob_r_desc.description = "Radius of cyindrical of obstacles";
-      this->declare_parameter("obstacles/r", 0.1, ob_r_desc);
+      this->declare_parameter("obstacles/r", 0.05, ob_r_desc);
       obstacles_r = this->get_parameter("obstacles/r").get_parameter_value().get<double>();
 
       marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", 10);
-      marker_array = make_marker_array();
 
+      if(obstacles_x.size()){
+        marker_array = make_marker_array();
+      }
     }
 
   private:
@@ -98,7 +100,7 @@ class NusimNode : public rclcpp::Node
 
     visualization_msgs::msg::MarkerArray make_marker_array(){
       visualization_msgs::msg::MarkerArray mkr_array;
-      for(int i = 0; i < 2; i++){
+      for(int i = 0; i < (int)(obstacles_x.size()); i++){
         RCLCPP_INFO(this->get_logger(), "MAKING MARKER ARRAY: ");
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "nusim/world";
@@ -166,7 +168,6 @@ class NusimNode : public rclcpp::Node
       // Send the transformation
       tf_broadcaster_->sendTransform(t);
       marker_publisher_->publish( marker_array );
-
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
