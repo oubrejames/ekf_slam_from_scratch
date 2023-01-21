@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_default_runtime REQUIRED)
 find_package(tf2 REQUIRED)
@@ -33,7 +34,8 @@ ament_target_dependencies(nusim
                           std_srvs
                           tf2
                           tf2_ros
-                          turtlesim)
+                          turtlesim
+                          visualization_msgs)
 
 target_link_libraries(nusim "${cpp_typesupport_target}")
 
