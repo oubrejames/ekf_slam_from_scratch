@@ -13,6 +13,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "nusim/srv/teleport.hpp"
 #include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 using namespace std::chrono_literals;
 
@@ -47,47 +48,42 @@ class NusimNode : public rclcpp::Node
         "~/teleport",
         std::bind(&NusimNode::teleport, this, std::placeholders::_1, std::placeholders::_2));
 
-      auto x0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
       x0_desc.description = "Initial x position of turtlebot";
       this->declare_parameter("x0", 0.3, x0_desc);
       turtle_x0 = this->get_parameter("x0").get_parameter_value().get<double>();
       turtle_x=turtle_x0;
 
-      auto y0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      auto y0_desc = rcl_interfaces::msg::ParameterDescriptor();
       y0_desc.description = "Initial y position of turtlebot";
       this->declare_parameter("y0", 0.0, y0_desc);
       turtle_y0 = this->get_parameter("y0").get_parameter_value().get<double>();
       turtle_y=turtle_y0;
 
-      auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor();
       theta0_desc.description = "Initial theta position of turtlebot";
       this->declare_parameter("theta0", 0.0, theta0_desc);
       turtle_theta0 = this->get_parameter("theta0").get_parameter_value().get<double>();
       turtle_theta=turtle_theta0;
 
-      // Marker cylinder stuff
-      marker_publisher_ = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
+      auto ob_x_desc = rcl_interfaces::msg::ParameterDescriptor();
+      ob_x_desc.description = "List of x coordinates of obstacles";
+      this->declare_parameter("obstacles/x", std::vector<double> {0.0, 0.5, 1.0}, ob_x_desc);
+      obstacles_x = this->get_parameter("obstacles/x").get_parameter_value().get<std::vector<double>>();
 
-      marker.header.frame_id = "nusim/world";
-      marker.header.stamp = this->get_clock()->now();
-      marker.ns = "my_namespace";
-      marker.id = 0;
-      marker.type = visualization_msgs::msg::Marker::SPHERE;
-      marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose.position.x = 1.0;
-      marker.pose.position.y = 1.0;
-      marker.pose.position.z = 1.0;
-      marker.pose.orientation.x = 0.0;
-      marker.pose.orientation.y = 0.0;
-      marker.pose.orientation.z = 0.0;
-      marker.pose.orientation.w = 1.0;
-      marker.scale.x = 1.0;
-      marker.scale.y = 1.0;
-      marker.scale.z = 0.1;
-      marker.color.a = 1.0; // Don't forget to set the alpha!
-      marker.color.r = 0.0;
-      marker.color.g = 1.0;
-      marker.color.b = 0.0;
+
+      auto ob_y_desc = rcl_interfaces::msg::ParameterDescriptor();
+      ob_y_desc.description = "List of y coordinates of obstacles";
+      this->declare_parameter("obstacles/y", std::vector<double> {0.0, 0.5, 1.0}, ob_y_desc);
+      obstacles_y = this->get_parameter("obstacles/y").get_parameter_value().get<std::vector<double>>();
+
+      auto ob_r_desc = rcl_interfaces::msg::ParameterDescriptor();
+      ob_r_desc.description = "Radius of cyindrical of obstacles";
+      this->declare_parameter("obstacles/r", 0.1, ob_r_desc);
+      obstacles_r = this->get_parameter("obstacles/r").get_parameter_value().get<double>();
+
+      marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", 10);
+      marker_array = make_marker_array();
 
     }
 
@@ -97,7 +93,37 @@ class NusimNode : public rclcpp::Node
     tf2::Quaternion q;
     double turtle_x0, turtle_y0, turtle_theta0;
     double turtle_x, turtle_y, turtle_theta;
-    
+    double obstacles_r;
+    std::vector<double> obstacles_x, obstacles_y;
+
+    visualization_msgs::msg::MarkerArray make_marker_array(){
+      visualization_msgs::msg::MarkerArray mkr_array;
+      for(int i = 0; i < 2; i++){
+        RCLCPP_INFO(this->get_logger(), "MAKING MARKER ARRAY: ");
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "nusim/world";
+        marker.header.stamp = this->get_clock()->now();
+        marker.id = i;
+        marker.type = visualization_msgs::msg::Marker::CYLINDER;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.pose.position.x = obstacles_x[i];
+        marker.pose.position.y = obstacles_y[i];
+        marker.pose.position.z = 0.25/2;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = obstacles_r*2;
+        marker.scale.y = obstacles_r*2;
+        marker.scale.z = 0.25;
+        marker.color.a = 1.0;
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        mkr_array.markers.push_back(marker);
+      }
+      return mkr_array;
+    }
 
     void teleport(const std::shared_ptr<nusim::srv::Teleport::Request> req,
                   std::shared_ptr<nusim::srv::Teleport::Response>){
@@ -139,7 +165,7 @@ class NusimNode : public rclcpp::Node
 
       // Send the transformation
       tf_broadcaster_->sendTransform(t);
-      marker_publisher_->publish( marker );
+      marker_publisher_->publish( marker_array );
 
     }
 
@@ -148,8 +174,9 @@ class NusimNode : public rclcpp::Node
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
-    visualization_msgs::msg::Marker marker;
-    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_publisher_;
+    /// @brief //////////////////////////////////////////////////////////////
+    visualization_msgs::msg::MarkerArray marker_array;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
     size_t count_;
 };
 
