@@ -112,7 +112,7 @@ namespace turtlelib
         /// \brief Create a transformation with a translational and rotational
         /// component
         /// \param trans - the translation
-        /// \param rot - the rotation, in radians
+        /// \param radians - the rotation, in radians
         Transform2D(Vector2D trans, double radians);
 
         /// \brief apply a transformation to a Vector2D
@@ -176,7 +176,7 @@ namespace turtlelib
     /// An example output:
     /// deg: 90 x: 3 y: 5
     /// \param os - an output stream
-    /// \param tf - the transform to print
+    /// \param twist - the transform to print
     std::ostream & operator<<(std::ostream & os, const Twist2D & twist);
 
     /// \brief Read a Twist2D from stdin

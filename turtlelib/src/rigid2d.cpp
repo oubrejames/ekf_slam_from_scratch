@@ -7,7 +7,6 @@ namespace turtlelib{
 
     std::ostream & operator<<(std::ostream & os, const Vector2D & v){
         os << "[" << v.x << " " << v.y << "]";
-        /// \TODO: Why do we return OS?
         return os; 
     }
 
