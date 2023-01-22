@@ -87,8 +87,21 @@ class NusimNode : public rclcpp::Node
       if(obstacles_x.size()){
         marker_array = make_marker_array();
       }
+      
+      if (obstacles_x.size() != obstacles_y.size()) {
+        RCLCPP_ERROR(this->get_logger(), "obstacles_x and obstacles_y lists have different lengths, shutting down.");
+        rclcpp::shutdown();
+        return;
+      }
     }
 
+    std::vector<double> getObstacleX(){
+      return this->obstacles_x;
+    }
+
+    std::vector<double> getObstacleY(){
+      return this->obstacles_y;
+    }
   private:
     uint64_t timestep = 0;
     geometry_msgs::msg::TransformStamped t;
@@ -117,7 +130,7 @@ class NusimNode : public rclcpp::Node
         marker.scale.x = obstacles_r*2;
         marker.scale.y = obstacles_r*2;
         marker.scale.z = 0.25;
-        marker.color.a = 1.0;
+        marker.color.a = 1.0; 
         marker.color.r = 1.0;
         marker.color.g = 0.0;
         marker.color.b = 0.0;
@@ -182,18 +195,7 @@ class NusimNode : public rclcpp::Node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<NusimNode>("nusim");
-  try{
-    if((node->obstacles_x.size() == node->obstacles_y.size())){
-      rclcpp::spin();
-    } else {
-      throw;
-    }
-  }
-  catch(...){
-    rclcpp::shutdown();
-  }
-  
+  rclcpp::spin(std::make_shared<NusimNode>());
   rclcpp::shutdown();
   return 0;
 }
