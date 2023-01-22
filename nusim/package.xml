@@ -3,9 +3,9 @@
 <package format="3">
   <name>nusim</name>
   <version>0.0.2</version>
-  <description>TODO: Package description</description>
+  <description>Simulation package for SLAM with Turtlebot</description>
   <maintainer email="oubrejames@gmail.com">James Oubre</maintainer>
-  <license>Apache License 2.0</license>
+  <license>APLv2</license>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 

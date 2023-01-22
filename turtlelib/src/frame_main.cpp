@@ -11,10 +11,6 @@ int main() {
     Transform2D tab;
     std::cin >> tab;
 
-    // // Flush the istream to cin multiple times
-    // std::cin.clear();
-    // std::cin.ignore(INT_MAX, '\n');
-
     std::cout <<"Enter transform T_{b,c}:" << std::endl;
     Transform2D tbc;
     std::cin >> tbc;
@@ -35,9 +31,6 @@ int main() {
     std::cout << "T_{c,b}: " << tcb << std::endl;
     std::cout << "T_{a,c}: " << tac << std::endl;
     std::cout << "T_{c,a}: " << tca << std::endl;
-    // // Flush the istream to cin multiple times
-    // std::cin.clear();
-    // std::cin.ignore(INT_MAX, '\n');
 
     std::cout <<"Enter vector v_b:" << std::endl;
     Vector2D vb;
@@ -56,10 +49,6 @@ int main() {
     std::cout << "v_a: " << va << std::endl;
     std::cout << "v_b: " << vb << std::endl;
     std::cout << "v_c: " << vc << std::endl;
-
-    // // Flush the istream to cin multiple times
-    // std::cin.clear();
-    // std::cin.ignore(INT_MAX, '\n');
 
     std::cout <<"Enter twist V_b:" << std::endl;
     Twist2D vb_twist;

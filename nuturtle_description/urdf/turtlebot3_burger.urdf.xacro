@@ -5,6 +5,7 @@ https://github.com/ROBOTIS-GIT/turtlebot3/blob/humble-devel/nuturtle_description
 <robot name="turtlebot3_burger"
   xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <!-- The following parameters were added to the original URDF -->
   <xacro:property name="yaml_file" value="$(find nuturtle_description)/config/diff_params.yaml" />
   <xacro:property name="props" value="${xacro.load_yaml(yaml_file)}"/>
   <xacro:property name="star" value="${props['/**']}" />

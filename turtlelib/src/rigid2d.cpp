@@ -5,20 +5,12 @@
 
 namespace turtlelib{
 
-    /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
-    /// os - stream to output to
-    /// v - the vector to print
     std::ostream & operator<<(std::ostream & os, const Vector2D & v){
         os << "[" << v.x << " " << v.y << "]";
         /// \TODO: Why do we return OS?
         return os; 
     }
 
-    /// \brief input a 2 dimensional vector
-    ///   You should be able to read vectors entered as follows:
-    ///   [x y] or x y
-    /// \param is - stream from which to read
-    /// \param v [out] - output vector
     std::istream & operator>>(std::istream & is, Vector2D & v){
         if (is.peek() == '['){ // If the first character input is a bracket
             is.get();               // Remove bracket
@@ -46,7 +38,7 @@ namespace turtlelib{
     // Create a translation + rotation rotation matrix
     Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, angle_in(deg2rad(radians)) {}
 
-    /// \TODO: ADD COMMENT
+    // Perform a transformation on a Vector2D
     Vector2D Transform2D::operator()(Vector2D v) const{
         Vector2D new_vec={
                 std::cos(angle_in)*v.x-std::sin(angle_in)*v.y + trans_in.x,
@@ -55,7 +47,7 @@ namespace turtlelib{
         return new_vec;
     }
 
-    /// \TODO: ADD COMMENT
+    // Perform a transformation on a Twist2D
     Twist2D Transform2D::operator()(Twist2D og_twist) const{
         Twist2D new_twist;
 
@@ -72,7 +64,7 @@ namespace turtlelib{
         return new_twist;
     }
 
-    /// \TODO: ADD COMMENT
+    // Return the inverse of a transformation matrix
     Transform2D Transform2D::inv() const{
         Transform2D inv_tf = {
             {std::cos(angle_in)*(-trans_in.x)-std::sin(angle_in)*trans_in.y,
@@ -82,7 +74,6 @@ namespace turtlelib{
             return inv_tf;
     }
 
-    /// \TODO: ADD COMMENT
     Transform2D & Transform2D::operator*=(const Transform2D & rhs){
         // Modify the x value
         this->trans_in.x=std::cos(angle_in)*rhs.trans_in.x-
@@ -95,24 +86,20 @@ namespace turtlelib{
                          this->trans_in.y;
 
         // Modify the theta value 
-        /// \test
         this->angle_in= fmod((angle_in+rhs.angle_in), 2*PI);
         return *this;
     }
 
     // Return the translational component of the TF matrix
     Vector2D Transform2D::translation() const{
-        /// TODO: is this right? should I actually perform a translation
         return trans_in;
     }
 
     // Return the rotational component of the TF matrix
     double Transform2D::rotation() const{
-        /// TODO: is this right? should I actually perform some operation
         return angle_in;
     }
 
-    /// \TODO: ADD COMMENT
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
         os << "deg: " << rad2deg(tf.angle_in) << " x: " << tf.trans_in.x << " y: " << tf.trans_in.y;
         return os;
@@ -120,14 +107,6 @@ namespace turtlelib{
 
     // Read a Transform2D as 3 numbers
     std::istream & operator>>(std::istream & is, Transform2D & tf){
-        // & tf refers to a transform2D object, if you change the variable here, it will change the
-        // contents at that memory location 
-        // we are reading in the user input from the is stream via is >> output
-        // we can then make changes to the tf variable here to change it in memory
-        
-        ///TODO: read in as output from operator<<
-            ///TODO: read cppreference.com on istream
-            ///TODO: make multiple istream things work
         std::string tmp1, tmp2, tmp3;
         double deg;
         double x;
@@ -146,7 +125,7 @@ namespace turtlelib{
 
     // Multiply 2 matrices and return the output
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs){
-        Transform2D output = lhs; // use output variable as to not change either argument after the operation
+        Transform2D output = lhs;
         return output*=rhs;
     }
 
@@ -155,7 +134,6 @@ namespace turtlelib{
         return os; 
     }
 
-    /// \TODO: doxygen
     std::istream & operator>>(std::istream & is, Twist2D & twist){
         if (is.peek() == '['){ // If the first character input is a bracket
             is.get();               // Remove bracket
@@ -169,7 +147,6 @@ namespace turtlelib{
         return is;
     }
 
-    /// \TODO: comment
     Vector2D Vector2D::normalize(){
         double mag = sqrt(x*x+y*y);
         return Vector2D{x/mag, y/mag};

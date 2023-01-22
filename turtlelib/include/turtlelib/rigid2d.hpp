@@ -45,10 +45,6 @@ namespace turtlelib
         return (rad*(180/PI));
     }
 
-    /// static_assertions test compile time assumptions.
-    /// You should write at least one more test for each function
-    /// You should also purposely (and temporarily) make one of these tests fail
-    /// just to see what happens
     static_assert(almost_equal(0, 0), "is_zero failed");
 
     static_assert(almost_equal(deg2rad(0.0), 0.0), "deg2rad failed");
@@ -57,7 +53,7 @@ namespace turtlelib
 
     static_assert(almost_equal(deg2rad(rad2deg(2.1)), 2.1), "deg2rad failed");
 
-    /// \brief A 2-Dimensional Vector
+    /// \brief A 2-Dimensional Vector [x,y]
     struct Vector2D
     {
         /// \brief the x coordinate
@@ -71,10 +67,10 @@ namespace turtlelib
         Vector2D normalize();
     };
 
-    /// \brief 
+    /// \brief A 2-Dimensional Twist [w,x,y]
     struct Twist2D
     {
-        /// \brief 
+        /// \brief rotational component
         double w = 0.0;
 
         /// \brief the x coordinate
@@ -89,25 +85,9 @@ namespace turtlelib
     /// v - the vector to print
     std::ostream & operator<<(std::ostream & os, const Vector2D & v);
 
-    /// \brief input a 2 dimensional vector
-    ///   You should be able to read vectors entered as follows:
-    ///   [x y] or x y
+    /// \brief input a 2 dimensional vector as [x y] or x y
     /// \param is - stream from which to read
     /// \param v [out] - output vector
-    ///
-    /// The way input works is (more or less): what the user types is stored in a buffer until the user types
-    /// a newline (by pressing enter).  The iostream methods then process the data in this buffer character by character.
-    /// Typically, each character is examined and then removed from the buffer automatically.
-    /// If the characters don't match what is expected (e.g., we are expecting an int but the letter 'q' is encountered)
-    /// an error flag is set on the stream object (e.g., std::cin) and processing stops.
-    ///
-    /// We have lower level control however.
-    /// std::peek() looks at the next unprocessed character in the buffer without removing it
-    ///     https://en.cppreference.com/w/cpp/io/basic_istream/peek
-    /// std::get() removes the next unprocessed character from the buffer.
-    ///     https://en.cppreference.com/w/cpp/io/basic_istream/get
-    /// When you call std::peek() it will wait for there to be at least one character in the buffer (e.g., the user types a character)
-    /// HINT: this function can be written in under 20 lines and uses only std::peek(), std::get(), istream::operator>>() and a little logic
     std::istream & operator>>(std::istream & is, Vector2D & v);
 
     /// \brief a rigid body transformation in 2 dimensions
@@ -170,7 +150,7 @@ namespace turtlelib
     };
 
 
-    /// \brief should print a human readable version of the transform:
+    /// \brief print a human readable version of the transform:
     /// An example output:
     /// deg: 90 x: 3 y: 5
     /// \param os - an output stream
@@ -178,34 +158,30 @@ namespace turtlelib
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
 
     /// \brief Read a transformation from stdin
-    /// Should be able to read input either as output by operator<< or
+    /// Read input either as output by operator<< or
     /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
     /// For example:
     /// 90 2 3
+    /// \param is - an input stream
+    /// \param tf - the transform to read
     std::istream & operator>>(std::istream & is, Transform2D & tf);
 
     /// \brief multiply two transforms together, returning their composition
     /// \param lhs - the left hand operand
     /// \param rhs - the right hand operand
     /// \return the composition of the two transforms
-    /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
-//--------------------------------------------------------------------------------------------//
-
-    /// \brief should print a human readable version of the transform:
+    /// \brief print a human readable version of the transform:
     /// An example output:
     /// deg: 90 x: 3 y: 5
     /// \param os - an output stream
     /// \param tf - the transform to print
     std::ostream & operator<<(std::ostream & os, const Twist2D & twist);
 
-    /// \brief Read a transformation from stdin
-    /// Should be able to read input either as output by operator<< or
-    /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
-    /// For example:
-    /// 90 2 3
-    //std::istream & operator>>(std::istream & is, Transform2D & tf);
+    /// \brief Read a Twist2D from stdin
+    /// \param is - an input stream
+    /// \param twist - the twist to read
     std::istream & operator>>(std::istream & is, Twist2D & twist);
 
 }

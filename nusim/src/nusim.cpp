@@ -85,7 +85,6 @@ class NusimNode : public rclcpp::Node
       marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
       if(obstacles_x.size()){
-        RCLCPP_INFO(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
         marker_array = make_marker_array();
       }
     }
@@ -102,7 +101,6 @@ class NusimNode : public rclcpp::Node
     visualization_msgs::msg::MarkerArray make_marker_array(){
       visualization_msgs::msg::MarkerArray mkr_array;
       for(int i = 0; i < (int)(obstacles_x.size()); i++){
-        RCLCPP_INFO(this->get_logger(), "MAKING MARKER ARRAY: ");
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "nusim/world";
         marker.header.stamp = this->get_clock()->now();
@@ -120,8 +118,8 @@ class NusimNode : public rclcpp::Node
         marker.scale.y = obstacles_r*2;
         marker.scale.z = 0.25;
         marker.color.a = 1.0;
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
         marker.color.b = 0.0;
         mkr_array.markers.push_back(marker);
       }
@@ -176,7 +174,6 @@ class NusimNode : public rclcpp::Node
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
-    /// @brief //////////////////////////////////////////////////////////////
     visualization_msgs::msg::MarkerArray marker_array;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
     size_t count_;
@@ -185,7 +182,18 @@ class NusimNode : public rclcpp::Node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<NusimNode>());
+  auto node = std::make_shared<NusimNode>("nusim");
+  try{
+    if((node->obstacles_x.size() == node->obstacles_y.size())){
+      rclcpp::spin();
+    } else {
+      throw;
+    }
+  }
+  catch(...){
+    rclcpp::shutdown();
+  }
+  
   rclcpp::shutdown();
   return 0;
 }
