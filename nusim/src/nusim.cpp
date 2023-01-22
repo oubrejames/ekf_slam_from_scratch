@@ -82,7 +82,7 @@ class NusimNode : public rclcpp::Node
       this->declare_parameter("obstacles/r", 0.05, ob_r_desc);
       obstacles_r = this->get_parameter("obstacles/r").get_parameter_value().get<double>();
 
-      marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", 10);
+      marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
       if(obstacles_x.size()){
         marker_array = make_marker_array();
