@@ -85,6 +85,7 @@ class NusimNode : public rclcpp::Node
       marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
       if(obstacles_x.size()){
+        RCLCPP_INFO(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
         marker_array = make_marker_array();
       }
     }
