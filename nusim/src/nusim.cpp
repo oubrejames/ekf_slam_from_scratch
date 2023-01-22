@@ -17,18 +17,16 @@
 
 using namespace std::chrono_literals;
 
-/* This example creates a subclass of Node and uses std::bind() to register a
-* member function as a callback from the timer. */
-
-
 class NusimNode : public rclcpp::Node
 {
 public:
   NusimNode()
   : Node("nusim"), count_(0)
   {
+    // Publisher to publish current timestep
     time_publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
 
+    // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
     this->declare_parameter("Hz", 200.0, hz_desc);
@@ -37,17 +35,21 @@ public:
     timer_ = this->create_wall_timer(
       hz_in_ms, std::bind(&NusimNode::timer_callback, this));
 
+    // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
       "~/reset",
       std::bind(&NusimNode::reset, this, std::placeholders::_1, std::placeholders::_2));
 
+    // Define transform broadcaster
     tf_broadcaster_ =
       std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+    // Define teleport service
     teleport_server_ = this->create_service<nusim::srv::Teleport>(
       "~/teleport",
       std::bind(&NusimNode::teleport, this, std::placeholders::_1, std::placeholders::_2));
 
+    // Create parameters for turtlebot position
     auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
     x0_desc.description = "Initial x position of turtlebot";
     this->declare_parameter("x0", 0.3, x0_desc);
@@ -66,12 +68,12 @@ public:
     turtle_theta0 = this->get_parameter("theta0").get_parameter_value().get<double>();
     turtle_theta = turtle_theta0;
 
+    // Create parameters for obstacle position and size
     auto ob_x_desc = rcl_interfaces::msg::ParameterDescriptor();
     ob_x_desc.description = "List of x coordinates of obstacles";
     this->declare_parameter("obstacles/x", std::vector<double> {}, ob_x_desc);
     obstacles_x =
       this->get_parameter("obstacles/x").get_parameter_value().get<std::vector<double>>();
-
 
     auto ob_y_desc = rcl_interfaces::msg::ParameterDescriptor();
     ob_y_desc.description = "List of y coordinates of obstacles";
@@ -84,14 +86,17 @@ public:
     this->declare_parameter("obstacles/r", 0.05, ob_r_desc);
     obstacles_r = this->get_parameter("obstacles/r").get_parameter_value().get<double>();
 
+    // Define a publisher to publish obstacle markers
     marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/obstacles",
       10);
 
+    // Only create marker array if there are actually obstacles defines
     if (obstacles_x.size()) {
       marker_array = make_marker_array();
     }
 
+    // Report error and kill node if obstacle x and y arrays are not same length
     if (obstacles_x.size() != obstacles_y.size()) {
       RCLCPP_ERROR(
         this->get_logger(),
@@ -99,16 +104,6 @@ public:
       rclcpp::shutdown();
       return;
     }
-  }
-
-  std::vector<double> getObstacleX()
-  {
-    return this->obstacles_x;
-  }
-
-  std::vector<double> getObstacleY()
-  {
-    return this->obstacles_y;
   }
 
 private:
@@ -120,6 +115,8 @@ private:
   double obstacles_r;
   std::vector<double> obstacles_x, obstacles_y;
 
+  /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
+  /// @return marker array with all obstacles
   visualization_msgs::msg::MarkerArray make_marker_array()
   {
     visualization_msgs::msg::MarkerArray mkr_array;
@@ -149,6 +146,9 @@ private:
     return mkr_array;
   }
 
+  /// @brief Teleport the turtlebot from one location to another
+  /// @param req Custom srv containing a x,y,theta position
+  /// @param - service response (empty)
   void teleport(
     const std::shared_ptr<nusim::srv::Teleport::Request> req,
     std::shared_ptr<nusim::srv::Teleport::Response>)
@@ -158,6 +158,9 @@ private:
     turtle_theta = req->theta;
   }
 
+  /// @brief reset timestep to 0 and return turtlebot to original location
+  /// @param - service request (empty)
+  /// @param - service response (empty)
   void reset(
     const std::shared_ptr<std_srvs::srv::Empty::Request>,
     const std::shared_ptr<std_srvs::srv::Empty::Response>)
@@ -174,14 +177,10 @@ private:
     message.data = timestep++;
     time_publisher_->publish(message);
 
-    // Read message content and assign it to
-    // corresponding tf variables
+    // Update world to robot transformation info
     t.header.stamp = this->get_clock()->now();
     t.header.frame_id = "nusim/world";
     t.child_frame_id = "red/base_footprint";
-
-    // Turtle only exists in 2D, thus we get x and y translation
-    // coordinates from the message and set the z coordinate to 0
     t.transform.translation.x = turtle_x;
     t.transform.translation.y = turtle_y;
     q.setRPY(0, 0, turtle_theta);
@@ -190,7 +189,7 @@ private:
     t.transform.rotation.z = q.z();
     t.transform.rotation.w = q.w();
 
-    // Send the transformation
+    // Send transformation
     tf_broadcaster_->sendTransform(t);
     marker_publisher_->publish(marker_array);
   }

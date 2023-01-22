@@ -13,15 +13,19 @@ A library for handling transformations in SE(2) and other turtlebot-related math
 
    - Which of the methods would you implement and why?
 
+
 2. What is the difference between a class and a struct in C++?
 * A classes member variavles and functions are private by default while a struct's is public. Classes
 may also inherit from other classes.
 
 3. Why is Vector2D a struct and Transform2D a Class (refer to at least 2 specific C++ core guidelines in your answer)?
-
+* 
 
 4. Why are some of the constructors in Transform2D explicit (refer to a specific C++ core guideline in your answer)?
-
+* 
 
 5. Why is Transform2D::inv() declared const while Transform2D::operator*=() is not?
    - Refer to [[https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#con-constants-and-immutability][C++ Core Guidelines (Constants and Immutability)]] in your answer
+* 
+
+Worked With: Liz Metzger, Dilan Wijesinghe, Meg Sindelar, Marno Nel, Katie Hughes, Ava Zahedi, Nicolas Morales
