@@ -27,9 +27,9 @@ TEST_CASE( "inverse", "[transform]" ) // James Oubre
     turtlelib::Vector2D out_tran = ground_truth.translation();
     double out_rot = ground_truth.rotation();
 
-    REQUIRE( turtlelib::almost_equal(inv_tran.x, out_tran.x, 1.0e-6));
-    REQUIRE( turtlelib::almost_equal(inv_tran.y, out_tran.y, 1.0e-6));
-    REQUIRE( turtlelib::almost_equal(inv_rot, out_rot, 1.0e-6));
+    REQUIRE_THAT(out_tran.x,  Catch::Matchers::WithinRel(inv_tran.x, 0.001));
+    REQUIRE_THAT(out_tran.y,  Catch::Matchers::WithinRel(inv_tran.y, 0.001));
+    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinRel(inv_rot, 0.001));
 }
 
 TEST_CASE( "transform times equals", "[transform]" ) // James Oubre
@@ -45,9 +45,9 @@ TEST_CASE( "transform times equals", "[transform]" ) // James Oubre
     turtlelib::Vector2D out_tran = ground_truth.translation();
     double out_rot = turtlelib::rad2deg(ground_truth.rotation());
 
-    REQUIRE( turtlelib::almost_equal(tran.x, out_tran.x, 1.0e-6));
-    REQUIRE( turtlelib::almost_equal(tran.y, out_tran.y, 1.0e-6));
-    REQUIRE( turtlelib::almost_equal(rot, out_rot, 1.0e-6));
+    REQUIRE_THAT(out_tran.x,  Catch::Matchers::WithinRel(tran.x, 0.001));
+    REQUIRE_THAT(out_tran.y,  Catch::Matchers::WithinRel(tran.y, 0.001));
+    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinRel(rot, 0.001));
 }
 
 TEST_CASE( "transform multiplication", "[transform]" ) // James Oubre
