@@ -85,9 +85,7 @@ TEST_CASE( "Rotation", "[transform]" ) // James Oubre
    double ang = 25.0;
    turtlelib::Transform2D tf = turtlelib::Transform2D(ang);
    REQUIRE(tf.rotation() == turtlelib::deg2rad(ang));
-
 }
- 
 
 TEST_CASE( "Operator () for Vector2D", "[transform]" ) { // Yin, Hang
    float my_x = 2;
@@ -144,4 +142,59 @@ TEST_CASE( "normalize_angle()", "[double]" ) // James Oubre
    double ang5 = -5*turtlelib::PI/2;
    double norm_ang5 = turtlelib::normalize_angle(ang5);
    REQUIRE_THAT(norm_ang5,  Catch::Matchers::WithinAbs(-turtlelib::PI/2, 0.001));
+}
+
+TEST_CASE("Vector2D *=", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    double rhs = 3.0;
+    in*=rhs;
+    turtlelib::Vector2D expected = {6, 9};
+    REQUIRE_THAT(in.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(in.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+}
+
+TEST_CASE("Vector2D *", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    double rhs = 3.0;
+    turtlelib::Vector2D out=in*rhs;
+    turtlelib::Vector2D expected = {6, 9};
+    REQUIRE_THAT(out.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(out.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+}
+
+TEST_CASE("Vector2D +=", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    in+=rhs;
+    turtlelib::Vector2D expected = {6, 8};
+    REQUIRE_THAT(in.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(in.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+
+}
+
+TEST_CASE("Vector2D +", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    turtlelib::Vector2D out=in+rhs;
+    turtlelib::Vector2D expected = {6, 8};
+    REQUIRE_THAT(out.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(out.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+}
+
+TEST_CASE("Vector2D -=", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    in-=rhs;
+    turtlelib::Vector2D expected = {-2, -2};
+    REQUIRE_THAT(in.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(in.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+}
+
+TEST_CASE("Vector2D -", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    turtlelib::Vector2D out=in-rhs;
+    turtlelib::Vector2D expected = {-2, -2};
+    REQUIRE_THAT(out.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(out.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
 }

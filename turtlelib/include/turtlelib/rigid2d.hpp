@@ -65,6 +65,23 @@ namespace turtlelib
         /// \brief normalize a Vector2D
         /// \return the unit vector of a Vector2D
         Vector2D normalize();
+//---------------------------------------------------------------------------------------//
+        /// \brief multiply this Vector2D with a scalar and store the result 
+        /// in this object
+        /// \param rhs - the first Vector to apply
+        /// \return a reference to the newly transformed operator
+        Vector2D & operator*=(const double rhs);
+
+        /// \brief subtract a Vector2D from this Vector2D and store the result in this object
+        /// \param rhs - the first Vector to apply
+        /// \return a reference to the newly transformed operator
+        Vector2D & operator-=(const Vector2D & rhs);
+
+        /// \brief add this Vector2D with another and store the result in this object
+        /// \param rhs - the first Vector to apply
+        /// \return a reference to the newly transformed operator
+        Vector2D & operator+=(const Vector2D & rhs);
+
     };
 
     /// \brief A 2-Dimensional Twist [w,x,y]
@@ -188,6 +205,25 @@ namespace turtlelib
     /// @param rad input angle
     /// @return angle between -pi and pi
     double normalize_angle(double rad); 
+
+//------------------------------------------------------------------------------------------------//
+    /// \brief multiply two Vector2Ds together, returning their product
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the product of the two vectors
+    Vector2D operator*(Vector2D lhs, const double rhs);
+
+    /// \brief add two Vector2Ds together, returning their sum
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the sum of the two vectors
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs);
+
+    /// \brief subtract one Vector2D from another, returning their difference
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the difference of the two vectors
+    Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
 }
 
 #endif

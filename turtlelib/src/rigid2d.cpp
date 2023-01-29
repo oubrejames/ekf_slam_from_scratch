@@ -152,14 +152,46 @@ namespace turtlelib{
     }
 
     double normalize_angle(double rad){ 
-        // Modify the theta value 
-        if (abs(rad) > PI){
+        if (abs(rad) > PI){ // If the angle's magnitude is larger than allowed, return the modulus
             double norm_rad= fmod(rad, PI);
             return norm_rad;
         }
-        else if(almost_equal(rad, -PI)){
+        else if(almost_equal(rad, -PI)){ // if angle = -pi, convert to pi
             return PI;
         }
         else{return rad;}
+    }
+
+    Vector2D & Vector2D::operator+=(const Vector2D & rhs){
+        this->x += rhs.x;
+        this->y += rhs.y;
+        return *this;
+    }
+
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs){
+        Vector2D output = lhs;
+        return output+=rhs;
+    }
+
+    Vector2D & Vector2D::operator-=(const Vector2D & rhs){
+        this->x -= rhs.x;
+        this->y -= rhs.y;
+        return *this;
+    }
+
+    Vector2D operator-(Vector2D lhs, const Vector2D & rhs){
+        Vector2D output = lhs;
+        return output-=rhs;
+    }
+
+    Vector2D & Vector2D::operator*=(const double rhs){
+        this->x *= rhs;
+        this->y *= rhs;
+        return *this;
+    }
+
+    Vector2D operator*(Vector2D lhs, const double rhs){
+        Vector2D output = lhs;
+        return output*=rhs;
     }
 }
