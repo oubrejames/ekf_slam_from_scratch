@@ -83,6 +83,9 @@ namespace turtlelib{
         this->trans_in.y=std::sin(angle_in)*rhs.trans_in.x+
                          std::cos(angle_in)*rhs.trans_in.y+
                          this->trans_in.y;
+
+        // Modify the theta value 
+        this->angle_in= normalize_angle((angle_in+rhs.angle_in));
         return *this;
     }
 
