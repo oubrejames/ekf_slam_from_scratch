@@ -194,4 +194,17 @@ namespace turtlelib{
         Vector2D output = lhs;
         return output*=rhs;
     }
+
+    double Vector2D::dot(Vector2D rhs_vect){
+        return this->x*rhs_vect.x+this->y*rhs_vect.y;
+    }
+
+    double Vector2D::magnitude(){
+        return sqrt(this->x*this->x+this->y*this->y);
+    }
+
+    double Vector2D::angle(Vector2D rhs_vect){
+        // theta = acos{(this•rhs_vect)/(|this|*|rhs_vect|)}
+        return normalize_angle(acosf(this->dot(rhs_vect)/(this->magnitude()*rhs_vect.magnitude())));
+    }
 }

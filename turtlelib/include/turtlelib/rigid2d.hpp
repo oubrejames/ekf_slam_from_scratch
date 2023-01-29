@@ -82,6 +82,20 @@ namespace turtlelib
         /// \return a reference to the newly transformed operator
         Vector2D & operator+=(const Vector2D & rhs);
 
+        /// @brief get the dot product between the current Vector2D and another
+        /// @param rhs_vect the Vector2D to perform dot product with
+        /// @return the scalar product of the vectors
+        double dot(Vector2D rhs_vect);
+
+        /// @brief obtain the magnitude of a Vector2D
+        /// @return the vector's magnitude
+        double magnitude();
+
+        /// @brief compute the angle between the current vector and another
+        /// @param rhs_vect the Vector to find the angle to
+        /// @return the angle between vectors
+        double angle(Vector2D rhs_vect);
+
     };
 
     /// \brief A 2-Dimensional Twist [w,x,y]
@@ -206,7 +220,6 @@ namespace turtlelib
     /// @return angle between -pi and pi
     double normalize_angle(double rad); 
 
-//------------------------------------------------------------------------------------------------//
     /// \brief multiply two Vector2Ds together, returning their product
     /// \param lhs - the left hand operand
     /// \param rhs - the right hand operand

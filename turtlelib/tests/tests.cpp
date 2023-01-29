@@ -169,7 +169,6 @@ TEST_CASE("Vector2D +=", "[Vector2D]"){ //James Oubre
     turtlelib::Vector2D expected = {6, 8};
     REQUIRE_THAT(in.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
     REQUIRE_THAT(in.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
-
 }
 
 TEST_CASE("Vector2D +", "[Vector2D]"){ //James Oubre
@@ -197,4 +196,24 @@ TEST_CASE("Vector2D -", "[Vector2D]"){ //James Oubre
     turtlelib::Vector2D expected = {-2, -2};
     REQUIRE_THAT(out.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
     REQUIRE_THAT(out.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+}
+
+TEST_CASE("magnitude()", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    double expected = 3.60555;
+    REQUIRE_THAT(in.magnitude(),  Catch::Matchers::WithinAbs(expected, 0.001));
+}
+
+TEST_CASE("angle()", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    double expected = 0.086738;
+    REQUIRE_THAT(in.angle(rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
+}
+
+TEST_CASE("dot()", "[Vector2D]"){ //James Oubre
+    turtlelib::Vector2D in = {2, 3};
+    turtlelib::Vector2D rhs = {4, 5};
+    double expected = 23;
+    REQUIRE_THAT(in.dot(rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
