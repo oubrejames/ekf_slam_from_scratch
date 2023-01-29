@@ -83,9 +83,6 @@ namespace turtlelib{
         this->trans_in.y=std::sin(angle_in)*rhs.trans_in.x+
                          std::cos(angle_in)*rhs.trans_in.y+
                          this->trans_in.y;
-
-        // Modify the theta value 
-        this->angle_in= fmod((angle_in+rhs.angle_in), 2*PI);
         return *this;
     }
 
@@ -149,5 +146,17 @@ namespace turtlelib{
     Vector2D Vector2D::normalize(){
         double mag = sqrt(x*x+y*y);
         return Vector2D{x/mag, y/mag};
+    }
+
+    double normalize_angle(double rad){ 
+        // Modify the theta value 
+        if (abs(rad) > PI){
+            double norm_rad= fmod(rad, PI);
+            return norm_rad;
+        }
+        else if(almost_equal(rad, -PI)){
+            return PI;
+        }
+        else{return rad;}
     }
 }

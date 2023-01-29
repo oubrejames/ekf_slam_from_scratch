@@ -184,6 +184,10 @@ namespace turtlelib
     /// \param twist - the twist to read
     std::istream & operator>>(std::istream & is, Twist2D & twist);
 
+    /// @brief Normalize an angle in radians to be between -pi and pi
+    /// @param rad input angle
+    /// @return angle between -pi and pi
+    double normalize_angle(double rad); 
 }
 
 #endif
