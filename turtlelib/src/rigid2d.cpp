@@ -195,6 +195,11 @@ namespace turtlelib{
         return output*=rhs;
     }
 
+    Vector2D operator*(const double lhs, Vector2D rhs){
+        Vector2D output = rhs;
+        return output*=lhs;
+    }
+
     double Vector2D::dot(Vector2D rhs_vect){
         return this->x*rhs_vect.x+this->y*rhs_vect.y;
     }

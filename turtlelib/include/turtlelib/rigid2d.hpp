@@ -226,6 +226,12 @@ namespace turtlelib
     /// \return the product of the two vectors
     Vector2D operator*(Vector2D lhs, const double rhs);
 
+    /// \brief multiply two Vector2Ds together, returning their product
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the product of the two vectors
+    Vector2D operator*(const double lhs, Vector2D rhs);
+
     /// \brief add two Vector2Ds together, returning their sum
     /// \param lhs - the left hand operand
     /// \param rhs - the right hand operand

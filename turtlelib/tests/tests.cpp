@@ -156,10 +156,13 @@ TEST_CASE("Vector2D *=", "[Vector2D]"){ //James Oubre
 TEST_CASE("Vector2D *", "[Vector2D]"){ //James Oubre
     turtlelib::Vector2D in = {2, 3};
     double rhs = 3.0;
-    turtlelib::Vector2D out=in*rhs;
+    turtlelib::Vector2D out1=in*rhs;
+    turtlelib::Vector2D out2=rhs*in;
     turtlelib::Vector2D expected = {6, 9};
-    REQUIRE_THAT(out.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
-    REQUIRE_THAT(out.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+    REQUIRE_THAT(out1.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(out1.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
+    REQUIRE_THAT(out2.x,  Catch::Matchers::WithinAbs(expected.x, 0.001));
+    REQUIRE_THAT(out2.y,  Catch::Matchers::WithinAbs(expected.y, 0.001));
 }
 
 TEST_CASE("Vector2D +=", "[Vector2D]"){ //James Oubre
