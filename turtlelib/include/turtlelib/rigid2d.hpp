@@ -65,7 +65,7 @@ namespace turtlelib
         /// \brief normalize a Vector2D
         /// \return the unit vector of a Vector2D
         Vector2D normalize();
-//---------------------------------------------------------------------------------------//
+
         /// \brief multiply this Vector2D with a scalar and store the result 
         /// in this object
         /// \param rhs - the first Vector to apply
@@ -237,6 +237,12 @@ namespace turtlelib
     /// \param rhs - the right hand operand
     /// \return the difference of the two vectors
     Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
+
+    /// @brief compute the transformation corresponding to a rigid body following a constant twist
+    /// for one unit of time
+    /// @param  twist the twist to integrate
+    /// @return the Transform2D resulting from the integrated twist
+    Transform2D integrate_twist(Twist2D twist);
 }
 
 #endif

@@ -217,3 +217,51 @@ TEST_CASE("dot()", "[Vector2D]"){ //James Oubre
     double expected = 23;
     REQUIRE_THAT(in.dot(rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
+
+TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
+    turtlelib::Twist2D in = {1, 2, 3};
+
+    turtlelib::Transform2D expected = {{2, 4.5}, 0.5};
+    turtlelib::Vector2D expected_trans = expected.translation();
+    double expected_rot = expected.rotation();
+
+    turtlelib::Transform2D out = turtlelib::integrate_twist(in);
+    turtlelib::Vector2D out_trans = out.translation();
+    double out_rot = out.rotation();
+
+    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+}
+
+TEST_CASE("integrate_twist() - Pure Translation", "[Transform2D]"){ //James Oubre
+    turtlelib::Twist2D in = {0, 2, 3};
+
+    turtlelib::Transform2D expected = {{2, 4.5}, 0.0};
+    turtlelib::Vector2D expected_trans = expected.translation();
+    double expected_rot = expected.rotation();
+
+    turtlelib::Transform2D out = turtlelib::integrate_twist(in);
+    turtlelib::Vector2D out_trans = out.translation();
+    double out_rot = out.rotation();
+
+    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+}
+
+TEST_CASE("integrate_twist() - Pure Rotation", "[Transform2D]"){ //James Oubre
+    turtlelib::Twist2D in = {1, 0, 0};
+
+    turtlelib::Transform2D expected = {{0, 0}, 0.5};
+    turtlelib::Vector2D expected_trans = expected.translation();
+    double expected_rot = expected.rotation();
+
+    turtlelib::Transform2D out = turtlelib::integrate_twist(in);
+    turtlelib::Vector2D out_trans = out.translation();
+    double out_rot = out.rotation();
+
+    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+}

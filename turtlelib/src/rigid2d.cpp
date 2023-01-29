@@ -204,7 +204,18 @@ namespace turtlelib{
     }
 
     double Vector2D::angle(Vector2D rhs_vect){
-        // theta = acos{(this•rhs_vect)/(|this|*|rhs_vect|)}
+        // theta = inverse cosine of the dot product over the product of the magnitudes
         return normalize_angle(acosf(this->dot(rhs_vect)/(this->magnitude()*rhs_vect.magnitude())));
     }
+
+    Transform2D integrate_twist(Twist2D twist){
+        // to integrate the twist for 1 unit of time, integrate each component with respect to time
+        // ex: integral(x')=0.5x^2 * t (t=1)
+        double theta = 0.5*twist.w*twist.w;
+        double x = 0.5*twist.x*twist.x;
+        double y = 0.5*twist.y*twist.y;
+        Transform2D integrated_twist = {{x,y},theta};
+        return integrated_twist;
+    }
+
 }
