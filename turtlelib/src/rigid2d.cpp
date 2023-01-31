@@ -210,7 +210,7 @@ namespace turtlelib{
 
     double angle(Vector2D lhs_vect, Vector2D rhs_vect){
         // theta = inverse cosine of the dot product over the product of the magnitudes
-        return normalize_angle(acosf(dot(lhs_vect,rhs_vect)/(lhs_vect.magnitude()*rhs_vect.magnitude())));
+        return normalize_angle(atan2f(abs(lhs_vect.x*rhs_vect.y-lhs_vect.y*rhs_vect.x),dot(lhs_vect,rhs_vect)));
     }
 
     Transform2D integrate_twist(Twist2D twist){
@@ -224,6 +224,7 @@ namespace turtlelib{
             // Get the transformation to the center of rotation
             Transform2D Tsb = {{cor_x, cor_y}, 0.0};
             Transform2D Tbs = Tsb.inv();
+
             // Get the transformation representing the rotation frm the C.O.R. to align with the new 
             // body frame (Tss')
             Transform2D Tss = {{0.0, 0.0}, twist.w};
@@ -231,13 +232,7 @@ namespace turtlelib{
             // Get the transformation representing the translation from the aligned C.O.R. frame to 
             // the new body frame (Ts'b'=Tsb=Tbs.inv())
             // Get integrated twist (Tbb')
-            std::cout << "Tss " << Tss << std::endl;
-            std::cout << "Tsb " << Tsb << std::endl;
-            std::cout << "Tbs " << Tbs << std::endl;
-            std::cout << "COR x " << cor_x << std::endl;
-            std::cout << "COR y " << cor_y << std::endl;
             Tbb = Tbs*Tss*Tsb;
-            std::cout << "Tbb " << Tbb << std::endl;
         }
         else{
             Tbb = {{twist.x, twist.y}, 0.0};
