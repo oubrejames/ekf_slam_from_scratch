@@ -221,26 +221,10 @@ TEST_CASE("dot()", "[double]"){ //James Oubre
     REQUIRE_THAT(dot(lhs, rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
 
-// TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
-//     turtlelib::Twist2D in = {1, 2, 3};
-
-//     turtlelib::Transform2D expected = {{0.08929286, 0.93319235}, 1};
-//     turtlelib::Vector2D expected_trans = expected.translation();
-//     double expected_rot = expected.rotation();
-
-//     turtlelib::Transform2D out = turtlelib::integrate_twist(in);
-//     turtlelib::Vector2D out_trans = out.translation();
-//     double out_rot = out.rotation();
-
-//     CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
-//     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
-//     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
-// }
-
 TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
-    turtlelib::Twist2D in = {-1.24, -2.15, -2.92};
+    turtlelib::Twist2D in = {1, 2, 3};
 
-    turtlelib::Transform2D expected = {{-3.229863264722, -1.05645265317421}, -1.24};
+    turtlelib::Transform2D expected = {{0.303849, 3.44381}, 1};
     turtlelib::Vector2D expected_trans = expected.translation();
     double expected_rot = expected.rotation();
 
@@ -252,7 +236,6 @@ TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //Ja
     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }
-
 
 TEST_CASE("integrate_twist() - Pure Translation", "[Transform2D]"){ //James Oubre
     turtlelib::Twist2D in = {0, 2, 3};
