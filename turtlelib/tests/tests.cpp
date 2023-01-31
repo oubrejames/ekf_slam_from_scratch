@@ -17,8 +17,8 @@ TEST_CASE( "Deg to rads", "[double]" ) // James Oubre
 
 TEST_CASE( "inverse", "[transform]" ) // James Oubre
 {
-    turtlelib::Transform2D tf = {{0,1},90};
-    turtlelib::Transform2D ground_truth = {{-1,0},-90};
+    turtlelib::Transform2D tf = {{0,1},turtlelib::deg2rad(90)};
+    turtlelib::Transform2D ground_truth = {{-1,0},-turtlelib::deg2rad(90)};
     turtlelib::Transform2D inv_tf = tf.inv();
 
     turtlelib::Vector2D inv_tran = inv_tf.translation();
@@ -34,9 +34,9 @@ TEST_CASE( "inverse", "[transform]" ) // James Oubre
 
 TEST_CASE( "transform times equals", "[transform]" ) // James Oubre
 {
-    turtlelib::Transform2D tf1 = {{4,5},45};
-    turtlelib::Transform2D tf2 = {{6,7},80};
-    turtlelib::Transform2D ground_truth = {{3.29289,14.1924},125};
+    turtlelib::Transform2D tf1 = {{4,5},turtlelib::deg2rad(45)};
+    turtlelib::Transform2D tf2 = {{6,7},turtlelib::deg2rad(80)};
+    turtlelib::Transform2D ground_truth = {{3.29289,14.1924},turtlelib::deg2rad(125)};
     tf1*=tf2;
 
     turtlelib::Vector2D tran = tf1.translation();
@@ -52,9 +52,9 @@ TEST_CASE( "transform times equals", "[transform]" ) // James Oubre
 
 TEST_CASE( "transform multiplication", "[transform]" ) // James Oubre
 {
-    turtlelib::Transform2D tf1 = {{4,5},45};
-    turtlelib::Transform2D tf2 = {{6,7},80};
-    turtlelib::Transform2D ground_truth = {{3.29289,14.1924},125};
+    turtlelib::Transform2D tf1 = {{4,5},turtlelib::deg2rad(45)};
+    turtlelib::Transform2D tf2 = {{6,7},turtlelib::deg2rad(80)};
+    turtlelib::Transform2D ground_truth = {{3.29289,14.1924},turtlelib::deg2rad(125)};
     turtlelib::Transform2D tf_out = tf1*tf2;
 
     turtlelib::Vector2D tran = tf_out.translation();
@@ -70,7 +70,7 @@ TEST_CASE( "transform multiplication", "[transform]" ) // James Oubre
 
 TEST_CASE( "Twist2D transformation", "[Twist2d]" ) // James Oubre
 {
-    turtlelib::Transform2D tf1 = {{4,5},45};
+    turtlelib::Transform2D tf1 = {{4,5},turtlelib::deg2rad(45)};
     turtlelib::Twist2D V_in = {6,7,8};
     turtlelib::Twist2D ground_truth = {6.0 , 29.2929, -13.3934};
     turtlelib::Twist2D V_out = tf1(V_in);
@@ -84,13 +84,13 @@ TEST_CASE( "Rotation", "[transform]" ) // James Oubre
 {
    double ang = 25.0;
    turtlelib::Transform2D tf = turtlelib::Transform2D(ang);
-   REQUIRE(tf.rotation() == turtlelib::deg2rad(ang));
+   REQUIRE(tf.rotation() == ang);
 }
 
 TEST_CASE( "Operator () for Vector2D", "[transform]" ) { // Yin, Hang
    float my_x = 2;
    float my_y = 3;
-   float my_ang = 180;
+   float my_ang = turtlelib::PI;
    turtlelib::Transform2D Ttest = {turtlelib::Vector2D{my_x,my_y}, my_ang};
    turtlelib::Vector2D v = {2,2};
    turtlelib::Vector2D result = Ttest(v);
@@ -104,7 +104,7 @@ TEST_CASE( "Rotation and Translation", "[transform]" ) { // Hughes, Katie
    float my_y = 3;
    float my_ang = 180;
    turtlelib::Transform2D Ttest = {turtlelib::Vector2D{my_x,my_y}, my_ang};
-   REQUIRE( Ttest.rotation() == turtlelib::deg2rad(my_ang));
+   REQUIRE( Ttest.rotation() == my_ang);
    REQUIRE( Ttest.translation().x == my_x);
    REQUIRE( Ttest.translation().y == my_y);
 }
@@ -207,24 +207,40 @@ TEST_CASE("magnitude()", "[Vector2D]"){ //James Oubre
     REQUIRE_THAT(in.magnitude(),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
 
-TEST_CASE("angle()", "[Vector2D]"){ //James Oubre
-    turtlelib::Vector2D in = {2, 3};
+TEST_CASE("angle()", "[double]"){ //James Oubre
+    turtlelib::Vector2D lhs = {2, 3};
     turtlelib::Vector2D rhs = {4, 5};
     double expected = 0.086738;
-    REQUIRE_THAT(in.angle(rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
+    REQUIRE_THAT(angle(lhs,rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
 
-TEST_CASE("dot()", "[Vector2D]"){ //James Oubre
-    turtlelib::Vector2D in = {2, 3};
+TEST_CASE("dot()", "[double]"){ //James Oubre
+    turtlelib::Vector2D lhs = {2, 3};
     turtlelib::Vector2D rhs = {4, 5};
     double expected = 23;
-    REQUIRE_THAT(in.dot(rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
+    REQUIRE_THAT(dot(lhs, rhs),  Catch::Matchers::WithinAbs(expected, 0.001));
 }
 
-TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
-    turtlelib::Twist2D in = {1, 2, 3};
+// TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
+//     turtlelib::Twist2D in = {1, 2, 3};
 
-    turtlelib::Transform2D expected = {{2, 4.5}, 0.5};
+//     turtlelib::Transform2D expected = {{0.08929286, 0.93319235}, 1};
+//     turtlelib::Vector2D expected_trans = expected.translation();
+//     double expected_rot = expected.rotation();
+
+//     turtlelib::Transform2D out = turtlelib::integrate_twist(in);
+//     turtlelib::Vector2D out_trans = out.translation();
+//     double out_rot = out.rotation();
+
+//     CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+//     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+//     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+// }
+
+TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //James Oubre
+    turtlelib::Twist2D in = {-1.24, -2.15, -2.92};
+
+    turtlelib::Transform2D expected = {{-3.229863264722, -1.05645265317421}, -1.24};
     turtlelib::Vector2D expected_trans = expected.translation();
     double expected_rot = expected.rotation();
 
@@ -232,15 +248,16 @@ TEST_CASE("integrate_twist() - Rotation and Translation", "[Transform2D]"){ //Ja
     turtlelib::Vector2D out_trans = out.translation();
     double out_rot = out.rotation();
 
-    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
-    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
-    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+    CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }
+
 
 TEST_CASE("integrate_twist() - Pure Translation", "[Transform2D]"){ //James Oubre
     turtlelib::Twist2D in = {0, 2, 3};
 
-    turtlelib::Transform2D expected = {{2, 4.5}, 0.0};
+    turtlelib::Transform2D expected = {{2, 3}, 0.0};
     turtlelib::Vector2D expected_trans = expected.translation();
     double expected_rot = expected.rotation();
 
@@ -248,15 +265,15 @@ TEST_CASE("integrate_twist() - Pure Translation", "[Transform2D]"){ //James Oubr
     turtlelib::Vector2D out_trans = out.translation();
     double out_rot = out.rotation();
 
-    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
-    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
-    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+    CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }
 
 TEST_CASE("integrate_twist() - Pure Rotation", "[Transform2D]"){ //James Oubre
     turtlelib::Twist2D in = {1, 0, 0};
 
-    turtlelib::Transform2D expected = {{0, 0}, 0.5};
+    turtlelib::Transform2D expected = {{0, 0}, 1};
     turtlelib::Vector2D expected_trans = expected.translation();
     double expected_rot = expected.rotation();
 
@@ -264,7 +281,7 @@ TEST_CASE("integrate_twist() - Pure Rotation", "[Transform2D]"){ //James Oubre
     turtlelib::Vector2D out_trans = out.translation();
     double out_rot = out.rotation();
 
-    REQUIRE_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
-    REQUIRE_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
-    REQUIRE_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+    CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+    CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+    CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }

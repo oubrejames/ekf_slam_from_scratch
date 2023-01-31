@@ -32,10 +32,10 @@ namespace turtlelib{
     Transform2D::Transform2D(Vector2D trans) : trans_in{trans}, angle_in(0.0) {}
 
     // Create a pure rotation rotation matrix
-    Transform2D::Transform2D(double radians) : trans_in{0.0, 0.0}, angle_in(deg2rad(radians)) {}
+    Transform2D::Transform2D(double radians) : trans_in{0.0, 0.0}, angle_in(radians) {}
 
     // Create a translation + rotation rotation matrix
-    Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, angle_in(deg2rad(radians)) {}
+    Transform2D::Transform2D(Vector2D trans, double radians) : trans_in{trans}, angle_in(radians) {}
 
     // Perform a transformation on a Vector2D
     Vector2D Transform2D::operator()(Vector2D v) const{
@@ -68,7 +68,7 @@ namespace turtlelib{
         Transform2D inv_tf = {
             {std::cos(angle_in)*(-trans_in.x)-std::sin(angle_in)*trans_in.y,
              std::cos(angle_in)*(-trans_in.y)+std::sin(angle_in)*trans_in.x},
-            -rad2deg(angle_in)
+            -angle_in
             };
             return inv_tf;
     }
@@ -116,7 +116,7 @@ namespace turtlelib{
         else{
             is >> deg >> x >> y;
         }
-        tf = Transform2D{{x,y},deg};
+        tf = Transform2D{{x,y},deg2rad(deg)};
         is.clear();
         is.ignore(INT_MAX, '\n');
         return is;
@@ -200,27 +200,48 @@ namespace turtlelib{
         return output*=lhs;
     }
 
-    double Vector2D::dot(Vector2D rhs_vect){
-        return this->x*rhs_vect.x+this->y*rhs_vect.y;
+    double dot(Vector2D lhs_vect, Vector2D rhs_vect){
+        return lhs_vect.x*rhs_vect.x+lhs_vect.y*rhs_vect.y;
     }
 
     double Vector2D::magnitude(){
         return sqrt(this->x*this->x+this->y*this->y);
     }
 
-    double Vector2D::angle(Vector2D rhs_vect){
+    double angle(Vector2D lhs_vect, Vector2D rhs_vect){
         // theta = inverse cosine of the dot product over the product of the magnitudes
-        return normalize_angle(acosf(this->dot(rhs_vect)/(this->magnitude()*rhs_vect.magnitude())));
+        return normalize_angle(acosf(dot(lhs_vect,rhs_vect)/(lhs_vect.magnitude()*rhs_vect.magnitude())));
     }
 
     Transform2D integrate_twist(Twist2D twist){
-        // to integrate the twist for 1 unit of time, integrate each component with respect to time
-        // ex: integral(x')=0.5x^2 * t (t=1)
-        double theta = 0.5*twist.w*twist.w;
-        double x = 0.5*twist.x*twist.x;
-        double y = 0.5*twist.y*twist.y;
-        Transform2D integrated_twist = {{x,y},theta};
-        return integrated_twist;
-    }
+        // Use try because if twist is pure translation, there will be a divide by zero
+        Transform2D Tbb;
+        if(twist.w){
+            // Obtain the x and y coordinates of the center of rotation
+            double cor_x = twist.y/twist.w;
+            double cor_y = -twist.x/twist.w;
 
+            // Get the transformation to the center of rotation
+            Transform2D Tsb = {{cor_x, cor_y}, 0.0};
+            Transform2D Tbs = Tsb.inv();
+            // Get the transformation representing the rotation frm the C.O.R. to align with the new 
+            // body frame (Tss')
+            Transform2D Tss = {{0.0, 0.0}, twist.w};
+
+            // Get the transformation representing the translation from the aligned C.O.R. frame to 
+            // the new body frame (Ts'b'=Tsb=Tbs.inv())
+            // Get integrated twist (Tbb')
+            std::cout << "Tss " << Tss << std::endl;
+            std::cout << "Tsb " << Tsb << std::endl;
+            std::cout << "Tbs " << Tbs << std::endl;
+            std::cout << "COR x " << cor_x << std::endl;
+            std::cout << "COR y " << cor_y << std::endl;
+            Tbb = Tbs*Tss*Tsb;
+            std::cout << "Tbb " << Tbb << std::endl;
+        }
+        else{
+            Tbb = {{twist.x, twist.y}, 0.0};
+        }
+        return Tbb;
+    }
 }
