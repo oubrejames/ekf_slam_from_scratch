@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "turtlelib/rigid2d.hpp"
+#include "turtlelib/diff_drive.hpp"
 
 TEST_CASE( "Numbers are almost equal", "[bool]" ) // James Oubre
 {
@@ -268,3 +269,19 @@ TEST_CASE("integrate_twist() - Pure Rotation", "[Transform2D]"){ //James Oubre
     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }
+
+// TEST_CASE("foward_kinematics(const WheelPos u)", "[Twist2D]"){ //James Oubre
+//     turtlelib::DiffDrive org = {1, 0, 0};
+
+//     turtlelib::Transform2D expected = {{0, 0}, 1};
+//     turtlelib::Vector2D expected_trans = expected.translation();
+//     double expected_rot = expected.rotation();
+
+//     turtlelib::Transform2D out = turtlelib::integrate_twist(in);
+//     turtlelib::Vector2D out_trans = out.translation();
+//     double out_rot = out.rotation();
+
+//     CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
+//     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
+//     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
+// }
