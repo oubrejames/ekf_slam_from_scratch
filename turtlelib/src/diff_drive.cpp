@@ -1,5 +1,5 @@
 #include "turtlelib/diff_drive.hpp"
-
+#include <stdexcept>
 namespace turtlelib{
 
     DiffDrive::DiffDrive(double track_l, double wheel_r, RobotConfig pos, WheelPos w_pos) : 
@@ -27,18 +27,35 @@ namespace turtlelib{
             current_pos{pos},
             current_wheel_pos{0.0, 0.0} {}
 
-    Twist2D DiffDrive::foward_kinematics(const WheelPos u) const{
+    /// TODO: should this update? should this return
+    /// if absolute value = u must subtract (current wheel pos - u)
+    // if u is relative, we good
+    Twist2D DiffDrive::forward_kinematics(const WheelPos u) {
         // Calculate the angular portion of the twist
         // [(u.r/4 - uy.l/4)*r^2]/l
-        double w = (0.25*(u.r-u.l)*(this->wheel_radius*this->wheel_radius))/(0.5*this->track_length);
+        double w = ((u.r-u.l)*(this->wheel_radius))/(this->track_length);
 
         // Calculate the x portion of the twist
         // (u.r/4 + uy.l/4)*r^2
-        double x = 0.25*(u.r+u.l)*(this->wheel_radius*this->wheel_radius);
+        double x = 0.5*(u.r+u.l);
 
         // y portion of twist = 0
-        Twist2D body_twist = {{x,0},w};
-        return body_twist
+        Twist2D body_twist = {w, x, 0.0};
+        update_robot_pos(body_twist);
+        return body_twist;
+    }
+
+    /// TODO: What angle is theta here
+    /// should i be adding on to my current position
+    void DiffDrive::update_robot_pos(const Twist2D Vb){
+        // Integrate body twist
+        Transform2D Tbb = integrate_twist(Vb);
+        double delta_theta = Tbb.rotation();
+        Vector2D delta_tran = Tbb.translation();
+
+        current_pos.x += cos(current_pos.theta)*delta_tran.x-sin(current_pos.theta)*delta_tran.y;
+        current_pos.y += sin(current_pos.theta)*delta_tran.x+cos(current_pos.theta)*delta_tran.y;
+        current_pos.theta = delta_theta;
     }
 
     WheelPos DiffDrive::inverse_kinematics(const Twist2D Vb) const{
@@ -59,4 +76,7 @@ namespace turtlelib{
         return phi;
     }
 
+    RobotConfig DiffDrive::get_current_pos() const{
+        return current_pos;
+    }
 }

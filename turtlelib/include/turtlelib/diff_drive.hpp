@@ -47,24 +47,28 @@ namespace turtlelib
         /// @brief Create a diff drive object with just a defined track length and wheel radius
         /// @param track_l the length between wheels
         /// @param wheel_r the radus of the robot's wheels
-        explicit DiffDrive(double track_l, double wheel_r);
+        DiffDrive(double track_l, double wheel_r);
 
         /// @brief Create a diff drive object with defined track length, wheel radius, and wheel position
         /// @param track_l the length between wheels
         /// @param wheel_r the radus of the robot's wheels
         /// @param w_pos the position of the robots wheels
-        explicit DiffDrive(double track_l, double wheel_r, WheelPos w_pos);
+        DiffDrive(double track_l, double wheel_r, WheelPos w_pos);
 
         /// @brief Create a diff drive object with defined track length, wheel radius, and robot position
         /// @param track_l the length between wheels
         /// @param wheel_r the radus of the robot's wheels
         /// @param pos the position of the  robot
-        explicit DiffDrive(double track_l, double wheel_r, RobotConfig pos);
+        DiffDrive(double track_l, double wheel_r, RobotConfig pos);
 
         /// @brief Given a wheel position command calculate the body twist of the robot
-        /// @param u the commanded wheel position
+        /// @param u the commanded wheel position (delta phi)
         /// @return a Twist2D that is the body twist of the robot
-        Twist2D foward_kinematics(const WheelPos u) const;
+        Twist2D forward_kinematics(const WheelPos u);
+
+        /// @brief Update the configuration of the robot in the robot frame 
+        /// @param Vb the commanded body twist
+        void update_robot_pos(const Twist2D Vb);
 
         /// TODO: Questions!!
         // making wheel velocity = displacement cause delta t = 1 ?
@@ -75,6 +79,9 @@ namespace turtlelib
         /// @return the corresponding wheel velocities 
         WheelPos inverse_kinematics(const Twist2D Vb) const;
 
+        /// \brief get the current position of the robot
+        /// \return the robot's current position as a RobotConfig
+        RobotConfig get_current_pos() const;
     };
 }
 #endif

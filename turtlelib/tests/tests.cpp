@@ -270,18 +270,79 @@ TEST_CASE("integrate_twist() - Pure Rotation", "[Transform2D]"){ //James Oubre
     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
 }
 
-// TEST_CASE("foward_kinematics(const WheelPos u)", "[Twist2D]"){ //James Oubre
-//     turtlelib::DiffDrive org = {1, 0, 0};
+TEST_CASE("foward_kinematics() - Forward", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::Twist2D Vb = in.forward_kinematics({1,1});
+    CHECK_THAT(Vb.w,  Catch::Matchers::WithinAbs(0.0, 0.001));
+    CHECK_THAT(Vb.x,  Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(Vb.y,  Catch::Matchers::WithinAbs(0.0, 0.001));
+}
 
-//     turtlelib::Transform2D expected = {{0, 0}, 1};
-//     turtlelib::Vector2D expected_trans = expected.translation();
-//     double expected_rot = expected.rotation();
+TEST_CASE("foward_kinematics() - Clockwise", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::Twist2D Vb = in.forward_kinematics({-1,1});
+    CHECK_THAT(Vb.w,  Catch::Matchers::WithinAbs(-0.5, 0.001));
+    CHECK_THAT(Vb.x,  Catch::Matchers::WithinAbs(0.0, 0.001));
+    CHECK_THAT(Vb.y,  Catch::Matchers::WithinAbs(0.0, 0.001));
+}
 
-//     turtlelib::Transform2D out = turtlelib::integrate_twist(in);
-//     turtlelib::Vector2D out_trans = out.translation();
-//     double out_rot = out.rotation();
+TEST_CASE("foward_kinematics() - Arc", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::Twist2D Vb = in.forward_kinematics({2,1});
+    CHECK_THAT(Vb.w,  Catch::Matchers::WithinAbs(0.25, 0.001));
+    CHECK_THAT(Vb.x,  Catch::Matchers::WithinAbs(1.5, 0.001));
+    CHECK_THAT(Vb.y,  Catch::Matchers::WithinAbs(0.0, 0.001));
+}
 
-//     CHECK_THAT(out_trans.x,  Catch::Matchers::WithinAbs(expected_trans.x, 0.001));
-//     CHECK_THAT(out_trans.y,  Catch::Matchers::WithinAbs(expected_trans.y, 0.001));
-//     CHECK_THAT(out_rot,  Catch::Matchers::WithinAbs(expected_rot, 0.001));
-// }
+TEST_CASE("foward_kinematics() - Forward (Updating Configuration)", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    in.forward_kinematics({1,1});
+    turtlelib::RobotConfig in_pos = in.get_current_pos();
+    CHECK_THAT(in_pos.theta,  Catch::Matchers::WithinAbs(0.0, 0.001));
+    CHECK_THAT(in_pos.x,  Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(in_pos.y,  Catch::Matchers::WithinAbs(0.0, 0.001));
+}
+
+TEST_CASE("foward_kinematics() - Clockwise (Updating Configuration)", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    in.forward_kinematics({-1,1});
+    turtlelib::RobotConfig in_pos = in.get_current_pos();
+    CHECK_THAT(in_pos.theta,  Catch::Matchers::WithinAbs(-0.5, 0.001));
+    CHECK_THAT(in_pos.x,  Catch::Matchers::WithinAbs(0.0, 0.001));
+    CHECK_THAT(in_pos.y,  Catch::Matchers::WithinAbs(0.0, 0.001));
+}
+
+TEST_CASE("foward_kinematics() - Arc (Updating Configuration)", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    in.forward_kinematics({2,1});
+    turtlelib::RobotConfig in_pos = in.get_current_pos();
+    CHECK_THAT(in_pos.theta,  Catch::Matchers::WithinAbs(0.25, 0.001));
+    CHECK_THAT(in_pos.x,  Catch::Matchers::WithinAbs(1.484, 0.001));
+    CHECK_THAT(in_pos.y,  Catch::Matchers::WithinAbs(0.186, 0.001));
+}
+
+TEST_CASE("ivnerse_kinematics() - Forward", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::WheelPos wp = in.inverse_kinematics({0, 1, 0});
+    CHECK_THAT(wp.r,  Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(wp.l,  Catch::Matchers::WithinAbs(1.0, 0.001));
+}
+
+TEST_CASE("ivnerse_kinematics() - Clockwise", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::WheelPos wp = in.inverse_kinematics({1, 0, 0});
+    CHECK_THAT(wp.r,  Catch::Matchers::WithinAbs(2.0, 0.001));
+    CHECK_THAT(wp.l,  Catch::Matchers::WithinAbs(-2.0, 0.001));
+}
+
+TEST_CASE("ivnerse_kinematics() - Arc", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    turtlelib::WheelPos wp = in.inverse_kinematics({1, 1, 0});
+    CHECK_THAT(wp.r,  Catch::Matchers::WithinAbs(3.0, 0.001));
+    CHECK_THAT(wp.l,  Catch::Matchers::WithinAbs(-1.0, 0.001));
+}
+
+TEST_CASE("ivnerse_kinematics() - Slipping", "[DiffDrive]"){ //James Oubre
+    turtlelib::DiffDrive in = {4, 1, {0,0,0}, {0,0}};
+    CHECK_THROWS(in.inverse_kinematics({1, 1, 1}));
+}
