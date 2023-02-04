@@ -12,25 +12,23 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(rosidl_default_runtime REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(turtlesim REQUIRED)
-
+find_package(nuturtlebot_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(turtlelib REQUIRED)
 
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control
                           rclcpp
                           std_msgs
                           std_srvs
-                          tf2
-                          tf2_ros
-                          turtlesim
-                          visualization_msgs)
+                          nuturtlebot_msgs
+                          geometry_msgs
+                          sensor_msgs
+                          turtlelib)
 
-target_link_libraries(turtle_control "${cpp_typesupport_target}")
+target_link_libraries(turtle_control turtlelib::turtlelib "${cpp_typesupport_target}")
 
 
 if(BUILD_TESTING)
@@ -49,9 +47,9 @@ install(TARGETS
   turtle_control
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY
-  launch
-  config
-  DESTINATION share/${PROJECT_NAME})
+# install(DIRECTORY
+#   launch
+#   config
+#   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

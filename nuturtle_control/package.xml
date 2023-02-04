@@ -17,10 +17,10 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>turtlesim</depend>
-  <depend>visualization_msgs</depend>
+  <depend>nuturtlebot_msgs</depend>
+  <depend>turtlelib</depend>
+
+
 
   <build_depend>rosidl_default_generators</build_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>

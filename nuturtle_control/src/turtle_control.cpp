@@ -2,18 +2,15 @@
 #include <functional>
 #include <memory>
 #include <string>
-
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include <std_srvs/srv/empty.hpp>
-#include "tf2_ros/transform_broadcaster.h"
-#include "turtlesim/msg/pose.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-// #include "nusim/srv/teleport.hpp"
-#include <visualization_msgs/msg/marker.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
+#include <sensor_msgs/msg/joint_state.hpp>
+#include "turtlelib/diff_drive.hpp"
 
 using namespace std::chrono_literals;
 
@@ -23,7 +20,7 @@ public:
   TurtleControl()
   : Node("turtle_control"), count_(0)
   {
-    // Get turtle description parameters
+    // Get turtle description parameters and throw errors if they are not provided
     auto wheel_radius_desc = rcl_interfaces::msg::ParameterDescriptor();
     wheel_radius_desc.description = "Radius of turtlebot wheel";
     this->declare_parameter("wheel_radius", -1.0, wheel_radius_desc);
@@ -60,12 +57,41 @@ public:
     collision_radius = this->get_parameter("collision_radius").get_parameter_value().get<double>();
     if(collision_radius == -1.0){RCLCPP_ERROR_STREAM(this->get_logger(), "collision_radius not defined"); rclcpp::shutdown();}
 
+    // Create DiffDrive object 
+    turtlebot = {track_width, wheel_radius};
+
+    // Create cmd_vel subscriber
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel", 10, std::bind(&TurtleControl::velocity_callback, this, std::placeholders::_1));
+
+    // Create publisher to publish wheel commands
+    wheel_cmd_pub_ = this->create_publisher<nuturtlebot_msgs::msg::WheelCommands>("wheel_commands", 10);
   }
 
 private:
+    /// @brief subscribe to the cmd_vel topic to get robot velocity commands (rads/s)
+    /// @param msg the Twist from the cmd_vel topic
+    void velocity_callback(const geometry_msgs::msg::Twist & msg)
+    { 
+        velocity_command = msg;
+        double w = msg.angular.z;
+        double x = msg.angular.x;
+        double y = msg.angular.y;
+        turtlelib::WheelPos wheel_command = turtlebot.inverse_kinematics({w, x, y});
+        nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
+        wheel_cmd_msg.left_velocity = wheel_command.l;
+        wheel_cmd_msg.right_velocity = wheel_command.r;
+        wheel_cmd_pub_->publish(wheel_cmd_msg);
+    }
+
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
     double wheel_radius, track_width, motor_cmd_max, motor_cmd_per_rad_sec;
     double encoder_ticks_per_rad, collision_radius;
     size_t count_;
+    geometry_msgs::msg::Twist velocity_command;
+    rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_pub_;
+    turtlelib::DiffDrive turtlebot = {0.0, 0.0};
+
 };
 
 int main(int argc, char * argv[])
