@@ -1,11 +1,4 @@
-#include <chrono>
-#include <functional>
-#include <memory>
-#include <string>
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "std_msgs/msg/u_int64.hpp"
-#include <std_srvs/srv/empty.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -113,6 +106,8 @@ private:
         wheel_cmd_pub_->publish(wheel_cmd_msg);
     }
 
+    /// @brief subscribe to the sensor_data topic and publish updated joint states
+    /// @param msg readings from wheel encoders
     void sensor_data_cb(const nuturtlebot_msgs::msg::SensorData & msg)
     {
         // if first iteration, make previous timestep 0
