@@ -22,6 +22,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(turtlesim REQUIRED)
+find_package(rosidl_default_runtime REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control
@@ -49,6 +51,23 @@ ament_target_dependencies(odometry
                           turtlesim)
 target_link_libraries(odometry turtlelib::turtlelib "${cpp_typesupport_target}")
 
+
+rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Control.srv" LIBRARY_NAME ${PROJECT_NAME})
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
+add_executable(circle src/circle.cpp)
+ament_target_dependencies(circle
+                          rclcpp
+                          std_msgs
+                          std_srvs
+                          nuturtlebot_msgs
+                          geometry_msgs
+                          sensor_msgs
+                          turtlelib
+                          nav_msgs
+                          tf2
+                          tf2_geometry_msgs
+                          turtlesim)
+target_link_libraries(circle turtlelib::turtlelib "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

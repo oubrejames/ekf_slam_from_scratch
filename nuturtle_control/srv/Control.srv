@@ -1,0 +1,4 @@
+# Control srv message to give a robot a velocity and arc radius to follow
+float64 velocity
+float64 radius
+---
