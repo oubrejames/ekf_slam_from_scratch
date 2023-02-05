@@ -1,0 +1,37 @@
+<launch>
+  <arg name="body_id_" default="a"/>
+  <arg name="wheel_left_" default="b"/>
+  <arg name="wheel_right_" default="c"/>
+
+  <node pkg="nuturtle_control" exec="odometry" name="odometry">
+        <param name="body_id" value = "$(var body_id_)"/>
+        <param name="wheel_left" value = "$(var wheel_left_)"/>
+        <param name="wheel_right" value = "$(var wheel_right_)"/>
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  </node>
+
+  <node pkg="nuturtle_control" exec="turtle_control">
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  </node>
+
+  <arg name="cmd_src" default="none"/>
+  <node if="$(eval '\'$(var cmd_src)\' == \'circle\'')" pkg="nuturtle_control" exec="circle"/>
+
+  <node if="$(eval '\'$(var cmd_src)\' == \'teleop\'')" pkg="turtlebot3_teleop" exec="teleop_twist_keyboard"/>
+
+  <arg name="robot" default="nusim" />
+  <arg name="config_file" default="$(find-pkg-share nusim)/config/basic_world.yaml" />
+  <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="nusim">
+    <param from="$(var config_file)"/>
+  </node>
+  <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
+
+  <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
+  <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
+
+  <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
+
+  <node pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id nusim/world --child-frame-id odom"/>
+</launch>
+
+

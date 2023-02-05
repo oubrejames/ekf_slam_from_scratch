@@ -28,8 +28,8 @@ public:
 
     auto motor_cmd_max_desc = rcl_interfaces::msg::ParameterDescriptor();
     motor_cmd_max_desc.description = "Maximium wheel velocity command in ticks/sec";
-    this->declare_parameter("motor_cmd_max", -1.0, motor_cmd_max_desc);
-    motor_cmd_max = this->get_parameter("motor_cmd_max").get_parameter_value().get<double>();
+    this->declare_parameter("motor_cmd_max", -1, motor_cmd_max_desc);
+    motor_cmd_max = this->get_parameter("motor_cmd_max").get_parameter_value().get<int>();
     if(motor_cmd_max == -1.0){RCLCPP_ERROR_STREAM(this->get_logger(), "motor_cmd_max not defined"); rclcpp::shutdown();}
 
     auto motor_cmd_per_rad_sec_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -147,7 +147,8 @@ private:
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
     rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_sub_;
-    double wheel_radius, track_width, motor_cmd_max, motor_cmd_per_rad_sec;
+    double wheel_radius, track_width, motor_cmd_per_rad_sec;
+    int motor_cmd_max;
     double encoder_ticks_per_rad, collision_radius;
     size_t count_;
     geometry_msgs::msg::Twist velocity_command;

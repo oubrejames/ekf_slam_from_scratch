@@ -24,6 +24,8 @@ find_package(tf2_ros REQUIRED)
 find_package(turtlesim REQUIRED)
 find_package(rosidl_default_runtime REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(nuturtle_description REQUIRED)
+
 
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control
@@ -48,7 +50,8 @@ ament_target_dependencies(odometry
                           nav_msgs
                           tf2
                           tf2_geometry_msgs
-                          turtlesim)
+                          turtlesim
+                          nuturtle_description)
 target_link_libraries(odometry turtlelib::turtlelib "${cpp_typesupport_target}")
 
 
@@ -83,11 +86,13 @@ endif()
 
 install(TARGETS
   turtle_control
+  odometry
+  circle
   DESTINATION lib/${PROJECT_NAME})
 
-# install(DIRECTORY
-#   launch
-#   config
-#   DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY
+  launch
+  config
+  DESTINATION share/${PROJECT_NAME})
 
 ament_package()
