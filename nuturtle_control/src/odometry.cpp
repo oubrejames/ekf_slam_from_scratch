@@ -20,6 +20,15 @@ public:
   Odometry()
   : Node("odometry"), count_(0)
   {
+    // Create frequency parameter, convert it to chrono ms for timer, and create timer
+    auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
+    hz_desc.description = "Frequency of the  timer in Hz";
+    this->declare_parameter("frequency", 100.0, hz_desc);
+    int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
+    auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
+    timer_ = this->create_wall_timer(
+      hz_in_ms, std::bind(&Odometry::timer_callback, this));
+
     // Get odometry parameters
     auto body_id_desc = rcl_interfaces::msg::ParameterDescriptor();
     body_id_desc.description = "Name of the body frame of the robot";
@@ -68,6 +77,25 @@ public:
     odom_msg.header.frame_id = "odom_id";
     odom_msg.child_frame_id = "body_id";
 
+    // Create initial odom msg to broadcast
+    auto current_pos = internal_odom.get_current_pos();
+    tf2::Quaternion q;
+    q.setRPY(0, 0, current_pos.theta);
+
+    // Populate odom position with current position
+    odom_msg.pose.pose.position.x = current_pos.x;
+    odom_msg.pose.pose.position.y = current_pos.y;
+    odom_msg.pose.pose.position.z = 0.0;
+    odom_msg.pose.pose.orientation = tf2::toMsg(q);
+
+    // Populate odom twist with body twist
+    odom_msg.twist.twist.linear.x = 0.0;
+    odom_msg.twist.twist.linear.y = 0.0;
+    odom_msg.twist.twist.linear.z = 0.0;
+    odom_msg.twist.twist.angular.x = 0.0;
+    odom_msg.twist.twist.angular.y = 0.0;
+    odom_msg.twist.twist.angular.z = 0.0;
+
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -78,6 +106,11 @@ public:
   }
 
 private:
+    void timer_callback()
+    {
+      broadcast_tf();
+    }
+
     /// @brief 
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
@@ -111,7 +144,6 @@ private:
 
         // Publish updated odometry
         odom_pub_->publish(odom_msg);
-        broadcast_tf();
     }
 
     void broadcast_tf(){
@@ -141,6 +173,7 @@ private:
 
     std::string body_id, odom_id, wheel_left, wheel_right;
     double wheel_radius, track_width;
+    rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     nav_msgs::msg::Odometry odom_msg;
