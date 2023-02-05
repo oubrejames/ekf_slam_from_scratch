@@ -10,6 +10,7 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "tf2_ros/transform_broadcaster.h"
+#include <turtlesim/srv/spawn.hpp>
 
 using namespace std::chrono_literals;
 
@@ -69,6 +70,11 @@ public:
 
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+    // Define initial_pose service
+    initial_pose_server_ = this->create_service<turtlesim::srv::Spawn>(
+      "initial_pose",
+      std::bind(&Odometry::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
   }
 
 private:
@@ -125,7 +131,14 @@ private:
 
       tf_broadcaster_->sendTransform(t);
     }
-  
+
+    void initial_pose_cb(
+      const std::shared_ptr<turtlesim::srv::Spawn::Request> req,
+      std::shared_ptr<turtlesim::srv::Spawn::Response>)
+    {
+      internal_odom = {track_width, wheel_radius, {req->x, req->y, req->theta}, {internal_odom.get_current_wheel_pos()}};
+    }
+
     std::string body_id, odom_id, wheel_left, wheel_right;
     double wheel_radius, track_width;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
@@ -134,6 +147,8 @@ private:
     turtlelib::DiffDrive internal_odom = {0.0, 0.0};
     size_t count_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
+
 };
 
 int main(int argc, char * argv[])
