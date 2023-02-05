@@ -9,6 +9,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include "tf2_ros/transform_broadcaster.h"
 
 using namespace std::chrono_literals;
 
@@ -65,6 +66,9 @@ public:
     odom_msg.header.stamp = this->get_clock()->now();
     odom_msg.header.frame_id = "odom_id";
     odom_msg.child_frame_id = "body_id";
+
+    // Initialize the transform broadcaster
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
   }
 
 private:
@@ -101,9 +105,27 @@ private:
 
         // Publish updated odometry
         odom_pub_->publish(odom_msg);
-
+        broadcast_tf();
     }
 
+    void broadcast_tf(){
+      geometry_msgs::msg::TransformStamped t;
+
+      t.header.stamp = this->get_clock()->now();
+      t.header.frame_id = "odom_id";
+      t.child_frame_id = "body_id";
+
+      t.transform.translation.x = odom_msg.pose.pose.position.x;
+      t.transform.translation.y = odom_msg.pose.pose.position.y;
+      t.transform.translation.z = 0.0;
+
+      tf2::Quaternion q;
+      q.setRPY(0, 0, odom_msg.pose.pose.orientation.z);
+      t.transform.rotation = tf2::toMsg(q);
+
+      tf_broadcaster_->sendTransform(t);
+    }
+  
     std::string body_id, odom_id, wheel_left, wheel_right;
     double wheel_radius, track_width;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
@@ -111,7 +133,7 @@ private:
     nav_msgs::msg::Odometry odom_msg;
     turtlelib::DiffDrive internal_odom = {0.0, 0.0};
     size_t count_;
-
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 };
 
 int main(int argc, char * argv[])
