@@ -82,6 +82,10 @@ namespace turtlelib
         /// \brief get the current position of the robot
         /// \return the robot's current position as a RobotConfig
         RobotConfig get_current_pos() const;
+
+        /// \brief get the current wheel position of the robot
+        /// \return the robot's current wheel position as a WheelPos
+        WheelPos get_current_wheel_pos() const;
     };
 }
 #endif

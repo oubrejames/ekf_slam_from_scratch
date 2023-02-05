@@ -71,12 +71,14 @@ namespace turtlelib{
         else {
             throw std::logic_error("Given body twist causes slipping.");
         }
-
-
         return phi;
     }
 
     RobotConfig DiffDrive::get_current_pos() const{
         return current_pos;
+    }
+
+    WheelPos DiffDrive::get_current_wheel_pos() const{
+        return current_wheel_pos;
     }
 }
