@@ -86,6 +86,8 @@ private:
         double y = msg.linear.y;
         turtlelib::Twist2D twst = {w,x,y};
         RCLCPP_ERROR_STREAM(this->get_logger(), "msg.angular.z " << msg.angular.z);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.x " << msg.linear.x);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.y " << msg.linear.y);
 
         // Calculate wheel velocities from twist with IK (rad/s)
         turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);

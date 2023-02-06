@@ -64,10 +64,10 @@ namespace turtlelib{
 
         if(almost_equal(Vb.y, 0.0)){
             //phi.r = (l/2*theta+Vb.x)/r
-            phi.r = ((this->track_length/2)*Vb.w+Vb.x)/(this->wheel_radius);
+            phi.r = turtlelib::normalize_angle(((this->track_length/2)*Vb.w+Vb.x)/(this->wheel_radius));
 
             //phi.l = (Vb.x-theta*l/2)/r
-            phi.l = (Vb.x - (this->track_length/2)*Vb.w)/(this->wheel_radius);
+            phi.l = turtlelib::normalize_angle((Vb.x - (this->track_length/2)*Vb.w)/(this->wheel_radius));
         }
         else {
             throw std::logic_error("Given body twist causes slipping.");
