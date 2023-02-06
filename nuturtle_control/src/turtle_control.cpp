@@ -96,12 +96,21 @@ private:
         // Check if wheel commands are over max velocity
         // Convert velocity from rads/sec to ticks/sec to compare to motor_cmd_max
         if(wheel_cmd_msg.left_velocity > motor_cmd_max){
+            RCLCPP_ERROR_STREAM(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
             wheel_cmd_msg.left_velocity = motor_cmd_max;
+        }
+        if(wheel_cmd_msg.right_velocity > motor_cmd_max){
+            RCLCPP_ERROR_STREAM(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+            wheel_cmd_msg.right_velocity = motor_cmd_max;
         }
         if(wheel_cmd_msg.right_velocity < -motor_cmd_max){
             wheel_cmd_msg.right_velocity = -motor_cmd_max;
         }
-
+        if(wheel_cmd_msg.left_velocity < -motor_cmd_max){
+            wheel_cmd_msg.left_velocity = -motor_cmd_max;
+        }
         // Publish wheel commands in ticks
         wheel_cmd_pub_->publish(wheel_cmd_msg);
     }
