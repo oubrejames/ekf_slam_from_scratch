@@ -74,8 +74,8 @@ public:
     // Create publisher to publish odometry
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     odom_msg.header.stamp = this->get_clock()->now();
-    odom_msg.header.frame_id = "odom_id";
-    odom_msg.child_frame_id = "body_id";
+    odom_msg.header.frame_id = odom_id;
+    odom_msg.child_frame_id = body_id;
 
     // Create initial odom msg to broadcast
     auto current_pos = internal_odom.get_current_pos();
@@ -150,8 +150,8 @@ private:
       geometry_msgs::msg::TransformStamped t;
 
       t.header.stamp = this->get_clock()->now();
-      t.header.frame_id = "odom_id";
-      t.child_frame_id = "body_id";
+      t.header.frame_id = odom_id;
+      t.child_frame_id = body_id;
 
       t.transform.translation.x = odom_msg.pose.pose.position.x;
       t.transform.translation.y = odom_msg.pose.pose.position.y;

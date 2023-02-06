@@ -1,12 +1,14 @@
 <launch>
-  <arg name="body_id_" default="a"/>
-  <arg name="wheel_left_" default="b"/>
-  <arg name="wheel_right_" default="c"/>
+  <arg name="body_id" default=""/>
+  <arg name="odom_id" default="odom"/>
+  <arg name="wheel_left" default="wheel_left_joint"/>
+  <arg name="wheel_right" default="wheel_rightjoint"/>
 
   <node pkg="nuturtle_control" exec="odometry" name="odometry">
-        <param name="body_id" value = "$(var body_id_)"/>
-        <param name="wheel_left" value = "$(var wheel_left_)"/>
-        <param name="wheel_right" value = "$(var wheel_right_)"/>
+        <param name="body_id" value = "$(var body_id)"/>
+        <param name="odom_id" value = "$(var odom_id)"/>
+        <param name="wheel_left" value = "$(var wheel_left)"/>
+        <param name="wheel_right" value = "$(var wheel_right)"/>
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
   </node>
 
@@ -24,12 +26,24 @@
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="nusim">
     <param from="$(var config_file)"/>
   </node>
-  <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
 
   <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
   <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
+  <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/blue_and_red.rviz"/>
 
-  <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
+
+  <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+        <arg name="color" value="blue" />
+        <arg name="use_rviz" value="false" />
+  </include> 
+
+  <include if="$(eval '\'$(var use_rviz)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+        <arg name="color" value="red" />
+        <arg name="use_rviz" value="false" />
+  </include> 
+  <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
+
+
 
   <node pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id nusim/world --child-frame-id odom"/>
 </launch>

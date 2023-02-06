@@ -1,5 +1,6 @@
 <launch>
-  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
+  <arg name="rviz_config" default="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
+  <node pkg="rviz2" exec="rviz2" args="$(var rviz_config)"/>
 
   <arg name="config_file" default="$(find-pkg-share nusim)/config/basic_world.yaml" />
   <node pkg="nusim" exec="nusim">
