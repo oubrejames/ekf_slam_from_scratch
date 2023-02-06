@@ -68,7 +68,7 @@ public:
     joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 
     // Initialize turtle joint state
-    turtle_joint_state.name = {"r_wheel", "l_wheel"};
+    turtle_joint_state.name = {"wheel_right_joint", "wheel_left_joint"};
     turtle_joint_state.position = {0.0 , 0.0};
     turtle_joint_state.velocity = {0.0 , 0.0};
   }
