@@ -1,5 +1,6 @@
 #include "turtlelib/diff_drive.hpp"
 #include <stdexcept>
+#include <iostream>
 namespace turtlelib{
 
     DiffDrive::DiffDrive(double track_l, double wheel_r, RobotConfig pos, WheelPos w_pos) : 

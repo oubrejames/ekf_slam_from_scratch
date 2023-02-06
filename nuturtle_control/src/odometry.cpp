@@ -23,7 +23,7 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("frequency", 100.0, hz_desc);
+    this->declare_parameter("frequency", 10.0, hz_desc);
     int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
@@ -64,13 +64,6 @@ public:
     this->declare_parameter("track_width", -1.0, track_width_desc);
     track_width = this->get_parameter("track_width").get_parameter_value().get<double>();
 
-    // Create joint_states subscriber
-    joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-      "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
-
-    // Initialize internal odom
-    internal_odom = {track_width, wheel_radius};
-
     // Create publisher to publish odometry
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     odom_msg.header.stamp = this->get_clock()->now();
@@ -78,9 +71,10 @@ public:
     odom_msg.child_frame_id = body_id;
 
     // Create initial odom msg to broadcast
-    auto current_pos = internal_odom.get_current_pos();
+        // Initialize internal odom
+    internal_odom = turtlelib::DiffDrive{track_width, wheel_radius};
     tf2::Quaternion q;
-    q.setRPY(0, 0, current_pos.theta);
+    q.setRPY(0.0, 0.0, current_pos.theta);
 
     // Populate odom position with current position
     odom_msg.pose.pose.position.x = current_pos.x;
@@ -99,6 +93,10 @@ public:
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+    // Create joint_states subscriber
+    joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+      "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+
     // Define initial_pose service
     initial_pose_server_ = this->create_service<turtlesim::srv::Spawn>(
       "initial_pose",
@@ -115,20 +113,24 @@ private:
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
-        internal_odom = {track_width, wheel_radius, {msg.position[0], msg.position[1]}, {msg.velocity[0], msg.velocity[1]}};
+        internal_odom = turtlelib::DiffDrive{track_width, wheel_radius, {msg.position[0], msg.position[1]}, {msg.velocity[0], msg.velocity[1]}};
 
         // Get body twist from current wheel positions and update current position of robot
         turtlelib::Twist2D Vb = internal_odom.forward_kinematics(internal_odom.get_current_wheel_pos());
 
         // Update odom message
         odom_msg.header.stamp = this->get_clock()->now();
+        RCLCPP_ERROR_STREAM(this->get_logger(), "Current Vbx " << Vb.x);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
+
 
         // Convert current orientation to quaternian 
-        auto current_pos = internal_odom.get_current_pos();
+        current_pos = internal_odom.get_current_pos();
         tf2::Quaternion q;
         q.setRPY(0, 0, current_pos.theta);
 
         // Populate odom position with current position
+        RCLCPP_ERROR_STREAM(this->get_logger(), "Current x" << current_pos.x);
         odom_msg.pose.pose.position.x = current_pos.x;
         odom_msg.pose.pose.position.y = current_pos.y;
         odom_msg.pose.pose.position.z = 0.0;
@@ -177,11 +179,11 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     nav_msgs::msg::Odometry odom_msg;
-    turtlelib::DiffDrive internal_odom = {0.0, 0.0};
+    turtlelib::DiffDrive internal_odom = {1.0, 1.0};
     size_t count_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
-
+    turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
 };
 
 int main(int argc, char * argv[])

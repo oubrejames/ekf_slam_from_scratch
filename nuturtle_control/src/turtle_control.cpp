@@ -51,7 +51,7 @@ public:
     if(collision_radius == -1.0){RCLCPP_ERROR_STREAM(this->get_logger(), "collision_radius not defined"); rclcpp::shutdown();}
 
     // Create DiffDrive object 
-    turtlebot = {track_width, wheel_radius};
+    turtlebot = turtlelib::DiffDrive{track_width, wheel_radius};
 
     // Create cmd_vel subscriber
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
@@ -82,27 +82,27 @@ private:
 
         // Get command twist
         double w = msg.angular.z;
-        double x = msg.angular.x;
-        double y = msg.angular.y;
-
+        double x = msg.linear.x;
+        double y = msg.linear.y;
+        turtlelib::Twist2D twst = {w,x,y};
         // Calculate wheel velocities from twist with IK (rad/s)
-        turtlelib::WheelPos wheel_command = turtlebot.inverse_kinematics({w, x, y});
+        turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);
 
-        // Convert to a wheel command msgs
+        // Convert to a wheel command msgs (ticks)
         nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
-        wheel_cmd_msg.left_velocity = wheel_command.l;
-        wheel_cmd_msg.right_velocity = wheel_command.r;
+        wheel_cmd_msg.left_velocity = wheel_command_rad_s.l/motor_cmd_per_rad_sec;
+        wheel_cmd_msg.right_velocity = wheel_command_rad_s.r/motor_cmd_per_rad_sec;
 
         // Check if wheel commands are over max velocity
         // Convert velocity from rads/sec to ticks/sec to compare to motor_cmd_max
-        if(wheel_cmd_msg.left_velocity/encoder_ticks_per_rad > motor_cmd_max){
-            wheel_cmd_msg.left_velocity = motor_cmd_max*encoder_ticks_per_rad;
+        if(wheel_cmd_msg.left_velocity > motor_cmd_max){
+            wheel_cmd_msg.left_velocity = motor_cmd_max;
         }
-        if(wheel_cmd_msg.right_velocity/encoder_ticks_per_rad < -motor_cmd_max){
-            wheel_cmd_msg.right_velocity = -motor_cmd_max*encoder_ticks_per_rad;
+        if(wheel_cmd_msg.right_velocity < -motor_cmd_max){
+            wheel_cmd_msg.right_velocity = -motor_cmd_max;
         }
 
-        // Publish wheel commands
+        // Publish wheel commands in ticks
         wheel_cmd_pub_->publish(wheel_cmd_msg);
     }
 
@@ -112,8 +112,8 @@ private:
     {
         // if first iteration, make previous timestep 0
         if(init_flag){
-            prev_timestep = 0.0;
-            init_flag = 0;
+            prev_timestep.header.stamp = this->get_clock()->now();
+            init_flag = false;
         }
 
         // Get encoder values in ticks
@@ -126,11 +126,17 @@ private:
 
         // Calculate change in time between sensor readings
         double dt = (msg.stamp.sec + msg.stamp.nanosec*1e-9) -
-                        (prev_timestep);
+                        (prev_timestep.header.stamp.sec + prev_timestep.header.stamp.nanosec*1e-9);
+
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.stamp.sec+ns " << msg.stamp.sec);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "prev_timestep" << prev_timestep.header.stamp.sec);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "dt" << dt);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "l_encoder_rad" << l_encoder_rad);
 
         // Calculate wheel velocities (rad/s)
         double r_vel = (r_encoder_rad)/dt;
         double l_vel = (l_encoder_rad)/dt;
+
 
         // Update new wheel position in rad and velocity in rad/s 
         turtle_joint_state.position[0] = r_encoder_rad;
@@ -142,7 +148,7 @@ private:
         joint_state_pub_->publish(turtle_joint_state);
 
         // Save previous time step 
-        prev_timestep = msg.stamp.sec + msg.stamp.nanosec*1e-9;
+        prev_timestep.header.stamp = this->get_clock()->now();
     }
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
@@ -153,10 +159,10 @@ private:
     size_t count_;
     geometry_msgs::msg::Twist velocity_command;
     rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_pub_;
-    turtlelib::DiffDrive turtlebot = {0.0, 0.0};
+    turtlelib::DiffDrive turtlebot = {1.0, 1.0};
     sensor_msgs::msg::JointState turtle_joint_state;
-    bool init_flag = 1;
-    double prev_timestep;
+    bool init_flag = true;
+    sensor_msgs::msg::JointState prev_timestep;
     double motor_cmd_max_rad_sec;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
 };
