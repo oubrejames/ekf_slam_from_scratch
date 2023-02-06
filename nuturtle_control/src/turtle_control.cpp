@@ -121,8 +121,8 @@ private:
         double r_encoder_ticks = msg.right_encoder;
 
         // Convert encoder ticks to radians (change in position)
-        double l_encoder_rad = (l_encoder_ticks*2*turtlelib::PI)/pow(2,12);
-        double r_encoder_rad = (r_encoder_ticks*2*turtlelib::PI)/pow(2,12);
+        double l_encoder_rad = (l_encoder_ticks)/encoder_ticks_per_rad;
+        double r_encoder_rad = (r_encoder_ticks)/encoder_ticks_per_rad;
 
         // Calculate change in time between sensor readings
         double dt = (msg.stamp.sec + msg.stamp.nanosec*1e-9) -
