@@ -120,8 +120,8 @@ private:
 
         // Update odom message
         odom_msg.header.stamp = this->get_clock()->now();
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Current Vbx " << Vb.x);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "Current Vbx " << Vb.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
 
 
         // Convert current orientation to quaternian 
@@ -130,7 +130,7 @@ private:
         q.setRPY(0, 0, current_pos.theta);
 
         // Populate odom position with current position
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Current x" << current_pos.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "Current x" << current_pos.x);
         odom_msg.pose.pose.position.x = current_pos.x;
         odom_msg.pose.pose.position.y = current_pos.y;
         odom_msg.pose.pose.position.z = 0.0;

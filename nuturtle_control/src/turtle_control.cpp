@@ -85,8 +85,13 @@ private:
         double x = msg.linear.x;
         double y = msg.linear.y;
         turtlelib::Twist2D twst = {w,x,y};
+        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.angular.z " << msg.angular.z);
+
         // Calculate wheel velocities from twist with IK (rad/s)
         turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_r " << wheel_command_rad_s.r);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_l " << wheel_command_rad_s.l);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Convert to a wheel command msgs (ticks)
         nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
@@ -96,13 +101,9 @@ private:
         // Check if wheel commands are over max velocity
         // Convert velocity from rads/sec to ticks/sec to compare to motor_cmd_max
         if(wheel_cmd_msg.left_velocity > motor_cmd_max){
-            RCLCPP_ERROR_STREAM(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-
             wheel_cmd_msg.left_velocity = motor_cmd_max;
         }
         if(wheel_cmd_msg.right_velocity > motor_cmd_max){
-            RCLCPP_ERROR_STREAM(this->get_logger(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-
             wheel_cmd_msg.right_velocity = motor_cmd_max;
         }
         if(wheel_cmd_msg.right_velocity < -motor_cmd_max){

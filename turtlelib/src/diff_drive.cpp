@@ -56,7 +56,7 @@ namespace turtlelib{
 
         current_pos.x += cos(current_pos.theta)*delta_tran.x-sin(current_pos.theta)*delta_tran.y;
         current_pos.y += sin(current_pos.theta)*delta_tran.x+cos(current_pos.theta)*delta_tran.y;
-        current_pos.theta = delta_theta;
+        current_pos.theta += delta_theta;
     }
 
     WheelPos DiffDrive::inverse_kinematics(const Twist2D Vb) const{

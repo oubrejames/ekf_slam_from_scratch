@@ -255,9 +255,17 @@ private:
     phi_l_rad = msg.left_velocity/encoder_ticks_per_rad;
     phi_r_rad = msg.right_velocity/encoder_ticks_per_rad;
 
+    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_l_rad " << phi_l_rad);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_r_rad " << phi_r_rad);
+
     // Update current config of robot based on wheel commands
-    turtlebot.forward_kinematics({phi_r_rad, phi_l_rad});
+    turtlelib::WheelPos w_pos = {phi_r_rad, phi_l_rad};
+    turtlebot.forward_kinematics(w_pos);
     current_pos = turtlebot.get_current_pos();
+    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "-------------------------------------------");
 
     // Update turtlebot position for broadcasting
     turtle_x = current_pos.x;
