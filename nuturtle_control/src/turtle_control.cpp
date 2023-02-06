@@ -85,15 +85,15 @@ private:
         double x = msg.linear.x;
         double y = msg.linear.y;
         turtlelib::Twist2D twst = {w,x,y};
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.angular.z " << msg.angular.z);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.x " << msg.linear.x);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.y " << msg.linear.y);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.angular.z " << msg.angular.z);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.x " << msg.linear.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.y " << msg.linear.y);
 
         // Calculate wheel velocities from twist with IK (rad/s)
         turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_r " << wheel_command_rad_s.r);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_l " << wheel_command_rad_s.l);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_r " << wheel_command_rad_s.r);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_l " << wheel_command_rad_s.l);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Convert to a wheel command msgs (ticks)
         nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
@@ -149,18 +149,21 @@ private:
         double r_vel = (r_encoder_rad)/dt;
         double l_vel = (l_encoder_rad)/dt;
 
-
         // Update new wheel position in rad and velocity in rad/s 
+        turtle_joint_state.header.stamp = this->get_clock()->now();
         turtle_joint_state.position[0] = r_encoder_rad;
         turtle_joint_state.position[1] = l_encoder_rad;
         turtle_joint_state.velocity[0] = r_vel;
         turtle_joint_state.velocity[1] = l_vel;
 
+        // save previous pose
+        prev_timestep.header.stamp = this->get_clock()->now();
+        prev_timestep.name = {"right_wheel", "left_wheel"};
+        prev_timestep.position = {r_encoder_rad, l_encoder_rad};
+        prev_timestep.velocity = {r_vel, l_vel};
+
         // Publish joint states
         joint_state_pub_->publish(turtle_joint_state);
-
-        // Save previous time step 
-        prev_timestep.header.stamp = this->get_clock()->now();
     }
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;

@@ -71,7 +71,7 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("Hz", 200.0, hz_desc);
+    this->declare_parameter("Hz", 20.0, hz_desc);
     int hz = this->get_parameter("Hz").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
@@ -245,8 +245,7 @@ private:
     tf_broadcaster_->sendTransform(t);
     marker_publisher_->publish(marker_array);
 
-    // publish sensor data
-    sensor_data_pub_->publish(sensor_readings);
+
 
   }
 
@@ -255,20 +254,10 @@ private:
     phi_l_rad = msg.left_velocity/encoder_ticks_per_rad;
     phi_r_rad = msg.right_velocity/encoder_ticks_per_rad;
 
-    RCLCPP_ERROR_STREAM(this->get_logger(), "msg.left_velocity " << msg.left_velocity);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "msg.right_velocity " << msg.right_velocity);
-
-    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_l_rad " << phi_l_rad);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_r_rad " << phi_r_rad);
-
     // Update current config of robot based on wheel commands
     turtlelib::WheelPos w_pos = {phi_r_rad, phi_l_rad};
     turtlebot.forward_kinematics(w_pos);
     current_pos = turtlebot.get_current_pos();
-    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "-------------------------------------------");
 
     // Update turtlebot position for broadcasting
     turtle_x = current_pos.x;
@@ -279,6 +268,8 @@ private:
     sensor_readings.stamp = this->get_clock()->now();
     sensor_readings.left_encoder = msg.left_velocity;
     sensor_readings.right_encoder = msg.right_velocity;
+    // publish sensor data
+    sensor_data_pub_->publish(sensor_readings);
   }
 
   size_t count_;
