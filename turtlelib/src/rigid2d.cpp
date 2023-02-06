@@ -210,7 +210,7 @@ namespace turtlelib{
 
     double angle(Vector2D lhs_vect, Vector2D rhs_vect){
         // theta = inverse cosine of the dot product over the product of the magnitudes
-        return normalize_angle(acosf(dot(lhs_vect,rhs_vect)/(lhs_vect.magnitude()*rhs_vect.magnitude())));
+        return (acosf(dot(lhs_vect,rhs_vect)/(lhs_vect.magnitude()*rhs_vect.magnitude())));
     }
 
     Transform2D integrate_twist(Twist2D twist){

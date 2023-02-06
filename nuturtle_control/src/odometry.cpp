@@ -119,14 +119,13 @@ private:
 
         // Update odom message
         odom_msg.header.stamp = this->get_clock()->now();
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[0] " << msg.velocity[0]);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[0] " << msg.velocity[0]);
         RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[1] " << msg.velocity[1]);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[1] " << msg.velocity[1]);
         RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[1] " << msg.position[1]);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.x " << Vb.x);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.y " << Vb.y);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.x " << Vb.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.y " << Vb.y);
         RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.w " << Vb.w);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         
         // Convert current orientation to quaternian 
@@ -143,6 +142,11 @@ private:
         odom_msg.pose.pose.orientation.y = q.y();
         odom_msg.pose.pose.orientation.z = q.z();
         odom_msg.pose.pose.orientation.w = q.w();
+        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
+
+        RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Populate odom twist with body twist
         odom_msg.twist.twist.linear.x = Vb.x;
@@ -165,12 +169,12 @@ private:
       t.header.frame_id = odom_id;
       t.child_frame_id = body_id;
 
-      t.transform.translation.x = odom_msg.pose.pose.position.x;
-      t.transform.translation.y = odom_msg.pose.pose.position.y;
+      t.transform.translation.x = current_pos.x;
+      t.transform.translation.y = current_pos.y;
       t.transform.translation.z = 0.0;
 
       tf2::Quaternion q;
-      q.setRPY(0, 0, odom_msg.pose.pose.orientation.z);
+      q.setRPY(0, 0, current_pos.theta);
       t.transform.rotation = tf2::toMsg(q);
 
       tf_broadcaster_->sendTransform(t);
