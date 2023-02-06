@@ -150,7 +150,7 @@ public:
 
     // Create wheel command subscriber
     wheel_commands_sub_ = this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-      "wheel_commands", 10, std::bind(&NusimNode::wheel_commands_cb, this, std::placeholders::_1));
+      "red/wheel_cmd", 10, std::bind(&NusimNode::wheel_commands_cb, this, std::placeholders::_1));
 
 
     // Create publisher to publish sensor data

@@ -70,7 +70,7 @@ private:
     const std::shared_ptr<std_srvs::srv::Empty::Response>)
   {
     robot_twist.angular.z *= -1.0;
-    robot_twist.angular.x *= -1.0;
+    robot_twist.linear.x *= -1.0;
   }
 
   void stop(
@@ -78,7 +78,7 @@ private:
     const std::shared_ptr<std_srvs::srv::Empty::Response>)
   {
     robot_twist.angular.z *= 0.0;
-    robot_twist.angular.x *= 0.0;
+    robot_twist.linear.x *= 0.0;
     stop_flag = true;
   }
 

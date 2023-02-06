@@ -106,7 +106,6 @@ public:
 private:
     void timer_callback()
     {
-      broadcast_tf();
     }
 
     /// @brief 
@@ -116,10 +115,10 @@ private:
         internal_odom = turtlelib::DiffDrive{track_width, wheel_radius, {msg.position[0], msg.position[1]}, {msg.velocity[0], msg.velocity[1]}};
 
         // Get body twist from current wheel positions and update current position of robot
-        turtlelib::Twist2D Vb = internal_odom.forward_kinematics(internal_odom.get_current_wheel_pos());
+        turtlelib::Twist2D Vb = internal_odom.forward_kinematics({msg.velocity[0], msg.velocity[1]});
 
         // Update odom message
-        odom_msg.header.stamp = this->get_clock()->now();
+        odom_msg.header.stamp = msg.header.stamp; //this->get_clock()->now();
         // RCLCPP_ERROR_STREAM(this->get_logger(), "Current Vbx " << Vb.x);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
 
@@ -146,6 +145,8 @@ private:
 
         // Publish updated odometry
         odom_pub_->publish(odom_msg);
+        broadcast_tf();
+
     }
 
     void broadcast_tf(){

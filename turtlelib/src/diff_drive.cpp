@@ -38,7 +38,7 @@ namespace turtlelib{
 
         // Calculate the x portion of the twist
         // (u.r/4 + uy.l/4)*r^2
-        double x = 0.5*(u.r+u.l);
+        double x = 0.5*(u.r+u.l)*this->wheel_radius;
 
         // y portion of twist = 0
         Twist2D body_twist = {w, x, 0.0};
