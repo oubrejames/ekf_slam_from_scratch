@@ -89,7 +89,7 @@ private:
         // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.x " << msg.linear.x);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.y " << msg.linear.y);
 
-        // Calculate wheel velocities from twist with IK (rad/s)
+        // // Calculate wheel velocities from twist with IK (rad/s)
         turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_r " << wheel_command_rad_s.r);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_l " << wheel_command_rad_s.l);
@@ -124,19 +124,15 @@ private:
     {
         // if first iteration, make previous timestep 0
         if(init_flag){
-            prev_timestep.header.stamp = this->get_clock()->now();
+            prev_timestep.header.stamp = msg.stamp;
             prev_timestep.position = {0.0, 0.0};
             prev_timestep.velocity = {0.0, 0.0};
             init_flag = false;
         }
 
-        // Get encoder values in ticks (positions)
-        double l_encoder_ticks = msg.left_encoder;
-        double r_encoder_ticks = msg.right_encoder;
-
         // Convert encoder ticks to radians (change in position)
-        double l_encoder_rad = (l_encoder_ticks)/encoder_ticks_per_rad;
-        double r_encoder_rad = (r_encoder_ticks)/encoder_ticks_per_rad;
+        double l_encoder_rad = (msg.left_encoder)/encoder_ticks_per_rad;
+        double r_encoder_rad = (msg.right_encoder)/encoder_ticks_per_rad;
 
         // Calculate change in time between sensor readings
         double dt = (msg.stamp.sec + msg.stamp.nanosec*1e-9) -
@@ -148,18 +144,18 @@ private:
         // RCLCPP_ERROR_STREAM(this->get_logger(), "l_encoder_rad" << l_encoder_rad);
 
         // Calculate wheel velocities (rad/s)
-        double r_vel = (r_encoder_rad-prev_timestep.position[0])/dt;
-        double l_vel = (l_encoder_rad-prev_timestep.position[1])/dt;
+        double r_vel = (r_encoder_rad-prev_timestep.position.at(0))/dt;
+        double l_vel = (l_encoder_rad-prev_timestep.position.at(0))/dt;
 
         // Update new wheel position in rad and velocity in rad/s 
         turtle_joint_state.header.stamp = this->get_clock()->now();
-        turtle_joint_state.position[0] = r_encoder_rad;
-        turtle_joint_state.position[1] = l_encoder_rad;
-        turtle_joint_state.velocity[0] = r_vel;
-        turtle_joint_state.velocity[1] = l_vel;
+        turtle_joint_state.position.at(0) = r_encoder_rad;
+        turtle_joint_state.position.at(1) = l_encoder_rad;
+        turtle_joint_state.velocity.at(0) = r_vel;
+        turtle_joint_state.velocity.at(1) = l_vel;
 
         // save previous pose
-        prev_timestep.header.stamp = this->get_clock()->now();
+        prev_timestep.header.stamp = msg.stamp;
         prev_timestep.name = {"right_wheel", "left_wheel"};
         prev_timestep.position = {r_encoder_rad, l_encoder_rad};
         prev_timestep.velocity = {r_vel, l_vel};

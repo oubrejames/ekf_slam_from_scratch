@@ -71,13 +71,13 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("Hz", 200.0, hz_desc);
+    this->declare_parameter("Hz", 20.0, hz_desc);
     int hz = this->get_parameter("Hz").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
       hz_in_ms, std::bind(&NusimNode::timer_callback, this));
 
-    dt_time = 1000/hz;
+    dt_time = 1.0/(double)hz;
 
     // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
@@ -253,14 +253,26 @@ private:
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
     // convert wheel command ticks to rad/s
+    RCLCPP_ERROR_STREAM(this->get_logger(), "msg.left_velocity" << msg.left_velocity);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "msg.right_velocity " << msg.right_velocity);
+
     phi_l_rad_s = msg.left_velocity*motor_cmd_per_rad_sec;
     phi_r_rad_s = msg.right_velocity*motor_cmd_per_rad_sec;
+    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_l_rad_s " << phi_l_rad_s);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "phi_r_rad_s " << phi_r_rad_s);
 
     // Update current config of robot based on wheel commands
     turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
-    double new_wheel_pos_r = cur_wheel_pos.r + (dt_time*phi_r_rad_s);
-    double new_wheel_pos_l = cur_wheel_pos.l + (dt_time*phi_l_rad_s);
+    double new_wheel_pos_r =(dt_time*phi_r_rad_s);
+    double new_wheel_pos_l = (dt_time*phi_l_rad_s);
     turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
+
+    RCLCPP_ERROR_STREAM(this->get_logger(), "cur_wheel_pos.r " << cur_wheel_pos.r);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "cur_wheel_pos.l " << cur_wheel_pos.l);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "new_wheel_pos_r " << new_wheel_pos_r);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "new_wheel_pos_l " << new_wheel_pos_l);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "dt_time" << dt_time);
+
     current_pos = turtlebot.get_current_pos();
 
     // Update turtlebot position for broadcasting
@@ -268,12 +280,10 @@ private:
     turtle_y = current_pos.y;
     turtle_theta = current_pos.theta;
 
-    // get current wheel positions in rads
-    turtlelib::WheelPos wheel_pos = turtlebot.get_current_wheel_pos();
     // update sensor data 
     sensor_readings.stamp = this->get_clock()->now();
-    sensor_readings.left_encoder = wheel_pos.l/motor_cmd_per_rad_sec;
-    sensor_readings.right_encoder = wheel_pos.r/motor_cmd_per_rad_sec;
+    sensor_readings.left_encoder = new_wheel_pos_l*encoder_ticks_per_rad;
+    sensor_readings.right_encoder = new_wheel_pos_r*encoder_ticks_per_rad;
 
     prev_wheel_pos = turtlebot.get_current_wheel_pos();
   }

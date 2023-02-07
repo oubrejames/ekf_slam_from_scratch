@@ -23,7 +23,7 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("frequency", 100.0, hz_desc);
+    this->declare_parameter("frequency", 10.0, hz_desc);
     int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
@@ -112,20 +112,20 @@ private:
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
-        turtlelib::WheelPos wp = {msg.velocity[0], msg.velocity[1]};
+        turtlelib::WheelPos wp = {msg.position[0], msg.position[1]};
 
         // Get body twist from current wheel positions and update current position of robot
         turtlelib::Twist2D Vb = internal_odom.forward_kinematics(wp);
 
         // Update odom message
         odom_msg.header.stamp = this->get_clock()->now();
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[0] " << msg.velocity[0]);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[1] " << msg.velocity[1]);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[1] " << msg.position[1]);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.x " << Vb.x);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.y " << Vb.y);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.w " << Vb.w);
+        // // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[0] " << msg.velocity[0]);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
+        // // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[1] " << msg.velocity[1]);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[1] " << msg.position[1]);
+        // // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.x " << Vb.x);
+        // // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.y " << Vb.y);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.w " << Vb.w);
 
         
         // Convert current orientation to quaternian 
@@ -142,11 +142,11 @@ private:
         odom_msg.pose.pose.orientation.y = q.y();
         odom_msg.pose.pose.orientation.z = q.z();
         odom_msg.pose.pose.orientation.w = q.w();
-        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
 
-        RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Populate odom twist with body twist
         odom_msg.twist.twist.linear.x = Vb.x;
