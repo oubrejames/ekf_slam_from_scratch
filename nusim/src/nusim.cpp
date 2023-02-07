@@ -77,6 +77,8 @@ public:
     timer_ = this->create_wall_timer(
       hz_in_ms, std::bind(&NusimNode::timer_callback, this));
 
+    dt_time = 1000/hz;
+
     // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
       "~/reset",
@@ -245,18 +247,20 @@ private:
     tf_broadcaster_->sendTransform(t);
     marker_publisher_->publish(marker_array);
 
-
-
+    // publish sensor data
+    sensor_data_pub_->publish(sensor_readings);
   }
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
-    // convert wheel commands in ticks to radians
-    phi_l_rad = msg.left_velocity/encoder_ticks_per_rad;
-    phi_r_rad = msg.right_velocity/encoder_ticks_per_rad;
+    // convert wheel command ticks to rad/s
+    phi_l_rad_s = msg.left_velocity*motor_cmd_per_rad_sec;
+    phi_r_rad_s = msg.right_velocity*motor_cmd_per_rad_sec;
 
     // Update current config of robot based on wheel commands
-    turtlelib::WheelPos w_pos = {phi_r_rad, phi_l_rad};
-    turtlebot.forward_kinematics(w_pos);
+    turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
+    double new_wheel_pos_r = cur_wheel_pos.r + (dt_time*phi_r_rad_s);
+    double new_wheel_pos_l = cur_wheel_pos.l + (dt_time*phi_l_rad_s);
+    turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
     current_pos = turtlebot.get_current_pos();
 
     // Update turtlebot position for broadcasting
@@ -264,12 +268,14 @@ private:
     turtle_y = current_pos.y;
     turtle_theta = current_pos.theta;
 
+    // get current wheel positions in rads
+    turtlelib::WheelPos wheel_pos = turtlebot.get_current_wheel_pos();
     // update sensor data 
     sensor_readings.stamp = this->get_clock()->now();
-    sensor_readings.left_encoder = msg.left_velocity;
-    sensor_readings.right_encoder = msg.right_velocity;
-    // publish sensor data
-    sensor_data_pub_->publish(sensor_readings);
+    sensor_readings.left_encoder = wheel_pos.l/motor_cmd_per_rad_sec;
+    sensor_readings.right_encoder = wheel_pos.r/motor_cmd_per_rad_sec;
+
+    prev_wheel_pos = turtlebot.get_current_wheel_pos();
   }
 
   size_t count_;
@@ -286,10 +292,12 @@ private:
   double wheel_radius, track_width, motor_cmd_per_rad_sec;
   int motor_cmd_max;
   double encoder_ticks_per_rad, collision_radius;
-  double phi_r_rad=0.0, phi_l_rad=0.0;
+  double phi_r_rad_s=0.0, phi_l_rad_s=0.0;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_pub_;
   nuturtlebot_msgs::msg::SensorData sensor_readings;
   turtlelib::RobotConfig current_pos;
+  turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
+  double dt_time;
 };
 
 int main(int argc, char * argv[])

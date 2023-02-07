@@ -125,10 +125,12 @@ private:
         // if first iteration, make previous timestep 0
         if(init_flag){
             prev_timestep.header.stamp = this->get_clock()->now();
+            prev_timestep.position = {0.0, 0.0};
+            prev_timestep.velocity = {0.0, 0.0};
             init_flag = false;
         }
 
-        // Get encoder values in ticks
+        // Get encoder values in ticks (positions)
         double l_encoder_ticks = msg.left_encoder;
         double r_encoder_ticks = msg.right_encoder;
 
@@ -146,8 +148,8 @@ private:
         // RCLCPP_ERROR_STREAM(this->get_logger(), "l_encoder_rad" << l_encoder_rad);
 
         // Calculate wheel velocities (rad/s)
-        double r_vel = (r_encoder_rad)/dt;
-        double l_vel = (l_encoder_rad)/dt;
+        double r_vel = (r_encoder_rad-prev_timestep.position[0])/dt;
+        double l_vel = (l_encoder_rad-prev_timestep.position[1])/dt;
 
         // Update new wheel position in rad and velocity in rad/s 
         turtle_joint_state.header.stamp = this->get_clock()->now();

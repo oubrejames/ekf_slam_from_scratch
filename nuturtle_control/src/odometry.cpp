@@ -112,7 +112,7 @@ private:
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
-        turtlelib::WheelPos wp = {msg.position[0], msg.position[1]};
+        turtlelib::WheelPos wp = {msg.velocity[0], msg.velocity[1]};
 
         // Get body twist from current wheel positions and update current position of robot
         turtlelib::Twist2D Vb = internal_odom.forward_kinematics(wp);
@@ -198,6 +198,7 @@ private:
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
     turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
+    double dt_time;
 };
 
 int main(int argc, char * argv[])
