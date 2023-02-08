@@ -95,7 +95,7 @@ public:
 
     // Create joint_states subscriber
     joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-      "blue/joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+      "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
 
     // Define initial_pose service
     initial_pose_server_ = this->create_service<turtlesim::srv::Spawn>(
@@ -113,7 +113,9 @@ private:
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
         turtlelib::WheelPos new_wp = {msg.position.at(0)-prev_wheel_pos.r, msg.position.at(1)-prev_wheel_pos.l};
-        prev_wheel_pos = new_wp;
+        prev_wheel_pos.r = msg.position.at(0);
+        prev_wheel_pos.l = msg.position.at(1);
+
         RCLCPP_ERROR_STREAM(this->get_logger(), "wheel positions " << msg.position[0] << " " << msg.position[1] );
 
         // Get body twist from current wheel positions and update current position of robot

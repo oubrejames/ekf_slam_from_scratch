@@ -65,7 +65,7 @@ public:
       "sensor_data", 10, std::bind(&TurtleControl::sensor_data_cb, this, std::placeholders::_1));
 
     // Create publisher to publish joint states
-    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("blue/joint_states", 10);
+    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 
     // Initialize turtle joint state
     turtle_joint_state.name = {"wheel_right_joint", "wheel_left_joint"};

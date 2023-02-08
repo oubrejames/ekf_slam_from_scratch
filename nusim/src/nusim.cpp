@@ -255,8 +255,8 @@ private:
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
     // convert wheel command ticks to rad/s
-    phi_l_rad_s = (double)msg.left_velocity*motor_cmd_per_rad_sec;
-    phi_r_rad_s = (double)msg.right_velocity*motor_cmd_per_rad_sec;
+    phi_l_rad_s = static_cast<double>(msg.left_velocity)*motor_cmd_per_rad_sec;
+    phi_r_rad_s = static_cast<double>(msg.right_velocity)*motor_cmd_per_rad_sec;
 
       // Update current config of robot based on wheel commands
     turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
@@ -275,9 +275,10 @@ private:
 
     // update sensor data 
     sensor_readings.stamp = this->get_clock()->now();
-    sensor_readings.left_encoder = (new_wheel_pos_l)*encoder_ticks_per_rad;
-    sensor_readings.right_encoder = (new_wheel_pos_r)*encoder_ticks_per_rad;
-    prev_wheel_pos = turtlebot.get_current_wheel_pos();
+    sensor_readings.left_encoder = (new_wheel_pos_l+prev_wheel_pos.l)*encoder_ticks_per_rad;
+    sensor_readings.right_encoder = (new_wheel_pos_r+prev_wheel_pos.r)*encoder_ticks_per_rad;
+    prev_wheel_pos.l += new_wheel_pos_l;
+    prev_wheel_pos.r += new_wheel_pos_r;
     RCLCPP_ERROR_STREAM(this->get_logger(), "Sensor reading encoder ticks " << sensor_readings.left_encoder << " " <<  sensor_readings.right_encoder);
   }
 
