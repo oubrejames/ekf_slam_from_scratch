@@ -41,8 +41,8 @@ namespace turtlelib{
         double x = 0.5*(u.r+u.l)*this->wheel_radius;
 
         // // Update wheel position
-        current_wheel_pos.r += u.r;
-        current_wheel_pos.l += u.l;
+        current_wheel_pos.r = u.r;
+        current_wheel_pos.l = u.l;
 
         // y portion of twist = 0
         Twist2D body_twist = {w, x, 0.0};

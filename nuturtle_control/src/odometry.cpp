@@ -112,7 +112,7 @@ private:
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
-        turtlelib::WheelPos new_wp = {msg.position.at(0), msg.position.at(1)};
+        turtlelib::WheelPos new_wp = {msg.position.at(0)-prev_wheel_pos.r, msg.position.at(1)-prev_wheel_pos.l};
         prev_wheel_pos = new_wp;
         RCLCPP_ERROR_STREAM(this->get_logger(), "wheel positions " << msg.position[0] << " " << msg.position[1] );
 
