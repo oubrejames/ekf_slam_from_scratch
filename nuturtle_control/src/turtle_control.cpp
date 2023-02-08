@@ -65,7 +65,7 @@ public:
       "sensor_data", 10, std::bind(&TurtleControl::sensor_data_cb, this, std::placeholders::_1));
 
     // Create publisher to publish joint states
-    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("blue/joint_states", 10);
 
     // Initialize turtle joint state
     turtle_joint_state.name = {"wheel_right_joint", "wheel_left_joint"};
@@ -129,6 +129,7 @@ private:
             prev_timestep.velocity = {0.0, 0.0};
             init_flag = false;
         }
+        RCLCPP_ERROR_STREAM(this->get_logger(), "Sensor reading encoder ticks " << msg.left_encoder << " " << msg.right_encoder);
 
         // Convert encoder ticks to radians (change in position)
         double l_encoder_rad = (msg.left_encoder)/encoder_ticks_per_rad;
@@ -145,7 +146,7 @@ private:
 
         // Calculate wheel velocities (rad/s)
         double r_vel = (r_encoder_rad-prev_timestep.position.at(0))/dt;
-        double l_vel = (l_encoder_rad-prev_timestep.position.at(0))/dt;
+        double l_vel = (l_encoder_rad-prev_timestep.position.at(1))/dt;
 
         // Update new wheel position in rad and velocity in rad/s 
         turtle_joint_state.header.stamp = this->get_clock()->now();
@@ -154,6 +155,7 @@ private:
         turtle_joint_state.velocity.at(0) = r_vel;
         turtle_joint_state.velocity.at(1) = l_vel;
 
+        // as of right now i am publishing the change in sensor position 
         // save previous pose
         prev_timestep.header.stamp = msg.stamp;
         prev_timestep.name = {"right_wheel", "left_wheel"};

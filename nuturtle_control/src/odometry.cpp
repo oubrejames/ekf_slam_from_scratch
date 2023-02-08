@@ -95,7 +95,7 @@ public:
 
     // Create joint_states subscriber
     joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-      "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+      "blue/joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
 
     // Define initial_pose service
     initial_pose_server_ = this->create_service<turtlesim::srv::Spawn>(
@@ -112,29 +112,22 @@ private:
     /// @param msg 
     void joint_states_cb(const sensor_msgs::msg::JointState & msg){
         // Update interal odom
-        turtlelib::WheelPos wp = {msg.position[0], msg.position[1]};
+        turtlelib::WheelPos new_wp = {msg.position.at(0), msg.position.at(1)};
+        prev_wheel_pos = new_wp;
+        RCLCPP_ERROR_STREAM(this->get_logger(), "wheel positions " << msg.position[0] << " " << msg.position[1] );
 
         // Get body twist from current wheel positions and update current position of robot
-        turtlelib::Twist2D Vb = internal_odom.forward_kinematics(wp);
+        turtlelib::Twist2D Vb = internal_odom.forward_kinematics(new_wp);
 
         // Update odom message
         odom_msg.header.stamp = this->get_clock()->now();
-        // // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[0] " << msg.velocity[0]);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[0] " << msg.position[0]);
-        // // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.velocity[1] " << msg.velocity[1]);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.position[1] " << msg.position[1]);
-        // // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.x " << Vb.x);
-        // // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.y " << Vb.y);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "Vb.w " << Vb.w);
 
-        
         // Convert current orientation to quaternian 
         current_pos = internal_odom.get_current_pos();
         tf2::Quaternion q;
         q.setRPY(0, 0, current_pos.theta);
 
         // Populate odom position with current position
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "Current x" << current_pos.x);
         odom_msg.pose.pose.position.x = current_pos.x;
         odom_msg.pose.pose.position.y = current_pos.y;
         odom_msg.pose.pose.position.z = 0.0;
@@ -142,11 +135,6 @@ private:
         odom_msg.pose.pose.orientation.y = q.y();
         odom_msg.pose.pose.orientation.z = q.z();
         odom_msg.pose.pose.orientation.w = q.w();
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.x " << current_pos.x);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.y " << current_pos.y);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "current_pos.theta " << current_pos.theta);
-
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Populate odom twist with body twist
         odom_msg.twist.twist.linear.x = Vb.x;
@@ -198,6 +186,7 @@ private:
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
     turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
+    turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
     double dt_time;
 };
 

@@ -40,7 +40,7 @@ namespace turtlelib{
         // (u.r/4 + uy.l/4)*r^2
         double x = 0.5*(u.r+u.l)*this->wheel_radius;
 
-        // Update wheel position
+        // // Update wheel position
         current_wheel_pos.r += u.r;
         current_wheel_pos.l += u.l;
 

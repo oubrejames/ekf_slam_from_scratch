@@ -247,10 +247,23 @@ private:
     tf_broadcaster_->sendTransform(t);
     marker_publisher_->publish(marker_array);
 
-    // Update current config of robot based on wheel commands
+
+  
+    // publish sensor data
+    sensor_data_pub_->publish(sensor_readings);
+  }
+
+  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
+    // convert wheel command ticks to rad/s
+    phi_l_rad_s = (double)msg.left_velocity*motor_cmd_per_rad_sec;
+    phi_r_rad_s = (double)msg.right_velocity*motor_cmd_per_rad_sec;
+
+      // Update current config of robot based on wheel commands
     turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
     double new_wheel_pos_r =(dt_time*phi_r_rad_s);
     double new_wheel_pos_l = (dt_time*phi_l_rad_s);
+    RCLCPP_ERROR_STREAM(this->get_logger(), "wheel positions " << new_wheel_pos_l << " " << new_wheel_pos_r);
+
     turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
 
     current_pos = turtlebot.get_current_pos();
@@ -262,19 +275,10 @@ private:
 
     // update sensor data 
     sensor_readings.stamp = this->get_clock()->now();
-    sensor_readings.left_encoder = (prev_wheel_pos.l+new_wheel_pos_l)*encoder_ticks_per_rad;
-    sensor_readings.right_encoder = (prev_wheel_pos.r+new_wheel_pos_r)*encoder_ticks_per_rad;
+    sensor_readings.left_encoder = (new_wheel_pos_l)*encoder_ticks_per_rad;
+    sensor_readings.right_encoder = (new_wheel_pos_r)*encoder_ticks_per_rad;
     prev_wheel_pos = turtlebot.get_current_wheel_pos();
-    // publish sensor data
-    sensor_data_pub_->publish(sensor_readings);
-  }
-
-  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
-    // convert wheel command ticks to rad/s
-    phi_l_rad_s = msg.left_velocity*motor_cmd_per_rad_sec;
-    phi_r_rad_s = msg.right_velocity*motor_cmd_per_rad_sec;
-
-
+    RCLCPP_ERROR_STREAM(this->get_logger(), "Sensor reading encoder ticks " << sensor_readings.left_encoder << " " <<  sensor_readings.right_encoder);
   }
 
   size_t count_;
