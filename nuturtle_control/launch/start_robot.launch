@@ -2,13 +2,14 @@
   <arg name="body_id" default=""/>
   <arg name="odom_id" default="odom"/>
   <arg name="wheel_left" default="wheel_left_joint"/>
-  <arg name="wheel_right" default="wheel_rightjoint"/>
+  <arg name="wheel_right" default="wheel_right_joint"/>
 
   <node pkg="nuturtle_control" exec="odometry" name="odometry">
         <param name="body_id" value = "$(var body_id)"/>
         <param name="odom_id" value = "$(var odom_id)"/>
         <param name="wheel_left" value = "$(var wheel_left)"/>
         <param name="wheel_right" value = "$(var wheel_right)"/>
+        <remap from="/joint_states" to="blue/joint_states"/>
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
   </node>
 
@@ -16,6 +17,7 @@
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
         <remap from="/wheel_commands" to="red/wheel_cmd"/>
         <remap from="/sensor_data" to="red/sensor_data"/>
+        <remap from="/joint_states" to="blue/joint_states"/>
   </node>
 
   <arg name="cmd_src" default="none"/>
@@ -38,11 +40,14 @@
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="blue" />
         <arg name="use_rviz" value="false" />
+        <arg name="use_jsp" value="false" />
   </include> 
 
   <include if="$(eval '\'$(var robot)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="red" />
         <arg name="use_rviz" value="false" />
+        <arg name="use_jsp" value="true" />
+
   </include> 
 
   <include if="$(eval '\'$(var use_rviz)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
