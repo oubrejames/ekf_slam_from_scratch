@@ -152,7 +152,7 @@ public:
       10);
 
     // Only create marker array if there are actually obstacles defines
-    if (obstacles_x.size()) {
+    if (obstacles_x.empty()) {
       marker_array = make_marker_array("CYLINDER", obstacles_x, obstacles_y);
     }
 
@@ -206,10 +206,10 @@ private:
   visualization_msgs::msg::MarkerArray make_marker_array(const char* marker_type, std::vector<double> x_coords, std::vector<double> y_coords)
   {
     double yaw = turtlelib::PI/2;
-    for (int i = 0; i < (int)(x_coords.size()); i++) {
-      visualization_msgs::msg::Marker marker;
-      marker.header.frame_id = "nusim/world";
-      marker.header.stamp = this->get_clock()->now();
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "nusim/world";
+    marker.header.stamp = get_clock()->now();
+    for (size_t i = 0; i < (x_coords.size()); i++) {
       marker.id = i;
       if (strcmp(marker_type, "CYLINDER") == 0){
         marker.type = visualization_msgs::msg::Marker::CYLINDER;
@@ -289,7 +289,7 @@ private:
     time_publisher_->publish(message);
 
     // Update world to robot transformation info
-    t.header.stamp = this->get_clock()->now();
+    t.header.stamp = get_clock()->now();
     t.header.frame_id = "nusim/world";
     t.child_frame_id = "red/base_footprint";
     t.transform.translation.x = turtle_x;
@@ -331,7 +331,7 @@ private:
     turtle_theta = current_pos.theta;
 
     // update sensor data 
-    sensor_readings.stamp = this->get_clock()->now();
+    sensor_readings.stamp = get_clock()->now();
     sensor_readings.left_encoder = (new_wheel_pos_l+prev_wheel_pos.l)*encoder_ticks_per_rad;
     sensor_readings.right_encoder = (new_wheel_pos_r+prev_wheel_pos.r)*encoder_ticks_per_rad;
     prev_wheel_pos.l += new_wheel_pos_l;
