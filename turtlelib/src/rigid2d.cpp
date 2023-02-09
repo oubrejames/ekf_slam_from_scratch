@@ -164,8 +164,7 @@ namespace turtlelib{
     }
 
     Vector2D operator+(Vector2D lhs, const Vector2D & rhs){
-        Vector2D output = lhs;
-        return output+=rhs;
+        return lhs+=rhs;
     }
 
     Vector2D & Vector2D::operator-=(const Vector2D & rhs){
@@ -175,8 +174,7 @@ namespace turtlelib{
     }
 
     Vector2D operator-(Vector2D lhs, const Vector2D & rhs){
-        Vector2D output = lhs;
-        return output-=rhs;
+        return lhs-=rhs;
     }
 
     Vector2D & Vector2D::operator*=(const double rhs){
@@ -186,13 +184,11 @@ namespace turtlelib{
     }
 
     Vector2D operator*(Vector2D lhs, const double rhs){
-        Vector2D output = lhs;
-        return output*=rhs;
+        return lhs*=rhs;
     }
 
     Vector2D operator*(const double lhs, Vector2D rhs){
-        Vector2D output = rhs;
-        return output*=lhs;
+        return rhs*=lhs;
     }
 
     double dot(Vector2D lhs_vect, Vector2D rhs_vect){

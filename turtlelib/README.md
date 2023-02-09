@@ -4,7 +4,8 @@ A library for handling transformations in SE(2) and other turtlebot-related math
 # Components
 - rigid2d - Handles 2D rigid body transformations
 - frame_main - Perform some rigid body computations based on user input
-
+- diff_drive - Class representing a differenttial drive object. Used to keep track the diff drive robot's location
+and velocity
 
 # Conceptual Questions
 1. We need to be able to normalize Vector2D objects (i.e., find the unit vector in the direction of a given Vector2D):

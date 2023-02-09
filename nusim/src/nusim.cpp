@@ -152,7 +152,7 @@ public:
       10);
 
     // Only create marker array if there are actually obstacles defines
-    if (obstacles_x.empty()) {
+    if (!obstacles_x.empty()) {
       marker_array = make_marker_array("CYLINDER", obstacles_x, obstacles_y);
     }
 
@@ -206,6 +206,7 @@ private:
   visualization_msgs::msg::MarkerArray make_marker_array(const char* marker_type, std::vector<double> x_coords, std::vector<double> y_coords)
   {
     double yaw = turtlelib::PI/2;
+    visualization_msgs::msg::MarkerArray mkr_array;
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "nusim/world";
     marker.header.stamp = get_clock()->now();
@@ -231,7 +232,6 @@ private:
         marker.color.b = 0.0;
       }
       else{
-        // TODO: FIX THIS PROB JUST NEED TWO FUNCTIONS
         marker.type = visualization_msgs::msg::Marker::CUBE;
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.scale.x = arena_x_len;
@@ -362,7 +362,6 @@ private:
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
   double dt_time = 0.0;
   double arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
-    visualization_msgs::msg::MarkerArray mkr_array;
 
 };
 

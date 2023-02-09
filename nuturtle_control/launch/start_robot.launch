@@ -39,6 +39,8 @@
 
   <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
   <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
+  <!-- <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/blue_and_red.rviz"/>
+  <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" if="$(eval '\'$(var robot)\' != \'nusim\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/blue.rviz"/> -->
   <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/blue_and_red.rviz"/>
 
 
