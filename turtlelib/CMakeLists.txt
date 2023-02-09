@@ -15,10 +15,12 @@ target_link_libraries(frame_main turtlelib)
 # enable C++ 17
 target_compile_features(turtlelib PUBLIC cxx_std_17) 
 
+if(NOT CMAKE_CROSSCOMPILING)
 # CMake also has the ability to generate doxygen documentation
 find_package(Doxygen)
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
 doxygen_add_docs(doxygen include/ src/ README.md ALL)
+endif()
 
 # Use the cmake testing functionality. A test is just an executable.
 # We use the catch2 unit testing framework

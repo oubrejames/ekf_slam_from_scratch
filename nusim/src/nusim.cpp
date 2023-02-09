@@ -17,7 +17,7 @@
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
-
+#include <vector>
 using namespace std::chrono_literals;
 
 class NusimNode : public rclcpp::Node
@@ -62,6 +62,18 @@ public:
     this->declare_parameter("collision_radius", -1.0, collision_radius_desc);
     collision_radius = this->get_parameter("collision_radius").get_parameter_value().get<double>();
     if(collision_radius == -1.0){RCLCPP_ERROR_STREAM(this->get_logger(), "collision_radius not defined"); rclcpp::shutdown();}
+
+    // Define arena wall parameters
+    auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
+    arena_x_len_desc.description = "Length of arena in the x direction";
+    this->declare_parameter("~x_length", 5.0, arena_x_len_desc);
+    arena_x_len = this->get_parameter("~x_length").get_parameter_value().get<double>();
+
+    auto arena_y_len_desc = rcl_interfaces::msg::ParameterDescriptor();
+    arena_y_len_desc.description = "Length of arena in the y direction";
+    this->declare_parameter("~y_length", 5.0, arena_y_len_desc);
+    arena_y_len = this->get_parameter("~y_length").get_parameter_value().get<double>();
+
 
     turtlebot = turtlelib::DiffDrive{track_width, wheel_radius};
 
@@ -130,15 +142,22 @@ public:
     this->declare_parameter("obstacles/r", 0.05, ob_r_desc);
     obstacles_r = this->get_parameter("obstacles/r").get_parameter_value().get<double>();
 
-    // Define a publisher to publish obstacle markers
-    marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+    // Define a publisher to publish obstacle and wall markers
+    obstacle_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/obstacles",
+      10);
+
+    wall_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+      "~/walls",
       10);
 
     // Only create marker array if there are actually obstacles defines
     if (obstacles_x.size()) {
-      marker_array = make_marker_array();
+      marker_array = make_marker_array("CYLINDER", obstacles_x, obstacles_y);
     }
+
+    // Make arena
+    arena_marker_array = make_marker_array("CUBE", std::vector<double> {arena_x_len/2.0, 0.0, -arena_x_len/2.0, 0.0}, std::vector<double> {0.0, arena_y_len/2, 0.0, -arena_y_len/2});
 
     // Report error and kill node if obstacle x and y arrays are not same length
     if (obstacles_x.size() != obstacles_y.size()) {
@@ -171,30 +190,68 @@ private:
 
   /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
   /// @return marker array with all obstacles
-  visualization_msgs::msg::MarkerArray make_marker_array()
+
+  /// @brief 
+  /// @param marker_type 
+  /// @param x_coords 
+  /// @param y_coords 
+  /// @param x_len 
+  /// @param y_len 
+  /// @param radius 
+  /// @param r 
+  /// @param g 
+  /// @param b 
+  /// @param yaw 
+  /// @return 
+  visualization_msgs::msg::MarkerArray make_marker_array(const char* marker_type, std::vector<double> x_coords, std::vector<double> y_coords)
   {
-    visualization_msgs::msg::MarkerArray mkr_array;
-    for (int i = 0; i < (int)(obstacles_x.size()); i++) {
+    double yaw = turtlelib::PI/2;
+    for (int i = 0; i < (int)(x_coords.size()); i++) {
       visualization_msgs::msg::Marker marker;
       marker.header.frame_id = "nusim/world";
       marker.header.stamp = this->get_clock()->now();
       marker.id = i;
-      marker.type = visualization_msgs::msg::Marker::CYLINDER;
-      marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose.position.x = obstacles_x[i];
-      marker.pose.position.y = obstacles_y[i];
-      marker.pose.position.z = 0.25 / 2;
-      marker.pose.orientation.x = 0.0;
-      marker.pose.orientation.y = 0.0;
-      marker.pose.orientation.z = 0.0;
-      marker.pose.orientation.w = 1.0;
-      marker.scale.x = obstacles_r * 2;
-      marker.scale.y = obstacles_r * 2;
-      marker.scale.z = 0.25;
-      marker.color.a = 1.0;
-      marker.color.r = 1.0;
-      marker.color.g = 0.0;
-      marker.color.b = 0.0;
+      if (strcmp(marker_type, "CYLINDER") == 0){
+        marker.type = visualization_msgs::msg::Marker::CYLINDER;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.scale.x = obstacles_r * 2;
+        marker.scale.y = obstacles_r * 2;
+        marker.scale.z = 0.25;
+        marker.pose.position.x = x_coords.at(i);
+        marker.pose.position.y = y_coords.at(i);
+        marker.pose.position.z = 0.25 / 2;
+        
+        marker.pose.orientation.x = q.x();
+        marker.pose.orientation.y = q.y();
+        marker.pose.orientation.z = q.z();
+        marker.pose.orientation.w = q.w();
+        marker.color.a = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+      }
+      else{
+        // TODO: FIX THIS PROB JUST NEED TWO FUNCTIONS
+        marker.type = visualization_msgs::msg::Marker::CUBE;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.scale.x = arena_x_len;
+        marker.scale.y = 0.2;
+        q.setRPY(0.0, 0.0, yaw);
+        yaw += turtlelib::PI/2;
+        marker.scale.z = 0.25;
+        marker.pose.position.x = x_coords.at(i);
+        marker.pose.position.y = y_coords.at(i);
+        marker.pose.position.z = 0.25 / 2;
+        marker.pose.orientation.x = q.x();
+        marker.pose.orientation.y = q.y();
+        marker.pose.orientation.z = q.z();
+        marker.pose.orientation.w = q.w();
+        marker.color.a = 1.0;
+        marker.color.r = 0.3;
+        marker.color.g = 0.5;
+        marker.color.b = 0.2;
+      }
+
       mkr_array.markers.push_back(marker);
     }
     return mkr_array;
@@ -245,7 +302,8 @@ private:
 
     // Send transformation
     tf_broadcaster_->sendTransform(t);
-    marker_publisher_->publish(marker_array);
+    obstacle_publisher->publish(marker_array);
+    wall_publisher->publish(arena_marker_array);
 
 
   
@@ -288,8 +346,11 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
-  visualization_msgs::msg::MarkerArray marker_array;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
+  visualization_msgs::msg::MarkerArray marker_array;  
+  visualization_msgs::msg::MarkerArray arena_marker_array;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr wall_publisher;
+
   // you are here, creating wheel command sub
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_commands_sub_;
   turtlelib::DiffDrive turtlebot = {1.0, 1.0};
@@ -301,7 +362,10 @@ private:
   nuturtlebot_msgs::msg::SensorData sensor_readings;
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
-  double dt_time;
+  double dt_time = 0.0;
+  double arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
+    visualization_msgs::msg::MarkerArray mkr_array;
+
 };
 
 int main(int argc, char * argv[])

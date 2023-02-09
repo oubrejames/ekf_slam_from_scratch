@@ -58,7 +58,7 @@ public:
       "cmd_vel", 10, std::bind(&TurtleControl::velocity_cb, this, std::placeholders::_1));
 
     // Create publisher to publish wheel commands
-    wheel_cmd_pub_ = this->create_publisher<nuturtlebot_msgs::msg::WheelCommands>("wheel_commands", 10);
+    wheel_cmd_pub_ = this->create_publisher<nuturtlebot_msgs::msg::WheelCommands>("wheel_cmd", 10);
 
     // Create sensor_data subscriber
     sensor_data_sub_ = this->create_subscription<nuturtlebot_msgs::msg::SensorData>(
