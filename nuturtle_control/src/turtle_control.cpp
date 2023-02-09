@@ -85,15 +85,9 @@ private:
         double x = msg.linear.x;
         double y = msg.linear.y;
         turtlelib::Twist2D twst = {w,x,y};
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.angular.z " << msg.angular.z);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.x " << msg.linear.x);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.linear.y " << msg.linear.y);
 
         // // Calculate wheel velocities from twist with IK (rad/s)
         turtlelib::WheelPos wheel_command_rad_s = turtlebot.inverse_kinematics(twst);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_r " << wheel_command_rad_s.r);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "WheelPos_l " << wheel_command_rad_s.l);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "============================================");
 
         // Convert to a wheel command msgs (ticks)
         nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
@@ -129,7 +123,6 @@ private:
             prev_timestep.velocity = {0.0, 0.0};
             init_flag = false;
         }
-        RCLCPP_ERROR_STREAM(this->get_logger(), "Sensor reading encoder ticks " << msg.left_encoder << " " << msg.right_encoder);
 
         // Convert encoder ticks to radians (change in position)
         double l_encoder_rad = (msg.left_encoder)/encoder_ticks_per_rad;
@@ -138,11 +131,6 @@ private:
         // Calculate change in time between sensor readings
         double dt = (msg.stamp.sec + msg.stamp.nanosec*1e-9) -
                         (prev_timestep.header.stamp.sec + prev_timestep.header.stamp.nanosec*1e-9);
-
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "msg.stamp.sec+ns " << msg.stamp.sec);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "prev_timestep" << prev_timestep.header.stamp.sec);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "dt" << dt);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "l_encoder_rad" << l_encoder_rad);
 
         // Calculate wheel velocities (rad/s)
         double r_vel = (r_encoder_rad-prev_timestep.position.at(0))/dt;

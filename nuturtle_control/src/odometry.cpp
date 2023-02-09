@@ -116,8 +116,6 @@ private:
         prev_wheel_pos.r = msg.position.at(0);
         prev_wheel_pos.l = msg.position.at(1);
 
-        RCLCPP_ERROR_STREAM(this->get_logger(), "wheel positions " << msg.position[0] << " " << msg.position[1] );
-
         // Get body twist from current wheel positions and update current position of robot
         turtlelib::Twist2D Vb = internal_odom.forward_kinematics(new_wp);
 
