@@ -338,7 +338,6 @@ private:
     phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
 
     // Update current config of robot based on wheel commands
-    turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
     double new_wheel_pos_r = (dt_time * phi_r_rad_s);
     double new_wheel_pos_l = (dt_time * phi_l_rad_s);
 
