@@ -34,7 +34,9 @@ public:
     body_id_desc.description = "Name of the body frame of the robot";
     this->declare_parameter("body_id", "", body_id_desc);
     body_id = this->get_parameter("body_id").get_parameter_value().get<std::string>();
-    if(body_id == ""){RCLCPP_ERROR_STREAM(this->get_logger(), "body_id not defined"); rclcpp::shutdown();}
+    if (body_id == "") {
+      RCLCPP_ERROR_STREAM(this->get_logger(), "body_id not defined"); rclcpp::shutdown();
+    }
 
     auto odom_id_desc = rcl_interfaces::msg::ParameterDescriptor();
     odom_id_desc.description = "Name of the odometetry frame of the robot";
@@ -45,13 +47,17 @@ public:
     wheel_left_desc.description = "Name of the left wheel joint of the robot";
     this->declare_parameter("wheel_left", "", wheel_left_desc);
     wheel_left = this->get_parameter("wheel_left").get_parameter_value().get<std::string>();
-    if(wheel_left== ""){RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_left not defined"); rclcpp::shutdown();}
+    if (wheel_left == "") {
+      RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_left not defined"); rclcpp::shutdown();
+    }
 
     auto wheel_right_desc = rcl_interfaces::msg::ParameterDescriptor();
     wheel_right_desc.description = "Name of the right wheel joint of the robot";
-    this->declare_parameter("wheel_right", "",  wheel_right_desc);
+    this->declare_parameter("wheel_right", "", wheel_right_desc);
     wheel_right = this->get_parameter("wheel_right").get_parameter_value().get<std::string>();
-    if(wheel_right == ""){RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_right not defined"); rclcpp::shutdown();}
+    if (wheel_right == "") {
+      RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_right not defined"); rclcpp::shutdown();
+    }
 
     // Get turtle description parameters
     auto wheel_radius_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -71,7 +77,7 @@ public:
     odom_msg.child_frame_id = body_id;
 
     // Create initial odom msg to broadcast
-        // Initialize internal odom
+    // Initialize internal odom
     internal_odom = turtlelib::DiffDrive{track_width, wheel_radius};
     tf2::Quaternion q;
     q.setRPY(0.0, 0.0, current_pos.theta);
@@ -104,90 +110,95 @@ public:
   }
 
 private:
-    void timer_callback()
-    {
-    }
+  void timer_callback()
+  {
+  }
 
-    /// @brief 
-    /// @param msg 
-    void joint_states_cb(const sensor_msgs::msg::JointState & msg){
-        // Update interal odom
-        turtlelib::WheelPos new_wp = {msg.position.at(0)-prev_wheel_pos.r, msg.position.at(1)-prev_wheel_pos.l};
-        prev_wheel_pos.r = msg.position.at(0);
-        prev_wheel_pos.l = msg.position.at(1);
+  /// @brief
+  /// @param msg
+  void joint_states_cb(const sensor_msgs::msg::JointState & msg)
+  {
+    // Update interal odom
+    turtlelib::WheelPos new_wp =
+    {msg.position.at(0) - prev_wheel_pos.r, msg.position.at(1) - prev_wheel_pos.l};
+    prev_wheel_pos.r = msg.position.at(0);
+    prev_wheel_pos.l = msg.position.at(1);
 
-        // Get body twist from current wheel positions and update current position of robot
-        turtlelib::Twist2D Vb = internal_odom.forward_kinematics(new_wp);
+    // Get body twist from current wheel positions and update current position of robot
+    turtlelib::Twist2D Vb = internal_odom.forward_kinematics(new_wp);
 
-        // Update odom message
-        odom_msg.header.stamp = this->get_clock()->now();
+    // Update odom message
+    odom_msg.header.stamp = this->get_clock()->now();
 
-        // Convert current orientation to quaternian 
-        current_pos = internal_odom.get_current_pos();
-        tf2::Quaternion q;
-        q.setRPY(0, 0, current_pos.theta);
+    // Convert current orientation to quaternian
+    current_pos = internal_odom.get_current_pos();
+    tf2::Quaternion q;
+    q.setRPY(0, 0, current_pos.theta);
 
-        // Populate odom position with current position
-        odom_msg.pose.pose.position.x = current_pos.x;
-        odom_msg.pose.pose.position.y = current_pos.y;
-        odom_msg.pose.pose.position.z = 0.0;
-        odom_msg.pose.pose.orientation.x = q.x();
-        odom_msg.pose.pose.orientation.y = q.y();
-        odom_msg.pose.pose.orientation.z = q.z();
-        odom_msg.pose.pose.orientation.w = q.w();
+    // Populate odom position with current position
+    odom_msg.pose.pose.position.x = current_pos.x;
+    odom_msg.pose.pose.position.y = current_pos.y;
+    odom_msg.pose.pose.position.z = 0.0;
+    odom_msg.pose.pose.orientation.x = q.x();
+    odom_msg.pose.pose.orientation.y = q.y();
+    odom_msg.pose.pose.orientation.z = q.z();
+    odom_msg.pose.pose.orientation.w = q.w();
 
-        // Populate odom twist with body twist
-        odom_msg.twist.twist.linear.x = Vb.x;
-        odom_msg.twist.twist.linear.y = Vb.y;
-        odom_msg.twist.twist.linear.z = 0.0;
-        odom_msg.twist.twist.angular.x = 0.0;
-        odom_msg.twist.twist.angular.y = 0.0;
-        odom_msg.twist.twist.angular.z = Vb.w;
+    // Populate odom twist with body twist
+    odom_msg.twist.twist.linear.x = Vb.x;
+    odom_msg.twist.twist.linear.y = Vb.y;
+    odom_msg.twist.twist.linear.z = 0.0;
+    odom_msg.twist.twist.angular.x = 0.0;
+    odom_msg.twist.twist.angular.y = 0.0;
+    odom_msg.twist.twist.angular.z = Vb.w;
 
-        // Publish updated odometry
-        odom_pub_->publish(odom_msg);
-        broadcast_tf();
+    // Publish updated odometry
+    odom_pub_->publish(odom_msg);
+    broadcast_tf();
 
-    }
+  }
 
-    void broadcast_tf(){
-      geometry_msgs::msg::TransformStamped t;
+  void broadcast_tf()
+  {
+    geometry_msgs::msg::TransformStamped t;
 
-      t.header.stamp = this->get_clock()->now();
-      t.header.frame_id = odom_id;
-      t.child_frame_id = body_id;
+    t.header.stamp = this->get_clock()->now();
+    t.header.frame_id = odom_id;
+    t.child_frame_id = body_id;
 
-      t.transform.translation.x = current_pos.x;
-      t.transform.translation.y = current_pos.y;
-      t.transform.translation.z = 0.0;
+    t.transform.translation.x = current_pos.x;
+    t.transform.translation.y = current_pos.y;
+    t.transform.translation.z = 0.0;
 
-      tf2::Quaternion q;
-      q.setRPY(0, 0, current_pos.theta);
-      t.transform.rotation = tf2::toMsg(q);
+    tf2::Quaternion q;
+    q.setRPY(0, 0, current_pos.theta);
+    t.transform.rotation = tf2::toMsg(q);
 
-      tf_broadcaster_->sendTransform(t);
-    }
+    tf_broadcaster_->sendTransform(t);
+  }
 
-    void initial_pose_cb(
-      const std::shared_ptr<turtlesim::srv::Spawn::Request> req,
-      std::shared_ptr<turtlesim::srv::Spawn::Response>)
-    {
-      internal_odom = {track_width, wheel_radius, {req->x, req->y, req->theta}, {internal_odom.get_current_wheel_pos()}};
-    }
+  void initial_pose_cb(
+    const std::shared_ptr<turtlesim::srv::Spawn::Request> req,
+    std::shared_ptr<turtlesim::srv::Spawn::Response>)
+  {
+    internal_odom =
+    {track_width, wheel_radius, {req->x, req->y, req->theta},
+      {internal_odom.get_current_wheel_pos()}};
+  }
 
-    std::string body_id, odom_id, wheel_left, wheel_right;
-    double wheel_radius, track_width;
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-    nav_msgs::msg::Odometry odom_msg;
-    turtlelib::DiffDrive internal_odom = {1.0, 1.0};
-    size_t count_;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-    rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
-    turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
-    turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
-    double dt_time;
+  std::string body_id, odom_id, wheel_left, wheel_right;
+  double wheel_radius, track_width;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  nav_msgs::msg::Odometry odom_msg;
+  turtlelib::DiffDrive internal_odom = {1.0, 1.0};
+  size_t count_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
+  turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
+  turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
+  double dt_time;
 };
 
 int main(int argc, char * argv[])

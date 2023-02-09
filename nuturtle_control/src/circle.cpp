@@ -52,18 +52,18 @@ public:
 private:
   void timer_callback()
   {
-    if(!stop_flag){
-    circle_pub_->publish(robot_twist);
+    if (!stop_flag) {
+      circle_pub_->publish(robot_twist);
     }
   }
 
-    void control_server_cb(
-      const std::shared_ptr<nuturtle_control::srv::Control::Request> req,
-      std::shared_ptr<nuturtle_control::srv::Control::Response>)
-    {
-      robot_twist.angular.z = req->velocity;
-      robot_twist.linear.x = req->velocity*req->radius;
-    }
+  void control_server_cb(
+    const std::shared_ptr<nuturtle_control::srv::Control::Request> req,
+    std::shared_ptr<nuturtle_control::srv::Control::Response>)
+  {
+    robot_twist.angular.z = req->velocity;
+    robot_twist.linear.x = req->velocity * req->radius;
+  }
 
   void reverse(
     const std::shared_ptr<std_srvs::srv::Empty::Request>,
@@ -82,15 +82,15 @@ private:
     stop_flag = true;
   }
 
-    size_t count_;
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr circle_pub_;
-    rclcpp::Service<nuturtle_control::srv::Control>::SharedPtr control_server_;
-    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reverse_server_;
-    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr stop_server_;
-    double arc_radius = 0.0;
-    geometry_msgs::msg::Twist robot_twist;
-    bool stop_flag = false;
+  size_t count_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr circle_pub_;
+  rclcpp::Service<nuturtle_control::srv::Control>::SharedPtr control_server_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reverse_server_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr stop_server_;
+  double arc_radius = 0.0;
+  geometry_msgs::msg::Twist robot_twist;
+  bool stop_flag = false;
 };
 
 

@@ -31,37 +31,51 @@ public:
     wheel_radius_desc.description = "Radius of turtlebot wheel";
     declare_parameter("wheel_radius", -1.0, wheel_radius_desc);
     wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
-    if(wheel_radius == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "Wheel radius not defined"); rclcpp::shutdown();}
+    if (wheel_radius == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Wheel radius not defined"); rclcpp::shutdown();
+    }
 
     auto track_width_desc = rcl_interfaces::msg::ParameterDescriptor();
     track_width_desc.description = "Trackwidth between turtlebot wheels";
     declare_parameter("track_width", -1.0, track_width_desc);
     track_width = get_parameter("track_width").get_parameter_value().get<double>();
-    if(track_width == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "Track width not defined"); rclcpp::shutdown();}
+    if (track_width == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Track width not defined"); rclcpp::shutdown();
+    }
 
     auto motor_cmd_max_desc = rcl_interfaces::msg::ParameterDescriptor();
     motor_cmd_max_desc.description = "Maximium wheel velocity command in ticks/sec";
     declare_parameter("motor_cmd_max", -1, motor_cmd_max_desc);
     motor_cmd_max = get_parameter("motor_cmd_max").get_parameter_value().get<int>();
-    if(motor_cmd_max == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "motor_cmd_max not defined"); rclcpp::shutdown();}
+    if (motor_cmd_max == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "motor_cmd_max not defined"); rclcpp::shutdown();
+    }
 
     auto motor_cmd_per_rad_sec_desc = rcl_interfaces::msg::ParameterDescriptor();
     motor_cmd_per_rad_sec_desc.description = "Maximium wheel velocity command in ticks per rad/sec";
     declare_parameter("motor_cmd_per_rad_sec", -1.0, motor_cmd_per_rad_sec_desc);
-    motor_cmd_per_rad_sec = get_parameter("motor_cmd_per_rad_sec").get_parameter_value().get<double>();
-    if(motor_cmd_per_rad_sec == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "motor_cmd_per_rad_sec not defined"); rclcpp::shutdown();}
+    motor_cmd_per_rad_sec =
+      get_parameter("motor_cmd_per_rad_sec").get_parameter_value().get<double>();
+    if (motor_cmd_per_rad_sec == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "motor_cmd_per_rad_sec not defined"); rclcpp::shutdown();
+    }
 
     auto encoder_ticks_per_rad_desc = rcl_interfaces::msg::ParameterDescriptor();
     encoder_ticks_per_rad_desc.description = "Ticks per second of the encoder";
     declare_parameter("encoder_ticks_per_rad", -1.0, encoder_ticks_per_rad_desc);
-    encoder_ticks_per_rad = get_parameter("encoder_ticks_per_rad").get_parameter_value().get<double>();
-    if(encoder_ticks_per_rad == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "encoder_ticks_per_rad not defined"); rclcpp::shutdown();}
+    encoder_ticks_per_rad =
+      get_parameter("encoder_ticks_per_rad").get_parameter_value().get<double>();
+    if (encoder_ticks_per_rad == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "encoder_ticks_per_rad not defined"); rclcpp::shutdown();
+    }
 
     auto collision_radius_desc = rcl_interfaces::msg::ParameterDescriptor();
     collision_radius_desc.description = "Radius of turtlebot wheel";
     declare_parameter("collision_radius", -1.0, collision_radius_desc);
     collision_radius = get_parameter("collision_radius").get_parameter_value().get<double>();
-    if(collision_radius == -1.0){RCLCPP_ERROR_STREAM(get_logger(), "collision_radius not defined"); rclcpp::shutdown();}
+    if (collision_radius == -1.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "collision_radius not defined"); rclcpp::shutdown();
+    }
 
     // Define arena wall parameters
     auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -89,7 +103,7 @@ public:
     timer_ = create_wall_timer(
       hz_in_ms, std::bind(&NusimNode::timer_callback, this));
 
-    dt_time = 1.0/(double)hz;
+    dt_time = 1.0 / (double)hz;
 
     // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
@@ -157,7 +171,10 @@ public:
     }
 
     // Make arena
-    arena_marker_array = make_marker_array("CUBE", std::vector<double> {arena_x_len/2.0, 0.0, -arena_x_len/2.0, 0.0}, std::vector<double> {0.0, arena_y_len/2, 0.0, -arena_y_len/2});
+    arena_marker_array = make_marker_array(
+      "CUBE", std::vector<double> {arena_x_len / 2.0, 0.0,
+        -arena_x_len / 2.0, 0.0},
+      std::vector<double> {0.0, arena_y_len / 2, 0.0, -arena_y_len / 2});
 
     // Report error and kill node if obstacle x and y arrays are not same length
     if (obstacles_x.size() != obstacles_y.size()) {
@@ -175,7 +192,9 @@ public:
 
 
     // Create publisher to publish sensor data
-    sensor_data_pub_ = this->create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+    sensor_data_pub_ = this->create_publisher<nuturtlebot_msgs::msg::SensorData>(
+      "red/sensor_data",
+      10);
 
   }
 
@@ -191,28 +210,31 @@ private:
   /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
   /// @return marker array with all obstacles
 
-  /// @brief 
-  /// @param marker_type 
-  /// @param x_coords 
-  /// @param y_coords 
-  /// @param x_len 
-  /// @param y_len 
-  /// @param radius 
-  /// @param r 
-  /// @param g 
-  /// @param b 
-  /// @param yaw 
-  /// @return 
-  visualization_msgs::msg::MarkerArray make_marker_array(const char* marker_type, std::vector<double> x_coords, std::vector<double> y_coords)
+  /// @brief
+  /// @param marker_type
+  /// @param x_coords
+  /// @param y_coords
+  /// @param x_len
+  /// @param y_len
+  /// @param radius
+  /// @param r
+  /// @param g
+  /// @param b
+  /// @param yaw
+  /// @return
+  visualization_msgs::msg::MarkerArray make_marker_array(
+    const char * marker_type,
+    std::vector<double> x_coords,
+    std::vector<double> y_coords)
   {
-    double yaw = turtlelib::PI/2;
+    double yaw = turtlelib::PI / 2;
     visualization_msgs::msg::MarkerArray mkr_array;
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "nusim/world";
     marker.header.stamp = get_clock()->now();
     for (size_t i = 0; i < (x_coords.size()); i++) {
       marker.id = i;
-      if (strcmp(marker_type, "CYLINDER") == 0){
+      if (strcmp(marker_type, "CYLINDER") == 0) {
         marker.type = visualization_msgs::msg::Marker::CYLINDER;
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.scale.x = obstacles_r * 2;
@@ -221,7 +243,7 @@ private:
         marker.pose.position.x = x_coords.at(i);
         marker.pose.position.y = y_coords.at(i);
         marker.pose.position.z = 0.25 / 2;
-        
+
         marker.pose.orientation.x = q.x();
         marker.pose.orientation.y = q.y();
         marker.pose.orientation.z = q.z();
@@ -230,14 +252,13 @@ private:
         marker.color.r = 1.0;
         marker.color.g = 0.0;
         marker.color.b = 0.0;
-      }
-      else{
+      } else {
         marker.type = visualization_msgs::msg::Marker::CUBE;
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.scale.x = arena_x_len;
         marker.scale.y = 0.2;
         q.setRPY(0.0, 0.0, yaw);
-        yaw += turtlelib::PI/2;
+        yaw += turtlelib::PI / 2;
         marker.scale.z = 0.25;
         marker.pose.position.x = x_coords.at(i);
         marker.pose.position.y = y_coords.at(i);
@@ -306,20 +327,20 @@ private:
     wall_publisher->publish(arena_marker_array);
 
 
-  
     // publish sensor data
     sensor_data_pub_->publish(sensor_readings);
   }
 
-  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg){
+  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)
+  {
     // convert wheel command ticks to rad/s
-    phi_l_rad_s = static_cast<double>(msg.left_velocity)*motor_cmd_per_rad_sec;
-    phi_r_rad_s = static_cast<double>(msg.right_velocity)*motor_cmd_per_rad_sec;
+    phi_l_rad_s = static_cast<double>(msg.left_velocity) * motor_cmd_per_rad_sec;
+    phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
 
-      // Update current config of robot based on wheel commands
+    // Update current config of robot based on wheel commands
     turtlelib::WheelPos cur_wheel_pos = turtlebot.get_current_wheel_pos();
-    double new_wheel_pos_r =(dt_time*phi_r_rad_s);
-    double new_wheel_pos_l = (dt_time*phi_l_rad_s);
+    double new_wheel_pos_r = (dt_time * phi_r_rad_s);
+    double new_wheel_pos_l = (dt_time * phi_l_rad_s);
 
     turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
 
@@ -330,10 +351,10 @@ private:
     turtle_y = current_pos.y;
     turtle_theta = current_pos.theta;
 
-    // update sensor data 
+    // update sensor data
     sensor_readings.stamp = get_clock()->now();
-    sensor_readings.left_encoder = (new_wheel_pos_l+prev_wheel_pos.l)*encoder_ticks_per_rad;
-    sensor_readings.right_encoder = (new_wheel_pos_r+prev_wheel_pos.r)*encoder_ticks_per_rad;
+    sensor_readings.left_encoder = (new_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
+    sensor_readings.right_encoder = (new_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
     prev_wheel_pos.l += new_wheel_pos_l;
     prev_wheel_pos.r += new_wheel_pos_r;
   }
@@ -344,7 +365,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
-  visualization_msgs::msg::MarkerArray marker_array;  
+  visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::MarkerArray arena_marker_array;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr wall_publisher;
@@ -355,7 +376,7 @@ private:
   double wheel_radius, track_width, motor_cmd_per_rad_sec;
   int motor_cmd_max;
   double encoder_ticks_per_rad, collision_radius;
-  double phi_r_rad_s=0.0, phi_l_rad_s=0.0;
+  double phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_pub_;
   nuturtlebot_msgs::msg::SensorData sensor_readings;
   turtlelib::RobotConfig current_pos;
