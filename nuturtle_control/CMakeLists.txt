@@ -37,6 +37,12 @@ ament_target_dependencies(turtle_control
                           turtlelib)
 target_link_libraries(turtle_control turtlelib::turtlelib "${cpp_typesupport_target}")
 
+rosidl_generate_interfaces(${PROJECT_NAME}_srv 
+                          "srv/Control.srv" 
+                          "srv/Spawn.srv" 
+                          LIBRARY_NAME ${PROJECT_NAME})
+
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 add_executable(odometry src/odometry.cpp)
 ament_target_dependencies(odometry
                           rclcpp
@@ -52,9 +58,6 @@ ament_target_dependencies(odometry
                           turtlesim)
 target_link_libraries(odometry turtlelib::turtlelib "${cpp_typesupport_target}")
 
-
-rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Control.srv" LIBRARY_NAME ${PROJECT_NAME})
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 add_executable(circle src/circle.cpp)
 ament_target_dependencies(circle
                           rclcpp

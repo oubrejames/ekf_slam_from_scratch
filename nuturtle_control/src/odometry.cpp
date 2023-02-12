@@ -10,7 +10,7 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "tf2_ros/transform_broadcaster.h"
-#include <turtlesim/srv/spawn.hpp>
+#include "nuturtle_control/srv/spawn.hpp"
 
 using namespace std::chrono_literals;
 
@@ -104,7 +104,7 @@ public:
       "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
 
     // Define initial_pose service
-    initial_pose_server_ = this->create_service<turtlesim::srv::Spawn>(
+    initial_pose_server_ = this->create_service<nuturtle_control::srv::Spawn>(
       "initial_pose",
       std::bind(&Odometry::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
   }
@@ -178,8 +178,8 @@ private:
   }
 
   void initial_pose_cb(
-    const std::shared_ptr<turtlesim::srv::Spawn::Request> req,
-    std::shared_ptr<turtlesim::srv::Spawn::Response>)
+    const std::shared_ptr<nuturtle_control::srv::Spawn::Request> req,
+    std::shared_ptr<nuturtle_control::srv::Spawn::Response>)
   {
     internal_odom =
     {track_width, wheel_radius, {req->x, req->y, req->theta},
@@ -195,7 +195,7 @@ private:
   turtlelib::DiffDrive internal_odom = {1.0, 1.0};
   size_t count_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  rclcpp::Service<turtlesim::srv::Spawn>::SharedPtr initial_pose_server_;
+  rclcpp::Service<nuturtle_control::srv::Spawn>::SharedPtr initial_pose_server_;
   turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
   double dt_time;

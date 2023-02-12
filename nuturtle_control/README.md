@@ -51,11 +51,12 @@ and the real world.
 # Services
 
 * `initial_pose` sets the robot's odometry to an initial position
-    * Type: turtlesim/srv/Spawn
-    * Service call: `ros2 service call /initial_pose /turtlesim/srv/Spawn "x: 0.0
-                        y: 0.0
-                        theta: 0.0
-                        "`
+    * Type: nuturtle_control/srv/Spawn
+    * Service call: `ros2 service call /initial_pose nuturtle_control/srv/Spawn "x: 0.0
+y: 0.0
+z: 0.0
+theta: 0.0" 
+`
 * `control` moves the robot in a circle when called
     * Type: nuturtle_control/srv/Control
     * Service call: `ros2 service call /control nuturtle_control/srv/Control "velocity: 0.0
