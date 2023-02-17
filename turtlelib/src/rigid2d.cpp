@@ -119,6 +119,7 @@ std::istream & operator>>(std::istream & is, Transform2D & tf)
   double deg = 0.0;
   double x = 0.0;
   double y = 0.0;
+  // Eat white space before trying to read anything - need to do
   if (is.peek() == 'd') {      // If the first character input is a bracket
     is >> tmp1 >> deg >> tmp2 >> x >> tmp3 >> y;
   } else {
