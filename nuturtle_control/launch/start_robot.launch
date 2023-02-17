@@ -62,6 +62,7 @@
   </include> 
   <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
 
+  <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher"/>
 
 
   <node pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id nusim/world --child-frame-id odom"/>

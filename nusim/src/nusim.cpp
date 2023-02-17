@@ -167,12 +167,12 @@ public:
 
     // Only create marker array if there are actually obstacles defines
     if (!obstacles_x.empty()) {
-      marker_array = make_marker_array("CYLINDER", obstacles_x, obstacles_y);
+      marker_array = make_obstacle_array( obstacles_x, obstacles_y);
     }
 
     // Make arena
-    arena_marker_array = make_marker_array(
-      "CUBE", std::vector<double> {arena_x_len / 2.0, 0.0,
+    arena_marker_array = make_wall_array(
+      std::vector<double> {arena_x_len / 2.0, 0.0,
         -arena_x_len / 2.0, 0.0},
       std::vector<double> {0.0, arena_y_len / 2, 0.0, -arena_y_len / 2});
 
@@ -222,8 +222,7 @@ private:
   /// @param b
   /// @param yaw
   /// @return
-  visualization_msgs::msg::MarkerArray make_marker_array(
-    const char * marker_type,
+  visualization_msgs::msg::MarkerArray make_obstacle_array(
     std::vector<double> x_coords,
     std::vector<double> y_coords)
   {
@@ -234,31 +233,78 @@ private:
     marker.header.stamp = get_clock()->now();
     for (size_t i = 0; i < (x_coords.size()); i++) {
       marker.id = i;
-      if (strcmp(marker_type, "CYLINDER") == 0) {
-        marker.type = visualization_msgs::msg::Marker::CYLINDER;
-        marker.action = visualization_msgs::msg::Marker::ADD;
-        marker.scale.x = obstacles_r * 2;
-        marker.scale.y = obstacles_r * 2;
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.scale.x = obstacles_r * 2;
+      marker.scale.y = obstacles_r * 2;
+      marker.scale.z = 0.25;
+      marker.pose.position.x = x_coords.at(i);
+      marker.pose.position.y = y_coords.at(i);
+      marker.pose.position.z = 0.25 / 2;
+
+      marker.pose.orientation.x = q.x();
+      marker.pose.orientation.y = q.y();
+      marker.pose.orientation.z = q.z();
+      marker.pose.orientation.w = q.w();
+      marker.color.a = 1.0;
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      mkr_array.markers.push_back(marker);
+    }
+    return mkr_array;
+  }
+
+
+  /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
+  /// @return marker array with all obstacles
+
+  /// @brief
+  /// @param marker_type
+  /// @param x_coords
+  /// @param y_coords
+  /// @param x_len
+  /// @param y_len
+  /// @param radius
+  /// @param r
+  /// @param g
+  /// @param b
+  /// @param yaw
+  /// @return
+  visualization_msgs::msg::MarkerArray make_wall_array(
+    std::vector<double> x_coords,
+    std::vector<double> y_coords)
+  {
+    double yaw = 0.0;//turtlelib::PI / 2;
+    visualization_msgs::msg::MarkerArray mkr_array;
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "nusim/world";
+    marker.header.stamp = get_clock()->now();
+
+    // Create X markers
+    for (size_t i = 0; i < (x_coords.size()); i++) {
+      marker.id = i;
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      if(i % 2 == 0){
+        // Create Y markers
+        marker.scale.x = 0.2;
+        marker.scale.y = arena_y_len;
+        q.setRPY(0.0, 0.0, yaw);
         marker.scale.z = 0.25;
         marker.pose.position.x = x_coords.at(i);
         marker.pose.position.y = y_coords.at(i);
         marker.pose.position.z = 0.25 / 2;
-
         marker.pose.orientation.x = q.x();
         marker.pose.orientation.y = q.y();
         marker.pose.orientation.z = q.z();
         marker.pose.orientation.w = q.w();
-        marker.color.a = 1.0;
-        marker.color.r = 1.0;
-        marker.color.g = 0.0;
-        marker.color.b = 0.0;
-      } else {
-        marker.type = visualization_msgs::msg::Marker::CUBE;
-        marker.action = visualization_msgs::msg::Marker::ADD;
+      }
+      else {
+        // Create X markers
         marker.scale.x = arena_x_len;
         marker.scale.y = 0.2;
         q.setRPY(0.0, 0.0, yaw);
-        yaw += turtlelib::PI / 2;
         marker.scale.z = 0.25;
         marker.pose.position.x = x_coords.at(i);
         marker.pose.position.y = y_coords.at(i);
@@ -267,14 +313,14 @@ private:
         marker.pose.orientation.y = q.y();
         marker.pose.orientation.z = q.z();
         marker.pose.orientation.w = q.w();
-        marker.color.a = 1.0;
-        marker.color.r = 0.3;
-        marker.color.g = 0.5;
-        marker.color.b = 0.2;
       }
-
+      marker.color.a = 1.0;
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
       mkr_array.markers.push_back(marker);
     }
+    yaw += turtlelib::PI / 2;
     return mkr_array;
   }
 
