@@ -77,6 +77,7 @@ public:
       RCLCPP_ERROR_STREAM(get_logger(), "collision_radius not defined"); rclcpp::shutdown();
     }
 
+
     // Define arena wall parameters
     auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
     arena_x_len_desc.description = "Length of arena in the x direction";
@@ -89,7 +90,9 @@ public:
     arena_y_len = get_parameter("~y_length").get_parameter_value().get<double>();
 
 
+    // Define a DiffDrive object to represent the turtlebot
     turtlebot = turtlelib::DiffDrive{track_width, wheel_radius};
+
 
     // Publisher to publish current timestep
     time_publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
@@ -103,23 +106,28 @@ public:
     timer_ = create_wall_timer(
       hz_in_ms, std::bind(&NusimNode::timer_callback, this));
 
+    // Calculate dt for later calculations
     dt_time = 1.0 / (double)hz;
+
 
     // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
       "~/reset",
       std::bind(&NusimNode::reset, this, std::placeholders::_1, std::placeholders::_2));
 
-    // Define transform broadcaster
+
+    // Define transform broadcaster to be used between nusim world and red robot
     tf_broadcaster_ =
       std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
 
     // Define teleport service
     teleport_server_ = this->create_service<nusim::srv::Teleport>(
       "~/teleport",
       std::bind(&NusimNode::teleport, this, std::placeholders::_1, std::placeholders::_2));
 
-    // Create parameters for turtlebot position
+
+    // Create parameters for turtlebot initial position
     auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
     x0_desc.description = "Initial x position of turtlebot";
     declare_parameter("x0", 0.3, x0_desc);
@@ -137,6 +145,7 @@ public:
     declare_parameter("theta0", 0.0, theta0_desc);
     turtle_theta0 = get_parameter("theta0").get_parameter_value().get<double>();
     turtle_theta = turtle_theta0;
+
 
     // Create parameters for obstacle position and size
     auto ob_x_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -156,6 +165,7 @@ public:
     declare_parameter("obstacles/r", 0.05, ob_r_desc);
     obstacles_r = get_parameter("obstacles/r").get_parameter_value().get<double>();
 
+
     // Define a publisher to publish obstacle and wall markers
     obstacle_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/obstacles",
@@ -165,7 +175,8 @@ public:
       "~/walls",
       10);
 
-    // Only create marker array if there are actually obstacles defines
+
+    // Only create obstacle marker array if there are actually obstacles defines
     if (!obstacles_x.empty()) {
       marker_array = make_obstacle_array( obstacles_x, obstacles_y);
     }
@@ -207,26 +218,16 @@ private:
   double obstacles_r;
   std::vector<double> obstacles_x, obstacles_y;
 
-  /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
-  /// @return marker array with all obstacles
 
-  /// @brief
-  /// @param marker_type
-  /// @param x_coords
-  /// @param y_coords
-  /// @param x_len
-  /// @param y_len
-  /// @param radius
-  /// @param r
-  /// @param g
-  /// @param b
-  /// @param yaw
-  /// @return
+  /// @brief create a marker array to publish obstacle cylinders
+  /// @param x_coords x coordinates of the obstacles
+  /// @param y_coords y coordinates of the obstacles
+  /// @return maker area containing obstacle markers
   visualization_msgs::msg::MarkerArray make_obstacle_array(
     std::vector<double> x_coords,
     std::vector<double> y_coords)
   {
-    double yaw = turtlelib::PI / 2;
+    // Initialize marker array
     visualization_msgs::msg::MarkerArray mkr_array;
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "nusim/world";
@@ -256,26 +257,16 @@ private:
   }
 
 
-  /// @brief create an array of markers based of parameter input (obstacles/x, obstacles/y, obstacles/r)
-  /// @return marker array with all obstacles
-
-  /// @brief
-  /// @param marker_type
-  /// @param x_coords
-  /// @param y_coords
-  /// @param x_len
-  /// @param y_len
-  /// @param radius
-  /// @param r
-  /// @param g
-  /// @param b
-  /// @param yaw
-  /// @return
+  /// @brief create a marker array to publish arena walls
+  /// @param x_coords x coordinates of the obstacles
+  /// @param y_coords y coordinates of the obstacles
+  /// @return maker area containing wall markers
   visualization_msgs::msg::MarkerArray make_wall_array(
     std::vector<double> x_coords,
     std::vector<double> y_coords)
   {
-    double yaw = 0.0;//turtlelib::PI / 2;
+    double yaw = 0.0;
+    // Initialize marker array
     visualization_msgs::msg::MarkerArray mkr_array;
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "nusim/world";
@@ -320,7 +311,10 @@ private:
       marker.color.b = 0.0;
       mkr_array.markers.push_back(marker);
     }
+
+    // Change marker angle by 90 degrees to make X and Y walls perpendicular
     yaw += turtlelib::PI / 2;
+
     return mkr_array;
   }
 
@@ -331,6 +325,7 @@ private:
     const std::shared_ptr<nusim::srv::Teleport::Request> req,
     std::shared_ptr<nusim::srv::Teleport::Response>)
   {
+    // Update robot's current position with service request input position
     turtle_x = req->x;
     turtle_y = req->y;
     turtle_theta = req->theta;
@@ -351,14 +346,17 @@ private:
 
   void timer_callback()
   {
-    auto message = std_msgs::msg::UInt64();
-    message.data = timestep++;
-    time_publisher_->publish(message);
+    // Create message and publish timestep
+    auto time_step_msg = std_msgs::msg::UInt64();
+    time_step_msg.data = timestep++;
+    time_publisher_->publish(time_step_msg);
 
-    // Update world to robot transformation info
+    // Update TF time stamp and declare frames
     t.header.stamp = get_clock()->now();
     t.header.frame_id = "nusim/world";
     t.child_frame_id = "red/base_footprint";
+
+    // Update world to robot transformation to turtlebot current location
     t.transform.translation.x = turtle_x;
     t.transform.translation.y = turtle_y;
     q.setRPY(0.0, 0.0, turtle_theta);
@@ -371,7 +369,6 @@ private:
     tf_broadcaster_->sendTransform(t);
     obstacle_publisher->publish(marker_array);
     wall_publisher->publish(arena_marker_array);
-
 
     // publish sensor data
     sensor_data_pub_->publish(sensor_readings);
@@ -387,16 +384,21 @@ private:
     double new_wheel_pos_r = (dt_time * phi_r_rad_s);
     double new_wheel_pos_l = (dt_time * phi_l_rad_s);
 
+    // Compute forward kinematics to update the robot's current position based off of wheel commands
     turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
 
+    // Use getter to obtain robots current configuration
     current_pos = turtlebot.get_current_pos();
 
-    // Update turtlebot position for broadcasting
+    // Update turtlebot position for broadcasting its transformation
     turtle_x = current_pos.x;
     turtle_y = current_pos.y;
     turtle_theta = current_pos.theta;
 
     // update sensor data
+    // Update the encoder readings by incrementing new position plus the old position and converting 
+    // it to encoder ticks
+    // Update the previous wheel position
     sensor_readings.stamp = get_clock()->now();
     sensor_readings.left_encoder = (new_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
     sensor_readings.right_encoder = (new_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
@@ -405,30 +407,28 @@ private:
   }
 
   size_t count_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr time_publisher_;
-  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
+  turtlelib::DiffDrive turtlebot = {1.0, 1.0};
+  double wheel_radius = 0.0, track_width = 0.0, motor_cmd_per_rad_sec = 0.0; 
+  double encoder_ticks_per_rad = 0.0, collision_radius = 0.0, phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
+  double dt_time = 0.0, arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
+  int motor_cmd_max = 0;
+
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
-  visualization_msgs::msg::MarkerArray marker_array;
-  visualization_msgs::msg::MarkerArray arena_marker_array;
+  rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr wall_publisher;
-
-  // you are here, creating wheel command sub
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_commands_sub_;
-  turtlelib::DiffDrive turtlebot = {1.0, 1.0};
-  double wheel_radius, track_width, motor_cmd_per_rad_sec;
-  int motor_cmd_max;
-  double encoder_ticks_per_rad, collision_radius;
-  double phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_pub_;
+  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr time_publisher_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
+  rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
+
   nuturtlebot_msgs::msg::SensorData sensor_readings;
+  visualization_msgs::msg::MarkerArray marker_array;
+  visualization_msgs::msg::MarkerArray arena_marker_array;
+
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
-  double dt_time = 0.0;
-  double arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
-
 };
 
 int main(int argc, char * argv[])
