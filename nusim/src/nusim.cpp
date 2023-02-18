@@ -18,6 +18,9 @@
 #include "turtlelib/diff_drive.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include <vector>
+#include <nav_msgs/msg/path.hpp>
+#include "geometry_msgs/msg/pose_stamped.hpp"
+
 using namespace std::chrono_literals;
 
 class NusimNode : public rclcpp::Node
@@ -207,6 +210,10 @@ public:
       "red/sensor_data",
       10);
 
+    // Define path publisher
+    path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
+      "~/path",
+      10);
   }
 
 private:
@@ -370,22 +377,15 @@ private:
     obstacle_publisher->publish(marker_array);
     wall_publisher->publish(arena_marker_array);
 
-    // publish sensor data
-    sensor_data_pub_->publish(sensor_readings);
-  }
-
-  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)
-  {
-    // convert wheel command ticks to rad/s
-    phi_l_rad_s = static_cast<double>(msg.left_velocity) * motor_cmd_per_rad_sec;
-    phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
-
     // Update current config of robot based on wheel commands
-    double new_wheel_pos_r = (dt_time * phi_r_rad_s);
-    double new_wheel_pos_l = (dt_time * phi_l_rad_s);
+    double delta_wheel_pos_r = (dt_time * phi_r_rad_s);
+    double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
+
+    RCLCPP_ERROR_STREAM(get_logger(), "phi_r_rad_s " << phi_r_rad_s);
+    RCLCPP_ERROR_STREAM(get_logger(), "phi_r_rad_s " << phi_r_rad_s);
 
     // Compute forward kinematics to update the robot's current position based off of wheel commands
-    turtlebot.forward_kinematics({new_wheel_pos_r, new_wheel_pos_l});
+    turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
     // Use getter to obtain robots current configuration
     current_pos = turtlebot.get_current_pos();
@@ -399,12 +399,26 @@ private:
     // Update the encoder readings by incrementing new position plus the old position and converting 
     // it to encoder ticks
     // Update the previous wheel position
+    sensor_readings.left_encoder = (delta_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
+    sensor_readings.right_encoder = (delta_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
+    prev_wheel_pos.l += delta_wheel_pos_l;
+    prev_wheel_pos.r += delta_wheel_pos_r;
+
+
+    // publish sensor data
     sensor_readings.stamp = get_clock()->now();
-    sensor_readings.left_encoder = (new_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
-    sensor_readings.right_encoder = (new_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
-    prev_wheel_pos.l += new_wheel_pos_l;
-    prev_wheel_pos.r += new_wheel_pos_r;
+
+    sensor_data_pub_->publish(sensor_readings);
   }
+
+  void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)
+  {
+    // convert wheel command ticks to rad/s
+    phi_l_rad_s = static_cast<double>(msg.left_velocity) * motor_cmd_per_rad_sec;
+    phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
+  }
+
+  // void populate_path()
 
   size_t count_;
   turtlelib::DiffDrive turtlebot = {1.0, 1.0};
@@ -412,6 +426,8 @@ private:
   double encoder_ticks_per_rad = 0.0, collision_radius = 0.0, phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   double dt_time = 0.0, arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
   int motor_cmd_max = 0;
+  double delta_wheel_pos_r = 0.0;
+  double delta_wheel_pos_l = 0.0;
 
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -420,13 +436,14 @@ private:
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_commands_sub_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_pub_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr time_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_server_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_server_;
 
   nuturtlebot_msgs::msg::SensorData sensor_readings;
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::MarkerArray arena_marker_array;
-
+  nav_msgs::msg::Path visited_path;
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
 };

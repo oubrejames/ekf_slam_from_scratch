@@ -20,6 +20,7 @@ find_package(tf2_ros REQUIRED)
 find_package(turtlesim REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 
 find_package(geometry_msgs REQUIRED)
@@ -39,7 +40,8 @@ ament_target_dependencies(nusim
                           turtlesim
                           visualization_msgs
                           nuturtlebot_msgs
-                          turtlelib)
+                          turtlelib
+                          nav_msgs)
 
 target_link_libraries(nusim turtlelib::turtlelib "${cpp_typesupport_target}")
 

@@ -90,7 +90,7 @@ public:
   }
 
 private:
-  /// @brief subscribe to the cmd_vel topic to get robot velocity commands (rads/s)
+  /// @brief subscribe to the cmd_vel topic to get robot velocity commands (m/s)
   /// @param msg the Twist from the cmd_vel topic
   void velocity_cb(const geometry_msgs::msg::Twist & msg)
   {
@@ -107,8 +107,8 @@ private:
 
     // Convert to a wheel command msgs (ticks)
     nuturtlebot_msgs::msg::WheelCommands wheel_cmd_msg;
-    wheel_cmd_msg.left_velocity = wheel_command_rad_s.l / motor_cmd_per_rad_sec;
-    wheel_cmd_msg.right_velocity = wheel_command_rad_s.r / motor_cmd_per_rad_sec;
+    wheel_cmd_msg.left_velocity = static_cast<int>(wheel_command_rad_s.l / motor_cmd_per_rad_sec);
+    wheel_cmd_msg.right_velocity = static_cast<int>(wheel_command_rad_s.r / motor_cmd_per_rad_sec);
 
     // Check if wheel commands are over max velocity
     // Convert velocity from rads/sec to ticks/sec to compare to motor_cmd_max
