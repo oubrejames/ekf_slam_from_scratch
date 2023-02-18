@@ -214,6 +214,10 @@ public:
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
       "~/path",
       10);
+
+    // Define path header
+    visited_path.header.frame_id = "nusim/world";
+    visited_path.header.stamp = get_clock()->now();
   }
 
 private:
@@ -381,9 +385,6 @@ private:
     double delta_wheel_pos_r = (dt_time * phi_r_rad_s);
     double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
 
-    RCLCPP_ERROR_STREAM(get_logger(), "phi_r_rad_s " << phi_r_rad_s);
-    RCLCPP_ERROR_STREAM(get_logger(), "phi_r_rad_s " << phi_r_rad_s);
-
     // Compute forward kinematics to update the robot's current position based off of wheel commands
     turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
@@ -407,8 +408,16 @@ private:
 
     // publish sensor data
     sensor_readings.stamp = get_clock()->now();
-
     sensor_data_pub_->publish(sensor_readings);
+
+    // Add point to path and publish
+    if (time_count % 100 == 0){
+      visited_path.header.stamp = get_clock()->now();
+      visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
+      path_pub_->publish(visited_path);
+    }
+
+    time_count ++;
   }
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)
@@ -418,14 +427,28 @@ private:
     phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
   }
 
-  // void populate_path()
+  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
+    geometry_msgs::msg::PoseStamped pose_stamped;
+    pose_stamped.header.frame_id = "red/base_footprint";
+    pose_stamped.header.stamp = get_clock()->now();
+    pose_stamped.pose.position.x = x;
+    pose_stamped.pose.position.y = y;
+
+    q.setRPY(0.0, 0.0, theta);
+    pose_stamped.pose.orientation.x = q.x();
+    pose_stamped.pose.orientation.y = q.y();
+    pose_stamped.pose.orientation.z = q.z();
+    pose_stamped.pose.orientation.w = q.w();
+
+    return pose_stamped;
+  }
 
   size_t count_;
   turtlelib::DiffDrive turtlebot = {1.0, 1.0};
   double wheel_radius = 0.0, track_width = 0.0, motor_cmd_per_rad_sec = 0.0; 
   double encoder_ticks_per_rad = 0.0, collision_radius = 0.0, phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   double dt_time = 0.0, arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
-  int motor_cmd_max = 0;
+  int motor_cmd_max = 0, time_count = 0.0;
   double delta_wheel_pos_r = 0.0;
   double delta_wheel_pos_l = 0.0;
 
