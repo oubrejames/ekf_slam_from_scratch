@@ -125,7 +125,7 @@ private:
   {
   
     // Add point to path and publish
-    if (time_count % 200 == 0){
+    if (time_count % 100 == 0){
       visited_path.header.stamp = get_clock()->now();
       visited_path.poses.push_back(create_pose_stamped(current_pos.x, current_pos.y, current_pos.theta));
       path_pub_->publish(visited_path);

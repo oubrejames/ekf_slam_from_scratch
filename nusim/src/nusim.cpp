@@ -20,6 +20,7 @@
 #include <vector>
 #include <nav_msgs/msg/path.hpp>
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include <random>
 
 using namespace std::chrono_literals;
 
@@ -218,6 +219,18 @@ public:
     // Define path header
     visited_path.header.frame_id = "nusim/world";
     visited_path.header.stamp = get_clock()->now();
+
+    // Add noise parameter
+    auto input_noise_desc = rcl_interfaces::msg::ParameterDescriptor();
+    input_noise_desc.description = "Input noise to simulate sensor noise";
+    this->declare_parameter("input_noise", 0.0, input_noise_desc);
+    input_noise = this->get_parameter("input_noise").get_parameter_value().get<double>();
+
+    // Add slip fraction
+    auto slip_fraction_desc = rcl_interfaces::msg::ParameterDescriptor();
+    slip_fraction_desc.description = "Fraction to simulate wheel slippage";
+    this->declare_parameter("slip_fraction", 0.0, slip_fraction_desc);
+    slip_fraction = this->get_parameter("slip_fraction").get_parameter_value().get<double>();
   }
 
 private:
@@ -411,7 +424,7 @@ private:
     sensor_data_pub_->publish(sensor_readings);
 
     // Add point to path and publish
-    if (timestep % 200 == 0){
+    if (timestep % 100 == 0){
       visited_path.header.stamp = get_clock()->now();
       visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
       path_pub_->publish(visited_path);
@@ -423,6 +436,29 @@ private:
     // convert wheel command ticks to rad/s
     phi_l_rad_s = static_cast<double>(msg.left_velocity) * motor_cmd_per_rad_sec;
     phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
+
+    // Apply noise if there is any noise to apply and we are not sending stop commands
+    if(input_noise > 0.0 && !turtlelib::almost_equal(msg.left_velocity, 0.0) && !turtlelib::almost_equal(msg.right_velocity, 0.0)){
+      // Create a zero mean Gaussian distribution with a variance equal to the input nosie
+      std::normal_distribution<> gaus_dist(0.0, input_noise);
+
+      // Update the motor velocities to include the noise
+      phi_r_rad_s += gaus_dist(get_random());
+      phi_l_rad_s += gaus_dist(get_random());
+    }
+
+  }
+
+  /// @brief SAY THAT I GOT THIS FROM MATT'S NOTES
+  /// @return 
+  std::mt19937 & get_random()
+  {
+      // static variables inside a function are created once and persist for the remainder of the program
+      static std::random_device rd{}; 
+      static std::mt19937 mt{rd()};
+      // we return a reference to the pseudo-random number genrator object. This is always the
+      // same object every time get_random is called
+      return mt;
   }
 
   geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
@@ -449,7 +485,7 @@ private:
   int motor_cmd_max = 0;
   double delta_wheel_pos_r = 0.0;
   double delta_wheel_pos_l = 0.0;
-
+  double input_noise = 0.0, slip_fraction = 0.0;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher;
