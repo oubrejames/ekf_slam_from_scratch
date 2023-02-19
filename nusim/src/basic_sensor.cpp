@@ -77,7 +77,7 @@ private:
         geometry_msgs::msg::TransformStamped t;
         try {
           t = tf_buffer_->lookupTransform(
-            "red/base_footprint", "nusim/world",
+            "nusim/world", "red/base_footprint",
             tf2::TimePointZero);
         } catch (const tf2::TransformException & ex) {
           RCLCPP_INFO(
@@ -92,9 +92,9 @@ private:
         for(int i=0; i < (int)sensed_obstacles.markers.size(); i++){
             // Check if the obstacle intersects with the max range of the robot
 
-            // // Add noise to the position of the obstacle
-            // sensed_obstacles.markers.at(i).pose.position.x += gaus_dist(get_random());
-            // sensed_obstacles.markers.at(i).pose.position.y += gaus_dist(get_random());
+            // Add noise to the position of the obstacle
+            sensed_obstacles.markers.at(i).pose.position.x += gaus_dist(get_random());
+            sensed_obstacles.markers.at(i).pose.position.y += gaus_dist(get_random());
 
             // Caclulate the straight line distance between center of robot to center of obstacle
             double dist_btw_centers = std::sqrt(
@@ -103,7 +103,7 @@ private:
 
             // If the straight line distance minus the obsacle radius is less than the max radius of
             // the robot than the obstacle is in range -> ADD
-            if(dist_btw_centers < max_range){
+            if(dist_btw_centers - sensed_obstacles.markers.at(i).scale.x/2 < max_range){
                 sensed_obstacles.markers.at(i).action = visualization_msgs::msg::Marker::ADD;
             }
             //Else -> DELETE
