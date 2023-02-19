@@ -398,6 +398,16 @@ private:
     double delta_wheel_pos_r = (dt_time * phi_r_rad_s);
     double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
 
+    // Apply wheel slippage if slip fraction specified
+    if(slip_fraction > 0.0 && !turtlelib::almost_equal(delta_wheel_pos_l, 0.0) && !turtlelib::almost_equal(delta_wheel_pos_r, 0.0)){
+      // Create a zero mean Gaussian distribution with a variance equal to the input nosie
+      std::uniform_real_distribution<> uni_dist(-slip_fraction, slip_fraction);
+
+      // Update the motor velocities to include the noise
+      delta_wheel_pos_r += uni_dist(get_random());
+      delta_wheel_pos_l += uni_dist(get_random());
+    }
+
     // Compute forward kinematics to update the robot's current position based off of wheel commands
     turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
