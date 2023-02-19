@@ -45,6 +45,20 @@ ament_target_dependencies(nusim
 
 target_link_libraries(nusim turtlelib::turtlelib "${cpp_typesupport_target}")
 
+add_executable(basic_sensor src/basic_sensor.cpp)
+ament_target_dependencies(basic_sensor
+                          rclcpp
+                          std_msgs
+                          std_srvs
+                          tf2
+                          tf2_ros
+                          turtlesim
+                          visualization_msgs
+                          nuturtlebot_msgs
+                          turtlelib
+                          nav_msgs)
+
+target_link_libraries(basic_sensor turtlelib::turtlelib "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -60,6 +74,7 @@ endif()
 
 install(TARGETS
   nusim
+  basic_sensor
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
