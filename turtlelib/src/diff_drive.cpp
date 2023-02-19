@@ -87,6 +87,11 @@ RobotConfig DiffDrive::get_current_pos() const
   return current_pos;
 }
 
+void DiffDrive::set_current_pos(RobotConfig pose)
+{
+  current_pos = pose;
+}
+
 WheelPos DiffDrive::get_current_wheel_pos() const
 {
   return current_wheel_pos;

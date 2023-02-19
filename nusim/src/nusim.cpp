@@ -408,16 +408,27 @@ private:
       delta_wheel_pos_l += uni_dist(get_random());
     }
 
+    // Save previous pose
+    auto prev_pos = turtlebot.get_current_pos();;
+
     // Compute forward kinematics to update the robot's current position based off of wheel commands
     turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
     // Use getter to obtain robots current configuration
     current_pos = turtlebot.get_current_pos();
-
-    // Update turtlebot position for broadcasting its transformation
-    turtle_x = current_pos.x;
-    turtle_y = current_pos.y;
-    turtle_theta = current_pos.theta;
+  
+    // Check if you're current movement makes you collide with obstacle or wall
+    if(!obstacle_collision(current_pos) && !wall_collision(current_pos)){
+      // If you are not colliding with a wall or obstacle, update position as normal
+      // Update turtlebot position for broadcasting its transformation
+      turtle_x = current_pos.x;
+      turtle_y = current_pos.y;
+      turtle_theta = current_pos.theta;
+    }
+    else{
+      // If you are colliding, do not update turtle bot TF and reset turtlebots location to prev
+      turtlebot.set_current_pos(prev_pos);
+    }
 
     // update sensor data
     // Update the encoder readings by incrementing new position plus the old position and converting 
@@ -439,6 +450,35 @@ private:
       visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
       path_pub_->publish(visited_path);
     }
+
+  }
+
+  bool obstacle_collision(turtlelib::RobotConfig robot_position){
+    // Loop through each of the sensed obstacles in the marker array
+    for(int i=0; i < (int)marker_array.markers.size(); i++){
+        // Check if the obstacle intersects with the collision radius of the robot
+
+        // Caclulate the straight line distance between center of robot to center of obstacle
+        double dist_btw_centers = std::sqrt(
+            (robot_position.x-marker_array.markers.at(i).pose.position.x)*(robot_position.x-marker_array.markers.at(i).pose.position.x)
+            + (robot_position.y-marker_array.markers.at(i).pose.position.y)*(robot_position.y-marker_array.markers.at(i).pose.position.y));
+
+        // If the distance between the robot center and obstacle center is less that the collision
+        // radius + the obstacle radius, you are colliding
+        if (dist_btw_centers <= collision_radius + obstacles_r){
+          return true;
+        }
+    }
+  return false;
+  }
+
+  bool wall_collision(turtlelib::RobotConfig robot_position){
+    // If the robot's x or y position is greater than or equal to half of the length of the arena walls
+    // minus half the width of the wall then you are colliding
+    // Half because origin at 0,0
+    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) | (abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2)){
+    return true;
+    } else {return false;}
   }
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)

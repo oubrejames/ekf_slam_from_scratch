@@ -88,6 +88,11 @@ public:
   /// \brief get the current wheel position of the robot
   /// \return the robot's current wheel position as a WheelPos
   WheelPos get_current_wheel_pos() const;
+
+  /// @brief Set the robot's current position to a specified position
+  /// @param pose pose to set to
+  void set_current_pos(RobotConfig pose);
+
 };
 }
 #endif
