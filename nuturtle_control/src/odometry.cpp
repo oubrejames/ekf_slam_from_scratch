@@ -11,6 +11,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "tf2_ros/transform_broadcaster.h"
 #include "nuturtle_control/srv/spawn.hpp"
+#include <nav_msgs/msg/path.hpp>
+#include "geometry_msgs/msg/pose_stamped.hpp"
 
 using namespace std::chrono_literals;
 
@@ -107,11 +109,44 @@ public:
     initial_pose_server_ = this->create_service<nuturtle_control::srv::Spawn>(
       "initial_pose",
       std::bind(&Odometry::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
+
+    // Define path header
+    visited_path.header.frame_id = "nusim/world";
+    visited_path.header.stamp = get_clock()->now();
+
+    // Define path publisher
+    path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
+      "~/path",
+      10);
   }
 
 private:
   void timer_callback()
   {
+  
+    // Add point to path and publish
+    if (time_count % 200 == 0){
+      visited_path.header.stamp = get_clock()->now();
+      visited_path.poses.push_back(create_pose_stamped(current_pos.x, current_pos.y, current_pos.theta));
+      path_pub_->publish(visited_path);
+    }
+    time_count ++;
+  }
+
+  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
+    geometry_msgs::msg::PoseStamped pose_stamped;
+    pose_stamped.header.frame_id = "red/base_footprint";
+    pose_stamped.header.stamp = get_clock()->now();
+    pose_stamped.pose.position.x = x;
+    pose_stamped.pose.position.y = y;
+
+    q.setRPY(0.0, 0.0, theta);
+    pose_stamped.pose.orientation.x = q.x();
+    pose_stamped.pose.orientation.y = q.y();
+    pose_stamped.pose.orientation.z = q.z();
+    pose_stamped.pose.orientation.w = q.w();
+
+    return pose_stamped;
   }
 
   /// @brief
@@ -198,7 +233,12 @@ private:
   rclcpp::Service<nuturtle_control::srv::Spawn>::SharedPtr initial_pose_server_;
   turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
-  double dt_time;
+  double dt_time = 0.005;
+  int time_count = 0;
+  nav_msgs::msg::Path visited_path;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+  tf2::Quaternion q;
+
 };
 
 int main(int argc, char * argv[])

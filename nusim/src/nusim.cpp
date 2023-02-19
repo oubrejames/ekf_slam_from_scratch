@@ -223,7 +223,7 @@ public:
 private:
   uint64_t timestep = 0;
   geometry_msgs::msg::TransformStamped t;
-  tf2::Quaternion q;
+  tf2::Quaternion q, q1;
   double turtle_x0, turtle_y0, turtle_theta0;
   double turtle_x, turtle_y, turtle_theta;
   double obstacles_r;
@@ -370,11 +370,11 @@ private:
     // Update world to robot transformation to turtlebot current location
     t.transform.translation.x = turtle_x;
     t.transform.translation.y = turtle_y;
-    q.setRPY(0.0, 0.0, turtle_theta);
-    t.transform.rotation.x = q.x();
-    t.transform.rotation.y = q.y();
-    t.transform.rotation.z = q.z();
-    t.transform.rotation.w = q.w();
+    q1.setRPY(0.0, 0.0, turtle_theta);
+    t.transform.rotation.x = q1.x();
+    t.transform.rotation.y = q1.y();
+    t.transform.rotation.z = q1.z();
+    t.transform.rotation.w = q1.w();
 
     // Send transformation
     tf_broadcaster_->sendTransform(t);
@@ -411,13 +411,11 @@ private:
     sensor_data_pub_->publish(sensor_readings);
 
     // Add point to path and publish
-    if (time_count % 100 == 0){
+    if (timestep % 200 == 0){
       visited_path.header.stamp = get_clock()->now();
       visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
       path_pub_->publish(visited_path);
     }
-
-    time_count ++;
   }
 
   void wheel_commands_cb(const nuturtlebot_msgs::msg::WheelCommands & msg)
@@ -448,7 +446,7 @@ private:
   double wheel_radius = 0.0, track_width = 0.0, motor_cmd_per_rad_sec = 0.0; 
   double encoder_ticks_per_rad = 0.0, collision_radius = 0.0, phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   double dt_time = 0.0, arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
-  int motor_cmd_max = 0, time_count = 0.0;
+  int motor_cmd_max = 0;
   double delta_wheel_pos_r = 0.0;
   double delta_wheel_pos_l = 0.0;
 
