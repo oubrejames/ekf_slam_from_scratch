@@ -49,13 +49,9 @@ add_executable(basic_sensor src/basic_sensor.cpp)
 ament_target_dependencies(basic_sensor
                           rclcpp
                           std_msgs
-                          std_srvs
                           tf2
                           tf2_ros
-                          turtlesim
                           visualization_msgs
-                          nuturtlebot_msgs
-                          turtlelib
                           nav_msgs)
 
 target_link_libraries(basic_sensor turtlelib::turtlelib "${cpp_typesupport_target}")
