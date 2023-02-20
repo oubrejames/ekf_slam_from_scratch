@@ -56,6 +56,17 @@ ament_target_dependencies(basic_sensor
 
 target_link_libraries(basic_sensor turtlelib::turtlelib "${cpp_typesupport_target}")
 
+add_executable(fake_laser_scan src/fake_laser_scan.cpp)
+ament_target_dependencies(fake_laser_scan
+                          rclcpp
+                          std_msgs
+                          tf2
+                          tf2_ros
+                          visualization_msgs
+                          nav_msgs)
+
+target_link_libraries(fake_laser_scan turtlelib::turtlelib "${cpp_typesupport_target}")
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
