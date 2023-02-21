@@ -476,7 +476,7 @@ private:
     // If the robot's x or y position is greater than or equal to half of the length of the arena walls
     // minus half the width of the wall then you are colliding
     // Half because origin at 0,0
-    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) | (abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2)){
+    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) | (abs(robot_position.y)+collision_radius >= arena_y_len/2-0.2/2)){
     return true;
     } else {return false;}
   }

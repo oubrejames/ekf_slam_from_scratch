@@ -8,6 +8,7 @@
 #include <cmath>
 #include <geometry_msgs/msg/twist.hpp>
 #include <tuple>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
 using namespace std::chrono_literals;
 
@@ -15,19 +16,38 @@ class FakeLaser : public rclcpp::Node
 {
 public:
     FakeLaser()
-    : Node("fake_laser"), count_(0)
+    : Node("fake_laser_scan"), count_(0)
     {
-        // // Define parameter to change basic sensor noise
-        // auto basic_sensor_variance_desc = rcl_interfaces::msg::ParameterDescriptor();
-        // basic_sensor_variance_desc.description = "Variance to change sensor noise for basic sensor";
-        // declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
-        // basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
-        // // Define parameter to change maximum range of the sensor
-        // auto max_range_desc = rcl_interfaces::msg::ParameterDescriptor();
-        // max_range_desc.description = "Maximum range for basic sensor (m)";
-        // declare_parameter("max_range", 1.0, max_range_desc);
-        // max_range = get_parameter("max_range").get_parameter_value().get<double>();
+        // Define parameter for minumum angle on laser scan
+        auto angle_min_desc = rcl_interfaces::msg::ParameterDescriptor();
+        angle_min_desc.description = "Minumum angle on laser scan";
+        declare_parameter("angle_min", 0.0, angle_min_desc);
+        angle_min = get_parameter("angle_min").get_parameter_value().get<double>();
+
+        // Define parameter for maximum angle on laser scan
+        auto angle_max_desc = rcl_interfaces::msg::ParameterDescriptor();
+        angle_max_desc.description = "Maximum angle on laser scan";
+        declare_parameter("angle_max", 6.2657318115234375, angle_max_desc);
+        angle_max = get_parameter("angle_max").get_parameter_value().get<double>();
+
+       // Define parameter for angle incriment on laser scan
+        auto angle_increment_desc = rcl_interfaces::msg::ParameterDescriptor();
+        angle_increment_desc.description = "The angle that the scanner is incrimenting by";
+        declare_parameter("angle_increment", 0.01745329238474369, angle_increment_desc);
+        angle_increment = get_parameter("angle_increment").get_parameter_value().get<double>();
+
+        // Define parameter to change maximum range of the sensor
+        auto max_range_desc = rcl_interfaces::msg::ParameterDescriptor();
+        max_range_desc.description = "Maximum range for fake laser scanner (m)";
+        declare_parameter("max_range", 3.5, max_range_desc);
+        max_range = get_parameter("max_range").get_parameter_value().get<double>();
+
+        // Define parameter to change maximum range of the sensor
+        auto min_range_desc = rcl_interfaces::msg::ParameterDescriptor();
+        min_range_desc.description = "Minimum range for fake laser scanner (m)";
+        declare_parameter("min_range", 0.11999999731779099, min_range_desc);
+        min_range = get_parameter("min_range").get_parameter_value().get<double>();
 
         // Create 5 Hz timer
         auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (5.0)));
@@ -45,7 +65,7 @@ public:
             "/nusim/obstacles", 10, std::bind(&FakeLaser::real_obstacles_cb, this, std::placeholders::_1));
 
         // Publisher to publish sensed obstacles
-        sensed_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker_array", 10);
+        laser_scan_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("fake_laser_scan", 10);
     }
 
 private:
@@ -53,59 +73,135 @@ private:
     // Timer callback going at 5 hz
     void timer_callback()
     {
+
+        do_a_laser_scan();
+        // // Get a Gaussian distributin of noise
+        // std::normal_distribution<> gaus_dist(0.0, basic_sensor_variance);
+
+    }
+
+    void do_a_laser_scan(){
+        // Create a laser scan message
+        laser_scan.header.stamp = this->get_clock()->now();
+        laser_scan.header.frame_id = "red/base_scan";
+        laser_scan.angle_min = angle_min;
+        laser_scan.angle_max = angle_max;
+        laser_scan.angle_increment = angle_increment;
+        laser_scan.range_min = min_range;
+        laser_scan.range_max = max_range;
+
+
         // Check position of the robot 
-        // Look up for the transformation between nusim/world and the laser scanner frames
-        geometry_msgs::msg::TransformStamped nuw2ls;
+        // Look up for the transformation between nusim/world and the red robot laser frames
+        geometry_msgs::msg::TransformStamped laser_tf;
         try {
-          nuw2ls = tf_buffer_->lookupTransform(
+          laser_tf = tf_buffer_->lookupTransform(
             "nusim/world", "red/base_scan",
             tf2::TimePointZero);
         } catch (const tf2::TransformException & ex) {
           RCLCPP_INFO(
-            this->get_logger(), "Could not transform red/base_scan to nusim/world");
+            get_logger(), "Could not transform red/base_scan to nusim/world");
           return;
         }
-        
-        // Get a Gaussian distributin of noise
-        std::normal_distribution<> gaus_dist(0.0, basic_sensor_variance);
+
+        // Loop through each angle that the laser scans at to get individual readings
+        for(double i = angle_min; i < angle_max; i += angle_increment){
+            RCLCPP_ERROR_STREAM(get_logger(), "Poo " << i); 
+            auto const x_max_range = max_range*cos(i);
+            auto const y_max_range = max_range*sin(i);
+
+            double range = -999.0;
+
+            // Loop through each of the obstacles looking for intersections
+            for (size_t j = 0; j < obstacle_array.markers.size(); j++){
+                auto reading = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y});
+
+                // If there is an intersection with this obstacle
+                if (std::get<2>(reading)){
+                    // Calculate range distance
+                    range = std::sqrt((std::get<0>(reading)*std::get<0>(reading)+std::get<1>(reading)*std::get<1>(reading)));
+                    //break;
+                }
+            }
+
+            // If no intersections with obstacles check wall
+            if (range == -999.0){
+                auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
+
+                // If there is an intersection with a wall
+                if (std::get<2>(wall_reading)){
+                    // Calculate range distance
+                    range = std::sqrt((std::get<0>(wall_reading)*std::get<0>(wall_reading)+std::get<1>(wall_reading)*std::get<1>(wall_reading)));
+                }
+            }
+            // Add ranges to laser scan message
+            laser_scan.ranges.push_back(range);
+        }
+        // Publish laser scan
+        laser_scan_pub_->publish(laser_scan);
 
     }
 
-    std::tuple<double, double, bool> check_laser_intersect(double x1, double y1, double x2, double y2){
+    std::tuple<double, double, bool> check_wall_intersect(std::tuple<double, double> max){
+
+            // Define points to return later
+           double x = 0.0, y = 0.0;
+            // Check if intersecting with wall (checking if within bounds)
+            if ((abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1) | (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1 ))
+            {
+                // if the x is out of bounds update the x to return to be point on wall, else keep same
+                if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
+                    x = sgn(std::get<0>(max))*(arena_x_len/2.0 - 0.1);
+                } else {x = std::get<0>(max);}
+
+                // if the y is out of bounds update the x to return to be point on wall
+                if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
+                    y = sgn(std::get<1>(max))*(arena_y_len/2.0 - 0.1);
+                } else {y = std::get<1>(max);}
+
+                // Check if less than min range
+                if(std::sqrt(x*x + y*y) < min_range){
+                    return {999, 999, false};
+                }
+                else{return {x, y, true};}
+            }
+    }
+
+    /// @brief 
+    /// @param laser tuple consisting of the laser's position x = laser[0], y = laser[1]
+    /// @param max tuple consisting of the position at the laser's max range x = max[0], y = max[1]
+    /// @param obstacle tuple consisting of an obstacles position x = obstacle[0], y = obstacle[1]
+    /// @param obs_radius 
+    /// @return 
+    std::tuple<double, double, bool> check_laser_intersect(std::tuple<double, double> laser, std::tuple<double, double> max, std::tuple<double, double> obstacle, double obs_radius = 0.05){
         // Intersection with obstacles calculate using the following method
-        // https://mathworld.wolfram.com/Circle-LineIntersection.html
-
-        // Calculate distance from lidar to max range point and determinent
-        auto dx = x2 - x1;
-        auto dy = y2 - y1;
-        auto dr = std::sqrt(dx*dx+dy*dy);
-        auto det = x1*y2 - x2*y1;
-        double sign = 0.0;
-
-        // Apply appropriate sign
-        if (dy < 0){
-            sign = -1.0;
-        }
-        else {sign = 1.0;}
+        // PUT LINK TO MATH WRITTEN OUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // Calculate possible x and y componenets for both plus and minus
-        double xp = (det*dy+sign*dx*std::sqrt(obs_radius*obs_radius*dr*dr - det*det))/(dr*dr);
-        double xm = (det*dy-sign*dx*std::sqrt(obs_radius*obs_radius*dr*dr - det*det))/(dr*dr);
+        auto const m = (std::get<1>(max)-std::get<1>(laser))/(std::get<0>(max)-std::get<0>(laser));
+        auto const a = 1 + m*m;
 
-        double yp = (-det*dx+abs(dy)*std::sqrt(obs_radius*obs_radius*dr*dr - det*det))/(dr*dr);
-        double ym = (-det*dx-abs(dy)*std::sqrt(obs_radius*obs_radius*dr*dr - det*det))/(dr*dr);
+        auto const alpha = std::get<1>(laser) - m*std::get<0>(laser)-std::get<1>(obstacle);
+        auto const b = 2*(alpha*m-std::get<0>(obstacle));
+        auto const c = std::get<0>(obstacle)*std::get<0>(obstacle) + alpha*alpha - obs_radius*obs_radius;
+
+        double xp = (-b + std::sqrt(b*b - 4*a*c))/2*a;
+        double xm = (-b - std::sqrt(b*b - 4*a*c))/2*a;
+
+        double yp = m * (xp - std::get<0>(laser)) + std::get<1>(laser);
+        double ym = m * (xm - std::get<0>(laser)) + std::get<1>(laser);
 
         // Define points to return later
         double x = 0.0, y = 0.0;
-        // Check which point is closer to the robot
-        if(abs(xp-x1) < abs(xm-x1)){
+        // Check which point is closer to the robot's laser
+        if(abs(xp-std::get<0>(laser)) < abs(xm-std::get<0>(laser))){
             // If xp is closer, set intersect point to xp
             x = xp;
         }
         // Else, xm is closer and set intersect point to xm
         else{ x = xm;}
 
-        if(abs(xp-x1) < abs(xm-x1)){
+        if(abs(yp-std::get<1>(laser)) < abs(ym-std::get<1>(laser))){
             // If yp is closer, set intersect point to yp
             y = yp;
         }
@@ -114,33 +210,21 @@ private:
 
 
         // Calculate discriminant
-        double disc = obs_radius*obs_radius*dr*dr - det*det;
+        double disc = b*b - 4*a*c;
 
         // If discriminant is < 0 than you are not intersecting with an obstacle but could still be hitting wall 
-        if ((disc < 0.0) | (dr < min_range)){
-
-            // Check if intersecting with wall (checking if within bounds)
-            if ((abs(x2) > arena_x_len/2.0 - 0.1) | (abs(y2) > arena_y_len/2.0 - 0.1 ))
-            {
-                // if the x is out of bounds update the x to return to be point on wall, else keep same
-                if (abs(x2) > arena_x_len/2.0 - 0.1){
-                    x = sgn(x2)*(arena_x_len/2.0 - 0.1);
-                } else {x = x2;}
-
-                // if the y is out of bounds update the x to return to be point on wall
-                if (abs(y2) > arena_y_len/2.0 - 0.1){
-                    y = sgn(y2)*(arena_y_len/2.0 - 0.1);
-                } else {y = y2;}
-
-                return {x, y, true};
-            }
+        if ((disc < 0.0)){
             // Not intersection at all - return false with huge value
-            else{return {999, 999, false};}
+            return {999, 999, false};
         }
 
         // If discriminant is => 0 then there is interestion
         else if( disc >= 0.0){
-            return {x, y, true};
+            // Check if less than min range
+            if(std::sqrt(x*x + y*y) < min_range){
+                return {999, 999, false};
+            }
+            else{return {x, y, true};}
         }
     }
 
@@ -163,22 +247,24 @@ private:
 
     // Subscribe to get the actual marker positions
     void real_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
-        sensed_obstacles = msg;
+        obstacle_array = msg;
     }
 
     size_t count_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacles_sub_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr sensed_obstacles_pub_;
-    visualization_msgs::msg::MarkerArray sensed_obstacles;
+    visualization_msgs::msg::MarkerArray obstacle_array;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
-    double basic_sensor_variance = 0.0, max_range = 0.0;
+    double angle_min = 0.0, angle_max = 0.0, angle_increment = 0.0, min_range = 0.0, max_range = 0.0;
 
-    double obs_radius = 0.05; // Will have to subscribe to this later to make smarter AGHHHHHHHHH
-    double min_range = 0.01; // Will have to make this a param
+    sensor_msgs::msg::LaserScan laser_scan;
+    rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_pub_;
+
+    double obstacle_radius = 0.05; // Will have to subscribe to this later to make smarter AGHHHHHHHHH
     double arena_x_len = 5.0; // Will have to make param to actually get
-    double arena_y_len = 5.0/2.0 - 0.1; // Will have to make param to actually get
+    double arena_y_len = 5.0; // Will have to make param to actually get
 
 };
 

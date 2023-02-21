@@ -63,7 +63,8 @@ ament_target_dependencies(fake_laser_scan
                           tf2
                           tf2_ros
                           visualization_msgs
-                          nav_msgs)
+                          nav_msgs
+                          sensor_msgs)
 
 target_link_libraries(fake_laser_scan turtlelib::turtlelib "${cpp_typesupport_target}")
 
@@ -82,6 +83,7 @@ endif()
 install(TARGETS
   nusim
   basic_sensor
+  fake_laser_scan
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
