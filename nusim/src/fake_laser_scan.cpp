@@ -87,9 +87,12 @@ private:
         laser_scan.angle_min = angle_min;
         laser_scan.angle_max = angle_max;
         laser_scan.angle_increment = angle_increment;
+        // laser_scan.scan_time = 0.20066890120506287;
+        // laser_scan.time_increment = 0.0005574136157520115;
         laser_scan.range_min = min_range;
         laser_scan.range_max = max_range;
 
+        laser_scan.ranges.clear();
 
         // Check position of the robot 
         // Look up for the transformation between nusim/world and the red robot laser frames
@@ -106,9 +109,13 @@ private:
 
         // Loop through each angle that the laser scans at to get individual readings
         for(double i = angle_min; i < angle_max; i += angle_increment){
-            RCLCPP_ERROR_STREAM(get_logger(), "Poo " << i); 
-            auto const x_max_range = max_range*cos(i);
-            auto const y_max_range = max_range*sin(i);
+
+            // add robot angle
+            tf2::Quaternion q(laser_tf.transform.rotation.x,  laser_tf.transform.rotation.y,  laser_tf.transform.rotation.z,  laser_tf.transform.rotation.w);
+
+            auto const theta = q.getAngle();
+            auto const x_max_range = max_range*std::cos(i+theta) + laser_tf.transform.translation.x;
+            auto const y_max_range = max_range*std::sin(i+theta) + laser_tf.transform.translation.y;
 
             double range = -999.0;
 
@@ -116,6 +123,7 @@ private:
             for (size_t j = 0; j < obstacle_array.markers.size(); j++){
                 auto reading = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y});
 
+                
                 // If there is an intersection with this obstacle
                 if (std::get<2>(reading)){
                     // Calculate range distance
@@ -124,47 +132,68 @@ private:
                 }
             }
 
-            // If no intersections with obstacles check wall
-            if (range == -999.0){
-                auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
+            // // If no intersections with obstacles check wall
+            // if (range == -999.0){
+            //     auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
 
-                // If there is an intersection with a wall
-                if (std::get<2>(wall_reading)){
-                    // Calculate range distance
-                    range = std::sqrt((std::get<0>(wall_reading)*std::get<0>(wall_reading)+std::get<1>(wall_reading)*std::get<1>(wall_reading)));
-                }
-            }
+            //     // If there is an intersection with a wall
+            //     if (std::get<2>(wall_reading)){
+            //         // Calculate range distance
+            //         range = std::sqrt((std::get<0>(wall_reading)*std::get<0>(wall_reading)+std::get<1>(wall_reading)*std::get<1>(wall_reading)));
+            //     }
+            // }
             // Add ranges to laser scan message
+            double range_tmp = 0.3;
             laser_scan.ranges.push_back(range);
+
+            // if(laser_scan.ranges.size() <1){
+            // laser_scan.ranges.push_back(range);}
+            // else{laser_scan.ranges.push_back(laser_scan.ranges.at(0));}
         }
         // Publish laser scan
+
         laser_scan_pub_->publish(laser_scan);
 
     }
 
-    std::tuple<double, double, bool> check_wall_intersect(std::tuple<double, double> max){
+    std::tuple<double, double, bool> check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
 
             // Define points to return later
-           double x = 0.0, y = 0.0;
+           double x = 999.0, y = 999.0, m=0.0;
             // Check if intersecting with wall (checking if within bounds)
-            if ((abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1) | (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1 ))
-            {
-                // if the x is out of bounds update the x to return to be point on wall, else keep same
-                if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
-                    x = sgn(std::get<0>(max))*(arena_x_len/2.0 - 0.1);
-                } else {x = std::get<0>(max);}
 
-                // if the y is out of bounds update the x to return to be point on wall
-                if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
-                    y = sgn(std::get<1>(max))*(arena_y_len/2.0 - 0.1);
-                } else {y = std::get<1>(max);}
+            // if the x is out of bounds update the x to return to be point on wall, else keep same
+            if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
+                x = sgn(std::get<0>(max))*abs((abs(std::get<0>(laser))-arena_x_len/2.0 - 0.1));
+                
+                // Calculate slope from robot to max range point
+                // m = (ymax - ylaser)/(xmax - xlaser)
+                m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
-                // Check if less than min range
-                if(std::sqrt(x*x + y*y) < min_range){
-                    return {999, 999, false};
-                }
-                else{return {x, y, true};}
+                // Calculate y value corresponding to the x value
+                // y = m*(x-xmax)+ymax
+                y = m * (x - std::get<0>(max)) + std::get<1>(max);
             }
+
+            // if the y is out of bounds update the x to return to be point on wall
+            if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
+                y = sgn(std::get<1>(max))*abs((abs(std::get<1>(laser))-arena_y_len/2.0 - 0.1));
+
+                // Calculate slope from robot to max range point
+                // m = (ymax - ylaser)/(xmax - xlaser)
+                m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+
+                // Calculate x value corresponding to the y value
+                // x = (y - ymax)/m +xmax
+                x = (y - std::get<1>(max))/m + std::get<0>(max);
+            }
+            RCLCPP_ERROR_STREAM(get_logger(), "X: " << x << "\n Y: " << y << "\n RANGE: " << std::sqrt(x*x+y*y)); 
+
+            // Check if less than min range
+            if(std::sqrt(x*x + y*y) < min_range){
+                return {999, 999, false};
+            }
+            else{return {x, y, true};}
     }
 
     /// @brief 
@@ -214,8 +243,12 @@ private:
 
         // If discriminant is < 0 than you are not intersecting with an obstacle but could still be hitting wall 
         if ((disc < 0.0)){
+            // Check if intersecting with wall
+            // auto tmp = check_wall_intersect(laser, max);
+            // if(std::get<2>(tmp)){ return tmp;}
             // Not intersection at all - return false with huge value
             return {999, 999, false};
+            // else{return {999, 999, false};}
         }
 
         // If discriminant is => 0 then there is interestion
