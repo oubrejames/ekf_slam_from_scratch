@@ -64,7 +64,8 @@ ament_target_dependencies(fake_laser_scan
                           tf2_ros
                           visualization_msgs
                           nav_msgs
-                          sensor_msgs)
+                          sensor_msgs
+                          turtlelib)
 
 target_link_libraries(fake_laser_scan turtlelib::turtlelib "${cpp_typesupport_target}")
 

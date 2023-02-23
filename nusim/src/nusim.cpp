@@ -21,6 +21,7 @@
 #include <nav_msgs/msg/path.hpp>
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include <random>
+#include <geometry_msgs/msg/point.hpp>
 
 using namespace std::chrono_literals;
 
@@ -231,6 +232,9 @@ public:
     slip_fraction_desc.description = "Fraction to simulate wheel slippage";
     this->declare_parameter("slip_fraction", 0.0, slip_fraction_desc);
     slip_fraction = this->get_parameter("slip_fraction").get_parameter_value().get<double>();
+
+    // temp point pub to get heading
+    heading_pub_ = this->create_publisher<geometry_msgs::msg::Point>("heading", 10);
   }
 
 private:
@@ -389,6 +393,10 @@ private:
     t.transform.rotation.z = q1.z();
     t.transform.rotation.w = q1.w();
 
+////////////////////////
+    heading.z = turtle_theta;
+    heading_pub_->publish(heading);
+
     // Send transformation
     tf_broadcaster_->sendTransform(t);
     obstacle_publisher->publish(marker_array);
@@ -476,7 +484,7 @@ private:
     // If the robot's x or y position is greater than or equal to half of the length of the arena walls
     // minus half the width of the wall then you are colliding
     // Half because origin at 0,0
-    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) | (abs(robot_position.y)+collision_radius >= arena_y_len/2-0.2/2)){
+    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) || (abs(robot_position.y)+collision_radius >= arena_y_len/2-0.2/2)){
     return true;
     } else {return false;}
   }
@@ -553,6 +561,10 @@ private:
   nav_msgs::msg::Path visited_path;
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
+
+
+    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr heading_pub_;
+    geometry_msgs::msg::Point heading;
 };
 
 int main(int argc, char * argv[])

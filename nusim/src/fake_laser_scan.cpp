@@ -9,6 +9,8 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <tuple>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include "turtlelib/rigid2d.hpp"
+#include <geometry_msgs/msg/point.hpp>
 
 using namespace std::chrono_literals;
 
@@ -66,6 +68,10 @@ public:
 
         // Publisher to publish sensed obstacles
         laser_scan_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("fake_laser_scan", 10);
+
+        // temp point pub to get heading
+         heading_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
+            "heading", 10, std::bind(&FakeLaser::heading_cb, this, std::placeholders::_1));
     }
 
 private:
@@ -113,7 +119,9 @@ private:
             // add robot angle
             tf2::Quaternion q(laser_tf.transform.rotation.x,  laser_tf.transform.rotation.y,  laser_tf.transform.rotation.z,  laser_tf.transform.rotation.w);
 
-            auto const theta = q.getAngle();
+            RCLCPP_ERROR_STREAM(get_logger(), "Angle " << q.getAngle()); 
+            RCLCPP_ERROR_STREAM(get_logger(), "Normalized angle " << turtlelib::normalize_angle(q.getAngle())); 
+            auto const theta = heading;// turtlelib::normalize_angle(q.getAngle());
             auto const x_max_range = max_range*std::cos(i+theta) + laser_tf.transform.translation.x;
             auto const y_max_range = max_range*std::sin(i+theta) + laser_tf.transform.translation.y;
 
@@ -122,10 +130,6 @@ private:
             // Loop through each of the obstacles looking for intersections
             for (size_t j = 0; j < obstacle_array.markers.size(); j++){
                 range = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y}, 0.038);
-                RCLCPP_ERROR_STREAM(get_logger(), "Count " << count << " " << range);
-                RCLCPP_ERROR_STREAM(get_logger(), "Angle i " << i );
-
-                RCLCPP_ERROR_STREAM(get_logger(), "Range  obstacle " << range);
 
                 count ++;
                 if(range > 0.0){
@@ -218,19 +222,11 @@ private:
         auto const alpha = std::get<1>(laser) - m*std::get<0>(laser)-std::get<1>(obstacle);
         auto const b = 2*(alpha*m-std::get<0>(obstacle));
         auto const c = std::get<0>(obstacle)*std::get<0>(obstacle) + alpha*alpha - obs_radius*obs_radius;
-        RCLCPP_ERROR_STREAM(get_logger(), "max x " << std::get<0>(max));
-        RCLCPP_ERROR_STREAM(get_logger(), "max y " << std::get<1>(max));
-        RCLCPP_ERROR_STREAM(get_logger(), "m " << m);
-        RCLCPP_ERROR_STREAM(get_logger(), "a " << a);
-        RCLCPP_ERROR_STREAM(get_logger(), "b " << b);
-        RCLCPP_ERROR_STREAM(get_logger(), "alpha " << alpha);
-        RCLCPP_ERROR_STREAM(get_logger(), "c " << c);
 
         double range = 0.0;
 
         // Calculate discriminant
         double disc = b*b - 4*a*c;
-        RCLCPP_ERROR_STREAM(get_logger(), "disc " << disc);
 
         if( disc > 0){
 
@@ -240,7 +236,6 @@ private:
             auto const yp = m * (xp - std::get<0>(laser)) + std::get<1>(laser);
             auto const ym = m * (xm - std::get<0>(laser)) + std::get<1>(laser);
 
-
             // Get Euclidean distance to each point
             auto const dp = std::sqrt((xp-std::get<0>(laser))*(xp-std::get<0>(laser))
                                        +(yp-std::get<1>(laser))*(yp-std::get<1>(laser)));
@@ -248,20 +243,22 @@ private:
             auto const dm = std::sqrt((xm-std::get<0>(laser))*(xm-std::get<0>(laser))
                                        +(ym-std::get<1>(laser))*(ym-std::get<1>(laser)));
 
+            auto x = 0.0, y = 0.0;
+
             // Set range to point with shortest distance
             if (dp < dm){
                 range = dp;
-                RCLCPP_ERROR_STREAM(get_logger(), "xp: " << xp << " yp: " << yp << " dp: " << dp);
-                RCLCPP_ERROR_STREAM(get_logger(), "xp - laser x: " << (xp-std::get<0>(laser)));
-                RCLCPP_ERROR_STREAM(get_logger(), "yp - laser y: " << (yp-std::get<1>(laser)));
+                x = xp;
+                y=yp;
             }
-            else{range = dm;
-                RCLCPP_ERROR_STREAM(get_logger(), "xm: " << xm << " ym: " << ym << " dm: " << dm);
-                RCLCPP_ERROR_STREAM(get_logger(), "xm - laser x: " << (xm-std::get<0>(laser)));
-                RCLCPP_ERROR_STREAM(get_logger(), "ym - laser y: " << (ym-std::get<1>(laser)));
-            }
+            else{
+                range = dm;
+                x = xm;
+                y = ym;
+                }
 
-        if((range < min_range) || (range > max_range)){
+        // Check if reading is within range and the heading of point compared to obstacle
+        if((range < min_range) || (range > max_range) || ((x - std::get<0>(laser)) / (std::get<0>(max) - std::get<0>(laser)) < 0.0)|| ( (y - std::get<1>(laser)) / (std::get<1>(max) - std::get<1>(laser)) < 0.0)){
             range = 0.0;
         }
         }
@@ -290,6 +287,11 @@ private:
         obstacle_array = msg;
     }
 
+///////////////////
+    void heading_cb(const geometry_msgs::msg::Point & msg){
+        heading = msg.z;
+    }
+
     size_t count_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacles_sub_;
@@ -306,6 +308,8 @@ private:
     double arena_x_len = 5.0; // Will have to make param to actually get
     double arena_y_len = 5.0; // Will have to make param to actually get
 
+    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;
+    double heading = 0.0;
 };
 
 int main(int argc, char * argv[])
