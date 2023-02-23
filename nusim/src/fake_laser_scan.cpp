@@ -112,7 +112,7 @@ private:
             get_logger(), "Could not transform red/base_scan to nusim/world");
           return;
         }
-        int count = 0.0;
+
         // Loop through each angle that the laser scans at to get individual readings
         for(double i = angle_min; i < angle_max; i += angle_increment){
 
@@ -125,21 +125,44 @@ private:
             auto const x_max_range = max_range*std::cos(i+theta) + laser_tf.transform.translation.x;
             auto const y_max_range = max_range*std::sin(i+theta) + laser_tf.transform.translation.y;
 
-            double range = -999.0;
+            double range = 0.0, range_to_push = 0.0;
+
+            // // Loop through each of the obstacles looking for intersections
+            // // Create an array to check if one lidar scan intersects with multiple objects and pick the right one
+            // std::vector<double> scans_to_check(obstacle_array.markers.size());
+            // for (size_t j = 0; j < obstacle_array.markers.size(); j++){
+            //     range = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y}, 0.038);
+            //     scans_to_check.at(j) = range;
+                
+            //     if(range > 0.0){
+            //         // RCLCPP_ERROR_STREAM(get_logger(), "DETECTION " << range);
+            //         break;
+            //     }
+            // }
+
+            // Create an array to check if one lidar scan intersects with multiple objects and pick the right one
+            std::vector<double> scans_to_check(obstacle_array.markers.size());
+            RCLCPP_ERROR_STREAM(get_logger(), "scans_to_check " << scans_to_check.at(0) << " " << scans_to_check.at(1) << " " << scans_to_check.at(2)); 
 
             // Loop through each of the obstacles looking for intersections
             for (size_t j = 0; j < obstacle_array.markers.size(); j++){
                 range = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y}, 0.038);
+                scans_to_check.at(j) = range;
+            }
 
-                count ++;
-                if(range > 0.0){
-                    // RCLCPP_ERROR_STREAM(get_logger(), "DETECTION " << range);
+            // Sort array of intersection ranges
+            std::sort(scans_to_check.begin(), scans_to_check.end());
+
+            // Push back closest obstacle
+            for(size_t n = 0; n < scans_to_check.size(); n++){
+                if(scans_to_check.at(n) > 0.0){
+                    range_to_push = scans_to_check.at(n);
                     break;
                 }
             }
-
+            laser_scan.ranges.push_back(range_to_push);
             // If there is an intersection with this obstacle
-            laser_scan.ranges.push_back(range);
+            // laser_scan.ranges.push_back(range);
             // // If no intersections with obstacles check wall
             // if (range == -999.0){
             //     auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
