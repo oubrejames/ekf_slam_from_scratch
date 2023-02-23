@@ -106,7 +106,7 @@ private:
             get_logger(), "Could not transform red/base_scan to nusim/world");
           return;
         }
-
+        int count = 0.0;
         // Loop through each angle that the laser scans at to get individual readings
         for(double i = angle_min; i < angle_max; i += angle_increment){
 
@@ -121,17 +121,21 @@ private:
 
             // Loop through each of the obstacles looking for intersections
             for (size_t j = 0; j < obstacle_array.markers.size(); j++){
-                auto reading = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y});
+                range = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y}, 0.038);
+                RCLCPP_ERROR_STREAM(get_logger(), "Count " << count << " " << range);
+                RCLCPP_ERROR_STREAM(get_logger(), "Angle i " << i );
 
-                
-                // If there is an intersection with this obstacle
-                if (std::get<2>(reading)){
-                    // Calculate range distance
-                    range = std::sqrt((std::get<0>(reading)*std::get<0>(reading)+std::get<1>(reading)*std::get<1>(reading)));
-                    //break;
+                RCLCPP_ERROR_STREAM(get_logger(), "Range  obstacle " << range);
+
+                count ++;
+                if(range > 0.0){
+                    // RCLCPP_ERROR_STREAM(get_logger(), "DETECTION " << range);
+                    break;
                 }
             }
 
+            // If there is an intersection with this obstacle
+            laser_scan.ranges.push_back(range);
             // // If no intersections with obstacles check wall
             // if (range == -999.0){
             //     auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
@@ -143,8 +147,7 @@ private:
             //     }
             // }
             // Add ranges to laser scan message
-            double range_tmp = 0.3;
-            laser_scan.ranges.push_back(range);
+            // laser_scan.ranges.push_back(range);
 
             // if(laser_scan.ranges.size() <1){
             // laser_scan.ranges.push_back(range);}
@@ -156,45 +159,46 @@ private:
 
     }
 
-    std::tuple<double, double, bool> check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
+    // double check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
 
-            // Define points to return later
-           double x = 999.0, y = 999.0, m=0.0;
-            // Check if intersecting with wall (checking if within bounds)
+    //         // Define points to return later
+    //        double x = 0.0, y = 0.0, m = 0.0;
 
-            // if the x is out of bounds update the x to return to be point on wall, else keep same
-            if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
-                x = sgn(std::get<0>(max))*abs((abs(std::get<0>(laser))-arena_x_len/2.0 - 0.1));
+    //         // Check if intersecting with wall (checking if within bounds)
+
+    //         // if the x is out of bounds update the x to return to be point on wall, else keep same
+    //         if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
+    //             x = sgn(std::get<0>(max))*abs(((std::get<0>(laser))-arena_x_len/2.0 - 0.1));
                 
-                // Calculate slope from robot to max range point
-                // m = (ymax - ylaser)/(xmax - xlaser)
-                m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+    //             // Calculate slope from robot to max range point
+    //             // m = (ymax - ylaser)/(xmax - xlaser)
+    //             m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
-                // Calculate y value corresponding to the x value
-                // y = m*(x-xmax)+ymax
-                y = m * (x - std::get<0>(max)) + std::get<1>(max);
-            }
+    //             // Calculate y value corresponding to the x value
+    //             // y = m*(x-xmax)+ymax
+    //             y = m * (x - std::get<0>(max)) + std::get<1>(max);
+    //         }
 
-            // if the y is out of bounds update the x to return to be point on wall
-            if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
-                y = sgn(std::get<1>(max))*abs((abs(std::get<1>(laser))-arena_y_len/2.0 - 0.1));
+    //         // if the y is out of bounds update the x to return to be point on wall
+    //         if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
+    //             y = sgn(std::get<1>(max))*abs(((std::get<1>(laser))-arena_y_len/2.0 - 0.1));
 
-                // Calculate slope from robot to max range point
-                // m = (ymax - ylaser)/(xmax - xlaser)
-                m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+    //             // Calculate slope from robot to max range point
+    //             // m = (ymax - ylaser)/(xmax - xlaser)
+    //             m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
-                // Calculate x value corresponding to the y value
-                // x = (y - ymax)/m +xmax
-                x = (y - std::get<1>(max))/m + std::get<0>(max);
-            }
-            RCLCPP_ERROR_STREAM(get_logger(), "X: " << x << "\n Y: " << y << "\n RANGE: " << std::sqrt(x*x+y*y)); 
+    //             // Calculate x value corresponding to the y value
+    //             // x = (y - ymax)/m +xmax
+    //             x = (y - std::get<1>(max))/m + std::get<0>(max);
+    //         }
+    //         RCLCPP_ERROR_STREAM(get_logger(), "X: " << x << "\n Y: " << y << "\n RANGE: " << std::sqrt(x*x+y*y)); 
 
-            // Check if less than min range
-            if(std::sqrt(x*x + y*y) < min_range){
-                return {999, 999, false};
-            }
-            else{return {x, y, true};}
-    }
+    //         // Check if less than min range
+    //         if(std::sqrt(x*x + y*y) < min_range){
+    //             return {999, 999, false};
+    //         }
+    //         else{return {x, y, true};}
+    // }
 
     /// @brief 
     /// @param laser tuple consisting of the laser's position x = laser[0], y = laser[1]
@@ -202,63 +206,66 @@ private:
     /// @param obstacle tuple consisting of an obstacles position x = obstacle[0], y = obstacle[1]
     /// @param obs_radius 
     /// @return 
-    std::tuple<double, double, bool> check_laser_intersect(std::tuple<double, double> laser, std::tuple<double, double> max, std::tuple<double, double> obstacle, double obs_radius = 0.05){
+    double check_laser_intersect(std::tuple<double, double> laser, std::tuple<double, double> max, std::tuple<double, double> obstacle, double obs_radius){
         // Intersection with obstacles calculate using the following method
         // PUT LINK TO MATH WRITTEN OUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // Calculate possible x and y componenets for both plus and minus
         auto const m = (std::get<1>(max)-std::get<1>(laser))/(std::get<0>(max)-std::get<0>(laser));
+
         auto const a = 1 + m*m;
 
         auto const alpha = std::get<1>(laser) - m*std::get<0>(laser)-std::get<1>(obstacle);
         auto const b = 2*(alpha*m-std::get<0>(obstacle));
         auto const c = std::get<0>(obstacle)*std::get<0>(obstacle) + alpha*alpha - obs_radius*obs_radius;
+        RCLCPP_ERROR_STREAM(get_logger(), "max x " << std::get<0>(max));
+        RCLCPP_ERROR_STREAM(get_logger(), "max y " << std::get<1>(max));
+        RCLCPP_ERROR_STREAM(get_logger(), "m " << m);
+        RCLCPP_ERROR_STREAM(get_logger(), "a " << a);
+        RCLCPP_ERROR_STREAM(get_logger(), "b " << b);
+        RCLCPP_ERROR_STREAM(get_logger(), "alpha " << alpha);
+        RCLCPP_ERROR_STREAM(get_logger(), "c " << c);
 
-        double xp = (-b + std::sqrt(b*b - 4*a*c))/2*a;
-        double xm = (-b - std::sqrt(b*b - 4*a*c))/2*a;
-
-        double yp = m * (xp - std::get<0>(laser)) + std::get<1>(laser);
-        double ym = m * (xm - std::get<0>(laser)) + std::get<1>(laser);
-
-        // Define points to return later
-        double x = 0.0, y = 0.0;
-        // Check which point is closer to the robot's laser
-        if(abs(xp-std::get<0>(laser)) < abs(xm-std::get<0>(laser))){
-            // If xp is closer, set intersect point to xp
-            x = xp;
-        }
-        // Else, xm is closer and set intersect point to xm
-        else{ x = xm;}
-
-        if(abs(yp-std::get<1>(laser)) < abs(ym-std::get<1>(laser))){
-            // If yp is closer, set intersect point to yp
-            y = yp;
-        }
-        // Else, ym is closer and set intersect point to ym
-        else{ y = ym;}
-
+        double range = 0.0;
 
         // Calculate discriminant
         double disc = b*b - 4*a*c;
+        RCLCPP_ERROR_STREAM(get_logger(), "disc " << disc);
 
-        // If discriminant is < 0 than you are not intersecting with an obstacle but could still be hitting wall 
-        if ((disc < 0.0)){
-            // Check if intersecting with wall
-            // auto tmp = check_wall_intersect(laser, max);
-            // if(std::get<2>(tmp)){ return tmp;}
-            // Not intersection at all - return false with huge value
-            return {999, 999, false};
-            // else{return {999, 999, false};}
-        }
+        if( disc > 0){
 
-        // If discriminant is => 0 then there is interestion
-        else if( disc >= 0.0){
-            // Check if less than min range
-            if(std::sqrt(x*x + y*y) < min_range){
-                return {999, 999, false};
+            auto const xp = (-b + std::sqrt(disc))/(2*a);
+            auto const xm = (-b - std::sqrt(disc))/(2*a);
+
+            auto const yp = m * (xp - std::get<0>(laser)) + std::get<1>(laser);
+            auto const ym = m * (xm - std::get<0>(laser)) + std::get<1>(laser);
+
+
+            // Get Euclidean distance to each point
+            auto const dp = std::sqrt((xp-std::get<0>(laser))*(xp-std::get<0>(laser))
+                                       +(yp-std::get<1>(laser))*(yp-std::get<1>(laser)));
+
+            auto const dm = std::sqrt((xm-std::get<0>(laser))*(xm-std::get<0>(laser))
+                                       +(ym-std::get<1>(laser))*(ym-std::get<1>(laser)));
+
+            // Set range to point with shortest distance
+            if (dp < dm){
+                range = dp;
+                RCLCPP_ERROR_STREAM(get_logger(), "xp: " << xp << " yp: " << yp << " dp: " << dp);
+                RCLCPP_ERROR_STREAM(get_logger(), "xp - laser x: " << (xp-std::get<0>(laser)));
+                RCLCPP_ERROR_STREAM(get_logger(), "yp - laser y: " << (yp-std::get<1>(laser)));
             }
-            else{return {x, y, true};}
+            else{range = dm;
+                RCLCPP_ERROR_STREAM(get_logger(), "xm: " << xm << " ym: " << ym << " dm: " << dm);
+                RCLCPP_ERROR_STREAM(get_logger(), "xm - laser x: " << (xm-std::get<0>(laser)));
+                RCLCPP_ERROR_STREAM(get_logger(), "ym - laser y: " << (ym-std::get<1>(laser)));
+            }
+
+        if((range < min_range) || (range > max_range)){
+            range = 0.0;
         }
+        }
+        return range;
     }
 
     // From https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
