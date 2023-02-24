@@ -86,7 +86,7 @@ public:
     // Define arena wall parameters
     auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
     arena_x_len_desc.description = "Length of arena in the x direction";
-    declare_parameter("~x_length", 5.0, arena_x_len_desc);
+    declare_parameter("~x_length", 3.5, arena_x_len_desc);
     arena_x_len = get_parameter("~x_length").get_parameter_value().get<double>();
 
     auto arena_y_len_desc = rcl_interfaces::msg::ParameterDescriptor();

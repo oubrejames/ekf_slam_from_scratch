@@ -119,30 +119,15 @@ private:
             // add robot angle
             tf2::Quaternion q(laser_tf.transform.rotation.x,  laser_tf.transform.rotation.y,  laser_tf.transform.rotation.z,  laser_tf.transform.rotation.w);
 
-            RCLCPP_ERROR_STREAM(get_logger(), "Angle " << q.getAngle()); 
-            RCLCPP_ERROR_STREAM(get_logger(), "Normalized angle " << turtlelib::normalize_angle(q.getAngle())); 
             auto const theta = heading;// turtlelib::normalize_angle(q.getAngle());
             auto const x_max_range = max_range*std::cos(i+theta) + laser_tf.transform.translation.x;
             auto const y_max_range = max_range*std::sin(i+theta) + laser_tf.transform.translation.y;
 
             double range = 0.0, range_to_push = 0.0;
 
-            // // Loop through each of the obstacles looking for intersections
-            // // Create an array to check if one lidar scan intersects with multiple objects and pick the right one
-            // std::vector<double> scans_to_check(obstacle_array.markers.size());
-            // for (size_t j = 0; j < obstacle_array.markers.size(); j++){
-            //     range = check_laser_intersect({laser_tf.transform.translation.x, laser_tf.transform.translation.y}, {x_max_range, y_max_range}, {obstacle_array.markers.at(j).pose.position.x, obstacle_array.markers.at(j).pose.position.y}, 0.038);
-            //     scans_to_check.at(j) = range;
-                
-            //     if(range > 0.0){
-            //         // RCLCPP_ERROR_STREAM(get_logger(), "DETECTION " << range);
-            //         break;
-            //     }
-            // }
-
+            // Loop through each of the obstacles looking for intersections
             // Create an array to check if one lidar scan intersects with multiple objects and pick the right one
             std::vector<double> scans_to_check(obstacle_array.markers.size());
-            RCLCPP_ERROR_STREAM(get_logger(), "scans_to_check " << scans_to_check.at(0) << " " << scans_to_check.at(1) << " " << scans_to_check.at(2)); 
 
             // Loop through each of the obstacles looking for intersections
             for (size_t j = 0; j < obstacle_array.markers.size(); j++){
@@ -186,46 +171,68 @@ private:
 
     }
 
-    // double check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
+    double check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
 
-    //         // Define points to return later
-    //        double x = 0.0, y = 0.0, m = 0.0;
+            // Define points to return later
+           double x = 0.0, y = 0.0, m = 0.0;
 
-    //         // Check if intersecting with wall (checking if within bounds)
+            // Calculate slope
+            m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
-    //         // if the x is out of bounds update the x to return to be point on wall, else keep same
-    //         if (abs(std::get<0>(max)) > arena_x_len/2.0 - 0.1){
-    //             x = sgn(std::get<0>(max))*abs(((std::get<0>(laser))-arena_x_len/2.0 - 0.1));
-                
-    //             // Calculate slope from robot to max range point
-    //             // m = (ymax - ylaser)/(xmax - xlaser)
-    //             m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+            // Define arena bounds
+            auto const y_top_arena = (arena_y_len/2.0 - 0.2);
+            auto const y_bot_arena = -(arena_y_len/2.0 - 0.2);
+            auto const x_left_arena = -(arena_x_len/2.0 - 0.2);
+            auto const x_right_arena = (arena_x_len/2.0 - 0.2);
 
-    //             // Calculate y value corresponding to the x value
-    //             // y = m*(x-xmax)+ymax
-    //             y = m * (x - std::get<0>(max)) + std::get<1>(max);
-    //         }
+            // Calculate the corresponding points 
+            auto const x_top = (y_top_arena-std::get<1>(laser))/m + std::get<0>(laser);
+            auto const x_bot = (y_bot_arena-std::get<1>(laser))/m + std::get<0>(laser);
+            auto const y_left = m*(x_left_arena-std::get<0>(laser))+std::get<1>(laser);
+            auto const y_right = m*(x_right_arena-std::get<0>(laser))+std::get<1>(laser);
 
-    //         // if the y is out of bounds update the x to return to be point on wall
-    //         if (abs(std::get<1>(max)) > arena_y_len/2.0 - 0.1){
-    //             y = sgn(std::get<1>(max))*abs(((std::get<1>(laser))-arena_y_len/2.0 - 0.1));
+            // Calculate the distance to each wall
+            auto const d_left = std::sqrt((x_left_arena-std::get<0>(laser))*(x_left_arena-std::get<0>(laser)) + (y_left-std::get<1>(laser))*(y_left-std::get<1>(laser)));
+            auto const d_right = std::sqrt((x_right_arena-std::get<0>(laser))*(x_right_arena-std::get<0>(laser)) + (y_right-std::get<1>(laser))*(y_right-std::get<1>(laser)));
+            auto const d_top = std::sqrt((x_top-std::get<0>(laser))*(x_top-std::get<0>(laser)) + (y_top_arena-std::get<1>(laser))*(y_top_arena-std::get<1>(laser)));
+            auto const d_bot = std::sqrt((x_bot-std::get<0>(laser))*(x_bot-std::get<0>(laser)) + (y_bot_arena-std::get<1>(laser))*(y_bot_arena-std::get<1>(laser)));
 
-    //             // Calculate slope from robot to max range point
-    //             // m = (ymax - ylaser)/(xmax - xlaser)
-    //             m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+            // Put distances into an array and get the smallest one
+            std::vector<double> distances = {d_left, d_right, d_top, d_bot};
+            std::vector<double> x_points = {x_left_arena, x_right_arena, x_top, x_bot};
+            std::vector<double> y_points = {y_left, y_right, y_top_arena, y_bot_arena};
 
-    //             // Calculate x value corresponding to the y value
-    //             // x = (y - ymax)/m +xmax
-    //             x = (y - std::get<1>(max))/m + std::get<0>(max);
-    //         }
-    //         RCLCPP_ERROR_STREAM(get_logger(), "X: " << x << "\n Y: " << y << "\n RANGE: " << std::sqrt(x*x+y*y)); 
+            // Loop through all the distances and return the smallest one that is valid
+            // If the smallest is invalid, pop it
+            bool flag = true;
+            while(flag){
+            auto min_idx = get_min_idx(distances);
 
-    //         // Check if less than min range
-    //         if(std::sqrt(x*x + y*y) < min_range){
-    //             return {999, 999, false};
-    //         }
-    //         else{return {x, y, true};}
-    // }
+                if (((x_points.at(min_idx) - std::get<0>(laser))/(std::get<0>(max) - std::get<0>(laser))) > 0.0){
+                    flag = false;
+                    RCLCPP_ERROR_STREAM(get_logger(), "yaga dee" ); 
+
+                    return distances.at(min_idx);
+                }
+                else{
+                    RCLCPP_ERROR_STREAM(get_logger(), "yaga do " ); 
+
+                    distances.erase (distances.begin() + min_idx);
+                    x_points.erase (x_points.begin() + min_idx);
+                    y_points.erase (y_points.begin() + min_idx);
+                }
+            }
+    }
+
+    size_t get_min_idx(std::vector<double> arr){
+        auto min_idx = 0;
+        for(size_t i = 0; i < arr.size(); i++){
+            if(arr.at(i)<arr.at(min_idx)){
+                min_idx = i;
+            }
+        }
+        return min_idx;
+    }
 
     /// @brief 
     /// @param laser tuple consisting of the laser's position x = laser[0], y = laser[1]
@@ -285,6 +292,11 @@ private:
             range = 0.0;
         }
         }
+    
+    // If not intersection with obstacles check walls
+    else{
+        range = check_wall_intersect(laser, max);
+    }
         return range;
     }
 
@@ -328,7 +340,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_pub_;
 
     double obstacle_radius = 0.05; // Will have to subscribe to this later to make smarter AGHHHHHHHHH
-    double arena_x_len = 5.0; // Will have to make param to actually get
+    double arena_x_len = 3.5; // Will have to make param to actually get
     double arena_y_len = 5.0; // Will have to make param to actually get
 
     rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;
