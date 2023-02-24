@@ -180,10 +180,10 @@ private:
             m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
             // Define arena bounds
-            auto const y_top_arena = (arena_y_len/2.0 - 0.2);
-            auto const y_bot_arena = -(arena_y_len/2.0 - 0.2);
-            auto const x_left_arena = -(arena_x_len/2.0 - 0.2);
-            auto const x_right_arena = (arena_x_len/2.0 - 0.2);
+            auto const y_top_arena = (arena_y_len/2.0 - 0.1);
+            auto const y_bot_arena = -(arena_y_len/2.0 - 0.1);
+            auto const x_left_arena = -(arena_x_len/2.0 - 0.1);
+            auto const x_right_arena = (arena_x_len/2.0 - 0.1);
 
             // Calculate the corresponding points 
             auto const x_top = (y_top_arena-std::get<1>(laser))/m + std::get<0>(laser);
@@ -297,6 +297,9 @@ private:
     else{
         range = check_wall_intersect(laser, max);
     }
+        // Get a Gaussian distributin of noise
+        std::normal_distribution<> gaus_dist(0.0, 0.01);
+        range += gaus_dist(get_random());
         return range;
     }
 

@@ -230,7 +230,7 @@ public:
     // Add slip fraction
     auto slip_fraction_desc = rcl_interfaces::msg::ParameterDescriptor();
     slip_fraction_desc.description = "Fraction to simulate wheel slippage";
-    this->declare_parameter("slip_fraction", 0.0, slip_fraction_desc);
+    this->declare_parameter("slip_fraction", 0.01, slip_fraction_desc);
     slip_fraction = this->get_parameter("slip_fraction").get_parameter_value().get<double>();
 
     // temp point pub to get heading
