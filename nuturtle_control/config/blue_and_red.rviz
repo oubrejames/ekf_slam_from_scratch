@@ -6,12 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Blue_turtle1
-        - /Red_turtle1
-        - /Odometry1
         - /Odometry1/Shape1
         - /RedPath1/Topic1
-        - /BluePath1
+        - /LaserScan1
       Splitter Ratio: 0.5
     Tree Height: 662
   - Class: rviz_common/Selection
@@ -365,7 +362,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -382,8 +379,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz_default_plugins/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 192; 28; 40
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -489,5 +486,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 0
+  X: 1920
   Y: 27
