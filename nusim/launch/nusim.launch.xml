@@ -10,6 +10,9 @@
     <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
   </node>
 
+  <node pkg="nusim" exec="basic_sensor" />
+  <node pkg="nusim" exec="fake_laser_scan" />
+
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="red" />
         <arg name="use_rviz" value="false" />

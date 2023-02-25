@@ -173,11 +173,8 @@ private:
 
     double check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
 
-            // Define points to return later
-           double x = 0.0, y = 0.0, m = 0.0;
-
             // Calculate slope
-            m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
+            auto m = (std::get<1>(max) - std::get<1>(laser))/(std::get<0>(max) - std::get<0>(laser));
 
             // Define arena bounds
             auto const y_top_arena = (arena_y_len/2.0 - 0.1);
@@ -210,18 +207,15 @@ private:
 
                 if (((x_points.at(min_idx) - std::get<0>(laser))/(std::get<0>(max) - std::get<0>(laser))) > 0.0){
                     flag = false;
-                    RCLCPP_ERROR_STREAM(get_logger(), "yaga dee" ); 
-
                     return distances.at(min_idx);
                 }
                 else{
-                    RCLCPP_ERROR_STREAM(get_logger(), "yaga do " ); 
-
                     distances.erase (distances.begin() + min_idx);
                     x_points.erase (x_points.begin() + min_idx);
                     y_points.erase (y_points.begin() + min_idx);
                 }
             }
+            return 0.0;
     }
 
     size_t get_min_idx(std::vector<double> arr){

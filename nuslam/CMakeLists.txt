@@ -23,23 +23,27 @@ find_package(turtlelib REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(nuturtle_control REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Teleport.srv" LIBRARY_NAME ${PROJECT_NAME})
+# rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Teleport.srv" LIBRARY_NAME ${PROJECT_NAME})
 
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
+# rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
-add_executable(nuslam src/nusim.cpp)
+add_executable(nuslam src/nuslam.cpp)
 ament_target_dependencies(nuslam
                           rclcpp
                           std_msgs
                           std_srvs
-                          tf2
-                          tf2_ros
-                          turtlesim
-                          visualization_msgs
                           nuturtlebot_msgs
+                          geometry_msgs
+                          sensor_msgs
                           turtlelib
-                          nav_msgs)
+                          nav_msgs
+                          tf2
+                          tf2_geometry_msgs
+                          turtlesim
+                          nuturtle_control)
 
 target_link_libraries(nuslam turtlelib::turtlelib "${cpp_typesupport_target}")
 
