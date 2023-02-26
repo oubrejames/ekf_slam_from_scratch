@@ -235,6 +235,12 @@ public:
 
     // temp point pub to get heading
     heading_pub_ = this->create_publisher<geometry_msgs::msg::Point>("heading", 10);
+
+    // Add parameter to make nusim only draw obstacles and walls
+    auto draw_only_desc = rcl_interfaces::msg::ParameterDescriptor();
+    draw_only_desc.description = "Radius of turtlebot wheel";
+    declare_parameter("draw_only", false, draw_only_desc);
+    draw_only = get_parameter("draw_only").get_parameter_value().get<bool>();
   }
 
 private:
@@ -374,91 +380,95 @@ private:
 
   void timer_callback()
   {
-    // Create message and publish timestep
-    auto time_step_msg = std_msgs::msg::UInt64();
-    time_step_msg.data = timestep++;
-    time_publisher_->publish(time_step_msg);
+    if(!draw_only){
+      // Create message and publish timestep
+      auto time_step_msg = std_msgs::msg::UInt64();
+      time_step_msg.data = timestep++;
+      time_publisher_->publish(time_step_msg);
 
-    // Update TF time stamp and declare frames
-    t.header.stamp = get_clock()->now();
-    t.header.frame_id = "nusim/world";
-    t.child_frame_id = "red/base_footprint";
+      // Update TF time stamp and declare frames
+      t.header.stamp = get_clock()->now();
+      t.header.frame_id = "nusim/world";
+      t.child_frame_id = "red/base_footprint";
 
-    // Update world to robot transformation to turtlebot current location
-    t.transform.translation.x = turtle_x;
-    t.transform.translation.y = turtle_y;
-    q1.setRPY(0.0, 0.0, turtle_theta);
-    t.transform.rotation.x = q1.x();
-    t.transform.rotation.y = q1.y();
-    t.transform.rotation.z = q1.z();
-    t.transform.rotation.w = q1.w();
+      // Update world to robot transformation to turtlebot current location
+      t.transform.translation.x = turtle_x;
+      t.transform.translation.y = turtle_y;
+      q1.setRPY(0.0, 0.0, turtle_theta);
+      t.transform.rotation.x = q1.x();
+      t.transform.rotation.y = q1.y();
+      t.transform.rotation.z = q1.z();
+      t.transform.rotation.w = q1.w();
 
-////////////////////////
-    heading.z = turtle_theta;
-    heading_pub_->publish(heading);
+      heading.z = turtle_theta;
+      heading_pub_->publish(heading);
 
-    // Send transformation
-    tf_broadcaster_->sendTransform(t);
-    obstacle_publisher->publish(marker_array);
-    wall_publisher->publish(arena_marker_array);
+      // Send transformation
+      tf_broadcaster_->sendTransform(t);
+      obstacle_publisher->publish(marker_array);
+      wall_publisher->publish(arena_marker_array);
 
-    // Update current config of robot based on wheel commands
-    double delta_wheel_pos_r = (dt_time * phi_r_rad_s);
-    double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
+      // Update current config of robot based on wheel commands
+      double delta_wheel_pos_r = (dt_time * phi_r_rad_s);
+      double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
 
-    // Apply wheel slippage if slip fraction specified
-    if(slip_fraction > 0.0 && !turtlelib::almost_equal(delta_wheel_pos_l, 0.0) && !turtlelib::almost_equal(delta_wheel_pos_r, 0.0)){
-      // Create a zero mean Gaussian distribution with a variance equal to the input nosie
-      std::uniform_real_distribution<> uni_dist(-slip_fraction, slip_fraction);
+      // Apply wheel slippage if slip fraction specified
+      if(slip_fraction > 0.0 && !turtlelib::almost_equal(delta_wheel_pos_l, 0.0) && !turtlelib::almost_equal(delta_wheel_pos_r, 0.0)){
+        // Create a zero mean Gaussian distribution with a variance equal to the input nosie
+        std::uniform_real_distribution<> uni_dist(-slip_fraction, slip_fraction);
 
-      // Update the motor velocities to include the noise
-      delta_wheel_pos_r += uni_dist(get_random());
-      delta_wheel_pos_l += uni_dist(get_random());
-    }
+        // Update the motor velocities to include the noise
+        delta_wheel_pos_r += uni_dist(get_random());
+        delta_wheel_pos_l += uni_dist(get_random());
+      }
 
-    // Save previous pose
-    auto prev_pos = turtlebot.get_current_pos();;
+      // Save previous pose
+      auto prev_pos = turtlebot.get_current_pos();;
 
-    // Compute forward kinematics to update the robot's current position based off of wheel commands
-    turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
+      // Compute forward kinematics to update the robot's current position based off of wheel commands
+      turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
-    // Use getter to obtain robots current configuration
-    current_pos = turtlebot.get_current_pos();
-  
-    // Check if you're current movement makes you collide with obstacle or wall
-    if(!obstacle_collision(current_pos) && !wall_collision(current_pos)){
-      // If you are not colliding with a wall or obstacle, update position as normal
-      // Update turtlebot position for broadcasting its transformation
-      turtle_x = current_pos.x;
-      turtle_y = current_pos.y;
-      turtle_theta = current_pos.theta;
+      // Use getter to obtain robots current configuration
+      current_pos = turtlebot.get_current_pos();
+    
+      // Check if you're current movement makes you collide with obstacle or wall
+      if(!obstacle_collision(current_pos) && !wall_collision(current_pos)){
+        // If you are not colliding with a wall or obstacle, update position as normal
+        // Update turtlebot position for broadcasting its transformation
+        turtle_x = current_pos.x;
+        turtle_y = current_pos.y;
+        turtle_theta = current_pos.theta;
+      }
+      else{
+        // If you are colliding, do not update turtle bot TF and reset turtlebots location to prev
+        turtlebot.set_current_pos(prev_pos);
+      }
+
+      // update sensor data
+      // Update the encoder readings by incrementing new position plus the old position and converting 
+      // it to encoder ticks
+      // Update the previous wheel position
+      sensor_readings.left_encoder = (delta_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
+      sensor_readings.right_encoder = (delta_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
+      prev_wheel_pos.l += delta_wheel_pos_l;
+      prev_wheel_pos.r += delta_wheel_pos_r;
+
+
+      // publish sensor data
+      sensor_readings.stamp = get_clock()->now();
+      sensor_data_pub_->publish(sensor_readings);
+
+      // Add point to path and publish
+      if (timestep % 100 == 0){
+        visited_path.header.stamp = get_clock()->now();
+        visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
+        path_pub_->publish(visited_path);
+      }
     }
     else{
-      // If you are colliding, do not update turtle bot TF and reset turtlebots location to prev
-      turtlebot.set_current_pos(prev_pos);
+      obstacle_publisher->publish(marker_array);
+      wall_publisher->publish(arena_marker_array);
     }
-
-    // update sensor data
-    // Update the encoder readings by incrementing new position plus the old position and converting 
-    // it to encoder ticks
-    // Update the previous wheel position
-    sensor_readings.left_encoder = (delta_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
-    sensor_readings.right_encoder = (delta_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
-    prev_wheel_pos.l += delta_wheel_pos_l;
-    prev_wheel_pos.r += delta_wheel_pos_r;
-
-
-    // publish sensor data
-    sensor_readings.stamp = get_clock()->now();
-    sensor_data_pub_->publish(sensor_readings);
-
-    // Add point to path and publish
-    if (timestep % 100 == 0){
-      visited_path.header.stamp = get_clock()->now();
-      visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
-      path_pub_->publish(visited_path);
-    }
-
   }
 
   bool obstacle_collision(turtlelib::RobotConfig robot_position){
@@ -562,7 +572,7 @@ private:
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
 
-
+    bool draw_only = false;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr heading_pub_;
     geometry_msgs::msg::Point heading;
 };

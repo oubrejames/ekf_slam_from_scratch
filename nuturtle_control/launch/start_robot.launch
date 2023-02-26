@@ -16,7 +16,7 @@
   <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
   <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
   <arg if="$(eval '\'$(var robot)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/blue_and_red.rviz" />
-  <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/blue.rviz" />
+  <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/real_robot.rviz" />
 
   <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
 
@@ -50,11 +50,6 @@
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="basic_sensor" />
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="fake_laser_scan" />
 
-  <node if="$(eval '\'$(var robot)\' != \'nusim\'')" pkg="nuturtle_control" exec="turtle_control">
-        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-        <remap from="/joint_states" to="blue/joint_states"/>
-  </node>
-
   <include if="$(eval '\'$(var robot)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="red" />
         <arg name="use_rviz" value="false" />
@@ -74,6 +69,14 @@
 <!-- If robot=localhost -->
   <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
   <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher"/>
+
+<!-- If robot=none -->
+  <node if="$(eval '\'$(var robot)\' == \'none\'')" name="nuwalls" pkg="nusim" exec="nusim">
+    <param from="$(var world_config_file)"/>
+    <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+    <param name="draw_only" value = "true"/>
+  </node>
+
 
 </launch>
 
