@@ -21,8 +21,6 @@
   <arg if="$(eval '\'$(var robot)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/blue_and_red.rviz" />
   <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/real_robot.rviz" />
 
-
-
   <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
 
 <!-- General Launch -->

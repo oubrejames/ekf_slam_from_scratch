@@ -5,7 +5,7 @@ add_executable(frame_main src/frame_main.cpp)
 
 
 # create the turtlelib library
-add_library(turtlelib src/rigid2d.cpp src/diff_drive.cpp)
+add_library(turtlelib src/rigid2d.cpp src/diff_drive.cpp src/slam.cpp)
 
 # The add_library function just added turtlelib as a "target"
 # A "target" is a name that CMake uses to refer to some type of output
