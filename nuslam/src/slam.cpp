@@ -16,11 +16,11 @@
 
 using namespace std::chrono_literals;
 
-class Odometry : public rclcpp::Node
+class SlamNode : public rclcpp::Node
 {
 public:
-  Odometry()
-  : Node("odometry"), count_(0)
+  SlamNode()
+  : Node("slam_node"), count_(0)
   {
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
@@ -29,7 +29,7 @@ public:
     int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
-      hz_in_ms, std::bind(&Odometry::timer_callback, this));
+      hz_in_ms, std::bind(&SlamNode::timer_callback, this));
 
     // Get odometry parameters
     auto body_id_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -73,7 +73,7 @@ public:
     track_width = this->get_parameter("track_width").get_parameter_value().get<double>();
 
     // Create publisher to publish odometry
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
     odom_msg.header.stamp = this->get_clock()->now();
     odom_msg.header.frame_id = odom_id;
     odom_msg.child_frame_id = body_id;
@@ -103,12 +103,12 @@ public:
 
     // Create joint_states subscriber
     joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-      "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+      "blue/joint_states", 10, std::bind(&SlamNode::joint_states_cb, this, std::placeholders::_1));
 
     // Define initial_pose service
     initial_pose_server_ = this->create_service<nuturtle_control::srv::Spawn>(
       "initial_pose",
-      std::bind(&Odometry::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
+      std::bind(&SlamNode::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
 
     // Define path header
     visited_path.header.frame_id = "nusim/world";
@@ -118,6 +118,9 @@ public:
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
       "~/path",
       10);
+
+    // Create publisher to publish joint states
+    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", 10);
   }
 
 private:
@@ -153,6 +156,9 @@ private:
   /// @param msg
   void joint_states_cb(const sensor_msgs::msg::JointState & msg)
   {
+    // Publish joint states
+    joint_state_pub_->publish(msg);
+
     // Update interal odom
     turtlelib::WheelPos new_wp =
     {msg.position.at(0) - prev_wheel_pos.r, msg.position.at(1) - prev_wheel_pos.l};
@@ -238,13 +244,14 @@ private:
   nav_msgs::msg::Path visited_path;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   tf2::Quaternion q;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
 
 };
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Odometry>());
+  rclcpp::spin(std::make_shared<SlamNode>());
   rclcpp::shutdown();
   return 0;
 }

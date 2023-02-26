@@ -7,6 +7,7 @@
   <arg name="cmd_src" default="none"/>
   <arg name="robot" default="nusim" />
   <arg name="world_config_file" default="$(find-pkg-share nusim)/config/basic_world.yaml" />
+  <arg name="slam" default="none"/>
 
 <!-- Set Command Source -->
   <node if="$(eval '\'$(var cmd_src)\' == \'circle\'')" pkg="nuturtle_control" exec="circle"/>
@@ -15,8 +16,12 @@
 <!-- Launch RViz-->
   <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
   <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
+  <arg if="$(eval '\'$(var slam)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuslam)/config/nusim_slam.rviz" />
+  <arg if="$(eval '\'$(var slam)\' == \'real\'')" name="rviz_config" default="$(find-pkg-share nuslam)/config/real_slam.rviz" />
   <arg if="$(eval '\'$(var robot)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/blue_and_red.rviz" />
   <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/real_robot.rviz" />
+
+
 
   <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
 
@@ -54,12 +59,7 @@
         <arg name="color" value="red" />
         <arg name="use_rviz" value="false" />
         <arg name="use_jsp" value="true" />
-  </include> 
-
-  <include if="$(eval '\'$(var use_rviz)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
-        <arg name="color" value="red" />
-        <arg name="use_rviz" value="false" />
-  </include> 
+  </include>
 
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="nusim">
     <param from="$(var world_config_file)"/>
