@@ -20,15 +20,13 @@ private:
     arma::colvec belief_t = arma::join_cols(q_t, m_t);
     arma::colvec belief_t_prev = arma::join_cols(q_t, m_t);
     arma::colvec belief_t_predict = arma::join_cols(q_t, m_t);
-    arma::mat A{43, 43, arma::fill::zeros};
-    arma::mat H;
-    arma::mat h_j;
-    double Q;
+    double Q; // add to constructior
     arma::mat sigma_tq{3,3, arma::fill::zeros};
     arma::mat sigma_tm = 99999*arma::eye<arma::mat>(2*20,2*20);
     arma::mat sigma_t = arma::join_cols((arma::join_rows(sigma_tq,arma::zeros<arma::mat>(3,2*20))),(arma::join_rows(arma::zeros<arma::mat>(2*20,3),sigma_tm)));
     arma::mat sigma_t_prev = sigma_t;
     arma::mat sigma_t_predict = arma::join_cols((arma::join_rows(sigma_tq,arma::zeros<arma::mat>(3,2*20))),(arma::join_rows(arma::zeros<arma::mat>(2*20,3),sigma_tm)));
+    double R; // add to constructor
 
 public:
     /// \brief Initialize state to all 0's
@@ -40,6 +38,9 @@ public:
 
     /// @brief 
     void predict(Twist2D u_t);
+
+    void update(arma::vec m);
+
 };
 
 }
