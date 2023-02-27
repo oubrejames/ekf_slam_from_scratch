@@ -37,6 +37,7 @@ namespace turtlelib
         // Subtract prev odom from current to get the delta u
         auto const delta_x = u_t.x - u_t_prev(1);
         auto const delta_theta = turtlelib::normalize_angle(u_t.w - u_t_prev(0));
+        auto const delta_y = u_t.y - u_t_prev(2);
 
         // Update previous u
         u_t_prev = {u_t.w, u_t.x, u_t.y};
@@ -47,7 +48,7 @@ namespace turtlelib
         if(turtlelib::almost_equal(delta_theta, 0.0)){
             // No rotation
             tmp_delta_mat = arma::colvec{0.0, delta_x*std::cos(belief_t(0)), delta_x*std::sin(belief_t(0))};
-            A(1,0) = delta_x*std::sin(belief_t(0));
+            A(1,0) = -delta_x*std::sin(belief_t(0));
             A(1,1) = delta_x*std::cos(belief_t(0));
             A = arma::eye<arma::mat>(23,23) + A;
         }
@@ -62,7 +63,11 @@ namespace turtlelib
         auto const big_u_matrix = arma::join_cols(tmp_delta_mat, arma::zeros<arma::colvec>(2*10));
 
         // Calculate prdicted state
-        belief_t_predict = belief_t + big_u_matrix;
+        // belief_t_predict = belief_t + big_u_matrix;
+        // belief_t_predict += belief_t + big_u_matrix;
+        belief_t_predict(0) = belief_t(0) + delta_theta;
+        belief_t_predict(1) = belief_t(1) + delta_x;
+        belief_t_predict(2) = belief_t(2) + delta_y;
 
         // Calcualate Q matrix
         arma::mat Q_bar{23,23, arma::fill::zeros};
@@ -86,7 +91,7 @@ namespace turtlelib
         auto const mx_estimate = belief_t(1)+rj*std::cos(phi_j+belief_t(0));
         auto const my_estimate = belief_t(2)+rj*std::sin(phi_j+belief_t(0));
         auto const rj_estimate = std::sqrt((mx_estimate-belief_t_predict(1))*(mx_estimate-belief_t_predict(1))+(my_estimate-belief_t_predict(2))*(my_estimate-belief_t_predict(2)));
-        auto const phi_j_estimate = std::atan2(my_estimate - belief_t_predict(2), mx_estimate - belief_t_predict(1)) - belief_t_predict(0);
+        auto const phi_j_estimate = turtlelib::normalize_angle(atan2(my_estimate - belief_t_predict(2), mx_estimate - belief_t_predict(1)) - belief_t_predict(0));
         auto const z_estimate = arma::colvec{rj_estimate, phi_j_estimate};
 
         // Update the obstacles in the state estimate
@@ -115,8 +120,6 @@ namespace turtlelib
         // Compute Kalman Gain
         arma::mat R_mat{2,2, arma::fill::eye};
         R_mat *= R;
-        arma::mat test{3,7, arma::fill::eye};
-        arma::mat test2{6,6, arma::fill::eye};
 
         // Ki = 23x2
         arma::mat Ki = sigma_t_predict*H.t()*((H*sigma_t_predict*H.t() + R_mat).i());
@@ -129,5 +132,20 @@ namespace turtlelib
         // Compute posterior covariance
         sigma_t = (arma::eye<arma::mat>(size(Ki*H)) - Ki*H)*sigma_t_predict;
     }
+
+    arma::colvec EKFSlam::get_qt(){
+        q_t(0) = belief_t(0);
+        q_t(1) = belief_t(1);
+        q_t(2) = belief_t(2);
+        return q_t;
+        }
+
+    arma::colvec EKFSlam::get_belief(){
+        return belief_t;
+        }
+
+    arma::colvec EKFSlam::get_belief_predict(){
+        return belief_t_predict;
+        }
 
 }

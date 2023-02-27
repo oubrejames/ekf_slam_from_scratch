@@ -16,6 +16,7 @@
 #include "turtlelib/slam.hpp"
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include "turtlelib/rigid2d.hpp"
 
 using namespace std::chrono_literals;
 
@@ -28,7 +29,7 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("frequency", 100.0, hz_desc);
+    this->declare_parameter("frequency", 5.0, hz_desc);
     int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
     timer_ = this->create_wall_timer(
@@ -75,11 +76,11 @@ public:
     this->declare_parameter("track_width", -1.0, track_width_desc);
     track_width = this->get_parameter("track_width").get_parameter_value().get<double>();
 
-    // Create publisher to publish odometry
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
-    odom_msg.header.stamp = this->get_clock()->now();
-    odom_msg.header.frame_id = odom_id;
-    odom_msg.child_frame_id = body_id;
+      // Create publisher to publish odometry
+      odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+      odom_msg.header.stamp = this->get_clock()->now();
+      odom_msg.header.frame_id = odom_id;
+      odom_msg.child_frame_id = body_id;
 
     // Create initial odom msg to broadcast
     // Initialize internal odom
@@ -153,7 +154,7 @@ private:
 
   geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
     geometry_msgs::msg::PoseStamped pose_stamped;
-    pose_stamped.header.frame_id = "red/base_footprint";
+    pose_stamped.header.frame_id = "green/base_footprint";
     pose_stamped.header.stamp = get_clock()->now();
     pose_stamped.pose.position.x = x;
     pose_stamped.pose.position.y = y;
@@ -216,21 +217,40 @@ private:
 
   void broadcast_tf()
   {
-    geometry_msgs::msg::TransformStamped t;
+    geometry_msgs::msg::TransformStamped Tor;
 
-    t.header.stamp = this->get_clock()->now();
-    t.header.frame_id = odom_id;
-    t.child_frame_id = body_id;
+    Tor.header.stamp = this->get_clock()->now();
+    Tor.header.frame_id = odom_id;
+    Tor.child_frame_id = body_id;
 
-    t.transform.translation.x = current_pos.x;
-    t.transform.translation.y = current_pos.y;
-    t.transform.translation.z = 0.0;
+    Tor.transform.translation.x =  current_pos.x;
+    Tor.transform.translation.y = current_pos.y;
+    Tor.transform.translation.z = 0.0;
 
     tf2::Quaternion q;
     q.setRPY(0, 0, current_pos.theta);
-    t.transform.rotation = tf2::toMsg(q);
+    Tor.transform.rotation = tf2::toMsg(q);
 
-    tf_broadcaster_->sendTransform(t);
+    tf_broadcaster_->sendTransform(Tor);
+
+    turtlelib::Transform2D Tor_tmp{{current_pos.x, current_pos.y}, current_pos.theta};
+    turtlelib::Transform2D Tmr{{slam_pos.x, slam_pos.y}, slam_pos.theta};
+    turtlelib::Transform2D Tmo_calc = Tmr*Tor_tmp.inv();
+    ////////////////
+    geometry_msgs::msg::TransformStamped Tmo;
+    Tmo.header.stamp = this->get_clock()->now();
+    Tmo.header.frame_id = "map";
+    Tmo.child_frame_id = odom_id;
+
+    Tmo.transform.translation.x =  Tmo_calc.translation().x;
+    Tmo.transform.translation.y = Tmo_calc.translation().y;
+    Tmo.transform.translation.z = 0.0;
+
+    tf2::Quaternion q2;
+    q2.setRPY(0, 0, Tmo_calc.rotation());
+    Tmo.transform.rotation = tf2::toMsg(q2);
+
+    tf_broadcaster_->sendTransform(Tmo);
   }
 
   void initial_pose_cb(
@@ -245,11 +265,22 @@ private:
     // Subscribe to get the sensed obstacle positions
     void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
         sensed_obstacles = msg;
-        ekf_slam.predict(Vb);
+        ekf_slam.predict({current_pos.theta, current_pos.x, current_pos.y});
         for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
           if(sensed_obstacles.markers.at(j).action < 2){
             ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<double>(j+1)});
+            arma::colvec tmp_pose = ekf_slam.get_belief();
+            slam_pos.x = tmp_pose(1);
+            slam_pos.y = tmp_pose(2);
+            slam_pos.theta = tmp_pose(0);
         }}
+        // arma::colvec tmp_pose = ekf_slam.get_belief_predict();
+        // slam_pos.x = tmp_pose(1);
+        // slam_pos.y = tmp_pose(2);
+        // slam_pos.theta = tmp_pose(0);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.x " << slam_pos.x);
+        RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.y " << slam_pos.y);
+
     }
 
   std::string body_id, odom_id, wheel_left, wheel_right;
@@ -263,6 +294,8 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Service<nuturtle_control::srv::Spawn>::SharedPtr initial_pose_server_;
   turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
+  turtlelib::RobotConfig slam_pos = {0.0, 0.0, 0.0};
+
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
   double dt_time = 0.005;
   int time_count = 0;

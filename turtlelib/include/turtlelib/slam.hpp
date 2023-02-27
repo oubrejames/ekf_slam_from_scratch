@@ -48,6 +48,12 @@ public:
 
     void update(arma::vec m);
 
+    arma::colvec get_qt();
+
+    arma::colvec get_belief();
+
+    arma::colvec get_belief_predict();
+
 };
 
 }
