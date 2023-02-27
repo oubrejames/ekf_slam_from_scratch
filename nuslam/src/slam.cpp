@@ -13,6 +13,9 @@
 #include "nuturtle_control/srv/spawn.hpp"
 #include <nav_msgs/msg/path.hpp>
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "turtlelib/slam.hpp"
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 using namespace std::chrono_literals;
 
@@ -121,6 +124,18 @@ public:
 
     // Create publisher to publish joint states
     joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", 10);
+
+    // Define parameter to change basic sensor noise
+    auto basic_sensor_variance_desc = rcl_interfaces::msg::ParameterDescriptor();
+    basic_sensor_variance_desc.description = "Variance to change sensor noise for basic sensor";
+    declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
+    basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
+
+    ekf_slam = {0.001, basic_sensor_variance};
+
+    // Create subcriber to get actual obstacle positions
+    sensed_obstacles_sub_ = this->create_subscription<visualization_msgs::msg::MarkerArray>(
+      "basic_sensor/marker_array", 10, std::bind(&SlamNode::sensed_obstacles_cb, this, std::placeholders::_1));
   }
 
 private:
@@ -166,7 +181,7 @@ private:
     prev_wheel_pos.l = msg.position.at(1);
 
     // Get body twist from current wheel positions and update current position of robot
-    turtlelib::Twist2D Vb = internal_odom.forward_kinematics(new_wp);
+    Vb = internal_odom.forward_kinematics(new_wp);
 
     // Update odom message
     odom_msg.header.stamp = this->get_clock()->now();
@@ -227,6 +242,16 @@ private:
       {internal_odom.get_current_wheel_pos()}};
   }
 
+    // Subscribe to get the sensed obstacle positions
+    void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
+        sensed_obstacles = msg;
+        ekf_slam.predict(Vb);
+        for(int j =0; j < sensed_obstacles.markers.size(); j++){
+          if(sensed_obstacles.markers.at(j).action < 2){
+            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, j+1});
+        }}
+    }
+
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -245,7 +270,11 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   tf2::Quaternion q;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
-
+  turtlelib::EKFSlam ekf_slam;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sensed_obstacles_sub_;
+  double basic_sensor_variance = 0.0;
+  visualization_msgs::msg::MarkerArray sensed_obstacles;
+  turtlelib::Twist2D Vb = {0.0, 0.0, 0.0};
 };
 
 int main(int argc, char * argv[])

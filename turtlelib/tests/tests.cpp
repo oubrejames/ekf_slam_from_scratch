@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "turtlelib/rigid2d.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include "turtlelib/slam.hpp"
 
 TEST_CASE("Numbers are almost equal", "[bool]")   // James Oubre
 {

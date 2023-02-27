@@ -16,7 +16,7 @@ class EKFSlam
 private:
     arma::colvec q_t{3, arma::fill::zeros};
     arma::colvec u_t_prev{3, arma::fill::zeros}; // maybe can delete thgis
-    arma::colvec m_t{20, arma::fill::zeros};
+    arma::colvec m_t{2*20, arma::fill::zeros};
     arma::colvec belief_t = arma::join_cols(q_t, m_t);
     arma::colvec belief_t_prev = arma::join_cols(q_t, m_t);
     arma::colvec belief_t_predict = arma::join_cols(q_t, m_t);
@@ -34,7 +34,14 @@ public:
 
     /// @brief Initialize robot state to a known value
     /// @param q0 Initial robot position
-    explicit EKFSlam(arma::vec q0);
+    /// @param Q_in Input process covariance
+    /// @param R_in Input sensor covariance
+    EKFSlam(arma::vec q0, double Q_in, double R_in);
+
+    /// @brief Initialize robot state
+    /// @param Q_in Input process covariance
+    /// @param R_in Input sensor covariance
+    EKFSlam(double Q_in, double R_in);
 
     /// @brief 
     void predict(Twist2D u_t);

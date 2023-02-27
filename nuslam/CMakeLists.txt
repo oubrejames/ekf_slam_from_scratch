@@ -25,7 +25,10 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nuturtle_control REQUIRED)
-
+find_package(Armadillo)
+include_directories(
+  ${ARMADILLO_INCLUDE_DIRS}
+)
 # rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Teleport.srv" LIBRARY_NAME ${PROJECT_NAME})
 
 # rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
@@ -43,9 +46,10 @@ ament_target_dependencies(slam
                           tf2
                           tf2_geometry_msgs
                           turtlesim
-                          nuturtle_control)
+                          nuturtle_control
+                          visualization_msgs)
 
-target_link_libraries(slam turtlelib::turtlelib "${cpp_typesupport_target}")
+target_link_libraries(slam turtlelib::turtlelib ${ARMADILLO_LIBRARIES} "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -32,6 +32,12 @@ add_executable(turtlelib_test tests/tests.cpp)
 target_link_libraries(turtlelib_test turtlelib Catch2::Catch2WithMain)
 add_test(NAME Test_of_Turtlelib COMMAND turtlelib_test)
 
+
+find_package(Armadillo)
+include_directories(
+  ${ARMADILLO_INCLUDE_DIRS}
+)
+
 # Public include directories can be used by other targets that link against turtlelib
 # By adding include/ to the include path, this means that files in e.g., include/turtlelib
 # can be included with #include"turtlelib/file.hpp"
