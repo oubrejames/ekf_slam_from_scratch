@@ -246,9 +246,9 @@ private:
     void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
         sensed_obstacles = msg;
         ekf_slam.predict(Vb);
-        for(int j =0; j < sensed_obstacles.markers.size(); j++){
+        for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
           if(sensed_obstacles.markers.at(j).action < 2){
-            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, j+1});
+            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<double>(j+1)});
         }}
     }
 
