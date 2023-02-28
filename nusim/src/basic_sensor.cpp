@@ -7,6 +7,7 @@
 #include "tf2_ros/buffer.h"
 #include <cmath>
 #include <geometry_msgs/msg/twist.hpp>
+#include "turtlelib/rigid2d.hpp"
 
 using namespace std::chrono_literals;
 
@@ -25,7 +26,7 @@ public:
         // Define parameter to change maximum range of the sensor
         auto max_range_desc = rcl_interfaces::msg::ParameterDescriptor();
         max_range_desc.description = "Maximum range for basic sensor (m)";
-        declare_parameter("max_range", 1.0, max_range_desc);
+        declare_parameter("max_range", 1.5, max_range_desc);
         max_range = get_parameter("max_range").get_parameter_value().get<double>();
 
         // Create 5 Hz timer
@@ -45,6 +46,10 @@ public:
 
         // Publisher to publish sensed obstacles
         sensed_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker_array", 10);
+
+        // temp point pub to get heading
+         heading_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
+            "heading", 10, std::bind(&BasicSensor::heading_cb, this, std::placeholders::_1));
     }
 
 private:
@@ -64,27 +69,35 @@ private:
             this->get_logger(), "Could not transform red/base_footprint to nusim/world");
           return;
         }
-        
+        turtlelib::Transform2D Twr{{t.transform.translation.x, t.transform.translation.y}, heading};
+        turtlelib::Transform2D Trw = Twr.inv();
+
         // Get a Gaussian distributin of noise
         std::normal_distribution<> gaus_dist(0.0, basic_sensor_variance);
 
         // Loop through each of the sensed obstacles in the marker array
         for(int i=0; i < (int)sensed_obstacles.markers.size(); i++){
+            turtlelib::Transform2D Two{{sensed_obstacles.markers.at(i).pose.position.x, sensed_obstacles.markers.at(i).pose.position.y}};
+            turtlelib::Transform2D Tro = Trw*Two;
+
             // Check if the obstacle intersects with the max range of the robot
 
-            // Add noise to the position of the obstacle
-            sensed_obstacles.markers.at(i).pose.position.x += gaus_dist(get_random());
-            sensed_obstacles.markers.at(i).pose.position.y += gaus_dist(get_random());
+            // Add noise to the position of the obstacle'
+            sensed_obstacles.markers.at(i).header.frame_id = "red/base_footprint";
+            sensed_obstacles.markers.at(i).header.stamp = get_clock()->now();
+            sensed_obstacles.markers.at(i).pose.position.x =Tro.translation().x+ gaus_dist(get_random());
+            sensed_obstacles.markers.at(i).pose.position.y =Tro.translation().y + gaus_dist(get_random());
 
             // Caclulate the straight line distance between center of robot to center of obstacle
             double dist_btw_centers = std::sqrt(
-                (t.transform.translation.x-sensed_obstacles.markers.at(i).pose.position.x)*(t.transform.translation.x-sensed_obstacles.markers.at(i).pose.position.x)
-                + (t.transform.translation.y-sensed_obstacles.markers.at(i).pose.position.y)*(t.transform.translation.y-sensed_obstacles.markers.at(i).pose.position.y));
+                (Tro.translation().x*Tro.translation().x)
+                + (Tro.translation().y*Tro.translation().y));
 
             // If the straight line distance minus the obsacle radius is less than the max radius of
             // the robot than the obstacle is in range -> ADD
-            if(dist_btw_centers - sensed_obstacles.markers.at(i).scale.x/2 < max_range){
+            if(dist_btw_centers < max_range){
                 sensed_obstacles.markers.at(i).action = visualization_msgs::msg::Marker::ADD;
+
             }
             //Else -> DELETE
             else{sensed_obstacles.markers.at(i).action = visualization_msgs::msg::Marker::DELETE;}
@@ -116,6 +129,12 @@ private:
         sensed_obstacles = msg;
     }
 
+    void heading_cb(const geometry_msgs::msg::Point & msg){
+        heading = msg.z;
+    }
+
+    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;
+    double heading = 0.0;
     size_t count_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacles_sub_;

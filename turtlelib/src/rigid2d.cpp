@@ -162,15 +162,25 @@ Vector2D Vector2D::normalize()
   return Vector2D{x / mag, y / mag};
 }
 
-double normalize_angle(double rad)
-{
-  if (abs(rad) > PI) {      // If the angle's magnitude is larger than allowed, return the modulus
-    double norm_rad = fmod(rad, PI);
-    return norm_rad;
-  } else if (almost_equal(rad, -PI)) {   // if angle = -pi, convert to pi
-    return PI;
-  } else {return rad;}
-}
+// double normalize_angle(double rad)
+// {
+//   if (abs(rad) > PI) {      // If the angle's magnitude is larger than allowed, return the modulus
+//     double norm_rad = fmod(rad, PI);
+//     return norm_rad;
+//   } else if (almost_equal(rad, -PI)) {   // if angle = -pi, convert to pi
+//     return PI;
+//   } else {return rad;}
+// }
+
+double normalize_angle(double rad) {
+      double deg = rad2deg(rad); // 180
+      // deg = fmod(deg + 180, 360); // 0
+      // if (deg < 0) {
+      //   deg += 360;
+      // }
+      // return deg2rad(deg-180); // Makes it negative
+      return deg2rad(remainder(deg, 360.0));
+    }
 
 Vector2D & Vector2D::operator+=(const Vector2D & rhs)
 {

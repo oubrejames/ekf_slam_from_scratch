@@ -104,6 +104,7 @@ public:
 
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    tf_broadcaster2_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // Create joint_states subscriber
     joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -115,7 +116,7 @@ public:
       std::bind(&SlamNode::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
 
     // Define path header
-    visited_path.header.frame_id = "nusim/world";
+    visited_path.header.frame_id = "green/odom";
     visited_path.header.stamp = get_clock()->now();
 
     // Define path publisher
@@ -143,13 +144,11 @@ private:
   void timer_callback()
   {
   
-    // Add point to path and publish
-    if (time_count % 100 == 0){
+
       visited_path.header.stamp = get_clock()->now();
       visited_path.poses.push_back(create_pose_stamped(current_pos.x, current_pos.y, current_pos.theta));
       path_pub_->publish(visited_path);
-    }
-    time_count ++;
+
   }
 
   geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
@@ -210,7 +209,7 @@ private:
     odom_msg.twist.twist.angular.z = Vb.w;
 
     // Publish updated odometry
-    odom_pub_->publish(odom_msg);
+    // odom_pub_->publish(odom_msg);
     broadcast_tf();
 
   }
@@ -250,7 +249,7 @@ private:
     q2.setRPY(0, 0, Tmo_calc.rotation());
     Tmo.transform.rotation = tf2::toMsg(q2);
 
-    tf_broadcaster_->sendTransform(Tmo);
+    tf_broadcaster2_->sendTransform(Tmo);
   }
 
   void initial_pose_cb(
@@ -265,21 +264,46 @@ private:
     // Subscribe to get the sensed obstacle positions
     void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
         sensed_obstacles = msg;
-        ekf_slam.predict({current_pos.theta, current_pos.x, current_pos.y});
+        current_pos2 = internal_odom.get_current_pos();
+
+        ekf_slam.predict({current_pos2.theta, current_pos2.x, current_pos2.y});
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "PREDICT thing " << ekf_slam.get_belief_predict());
+
         for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
           if(sensed_obstacles.markers.at(j).action < 2){
-            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<double>(j+1)});
+            RCLCPP_ERROR_STREAM(this->get_logger(), "j " << j << " x " << sensed_obstacles.markers.at(j).pose.position.x << " x " << sensed_obstacles.markers.at(j).pose.position.y);
+
+            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<int>(j)});
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "m " << ekf_slam.M_output);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "rj " << ekf_slam.rj_out);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "phi_j " << ekf_slam.phi_j_out);
+
             arma::colvec tmp_pose = ekf_slam.get_belief();
             slam_pos.x = tmp_pose(1);
             slam_pos.y = tmp_pose(2);
             slam_pos.theta = tmp_pose(0);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "sigma_t_pred_get " << std::endl << ekf_slam.sigma_t_pred_get << std::endl);
+
+            RCLCPP_ERROR_STREAM(this->get_logger(), "cov_out " << std::endl << ekf_slam.cov_out << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
+
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "K " << std::endl << ekf_slam.K_out << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "zout " << ekf_slam.z_out << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "zes " << ekf_slam.z_es << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "zdiff " << ekf_slam.z_diff << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "phi_j_es " << ekf_slam.phi_j_out << std::endl);
+
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "obstacle_tracking " << ekf_slam.obstacle_tracking);
+
         }}
-        // arma::colvec tmp_pose = ekf_slam.get_belief_predict();
-        // slam_pos.x = tmp_pose(1);
-        // slam_pos.y = tmp_pose(2);
-        // slam_pos.theta = tmp_pose(0);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.x " << slam_pos.x);
-        RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.y " << slam_pos.y);
+
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.x " << slam_pos.x);
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.y " << slam_pos.y);
+
+        RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
+        
 
     }
 
@@ -292,8 +316,11 @@ private:
   turtlelib::DiffDrive internal_odom = {1.0, 1.0};
   size_t count_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster2_;
+
   rclcpp::Service<nuturtle_control::srv::Spawn>::SharedPtr initial_pose_server_;
   turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
+    turtlelib::RobotConfig current_pos2 = {0.0, 0.0, 0.0};
   turtlelib::RobotConfig slam_pos = {0.0, 0.0, 0.0};
 
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};

@@ -52,7 +52,8 @@ ament_target_dependencies(basic_sensor
                           tf2
                           tf2_ros
                           visualization_msgs
-                          nav_msgs)
+                          nav_msgs
+                          turtlelib)
 
 target_link_libraries(basic_sensor turtlelib::turtlelib "${cpp_typesupport_target}")
 
