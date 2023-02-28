@@ -26,7 +26,7 @@ public:
         // Define parameter to change maximum range of the sensor
         auto max_range_desc = rcl_interfaces::msg::ParameterDescriptor();
         max_range_desc.description = "Maximum range for basic sensor (m)";
-        declare_parameter("max_range", 1.5, max_range_desc);
+        declare_parameter("max_range", 0.5, max_range_desc);
         max_range = get_parameter("max_range").get_parameter_value().get<double>();
 
         // Create 5 Hz timer

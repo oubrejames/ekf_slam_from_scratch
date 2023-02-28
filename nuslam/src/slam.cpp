@@ -268,6 +268,11 @@ private:
 
         ekf_slam.predict({current_pos2.theta, current_pos2.x, current_pos2.y});
         // RCLCPP_ERROR_STREAM(this->get_logger(), "PREDICT thing " << ekf_slam.get_belief_predict());
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "sigma_t_pred_get " << std::endl << ekf_slam.sigma_t_pred_get << std::endl);
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "cov_out " << std::endl << ekf_slam.cov_out << std::endl);
+
+            // RCLCPP_ERROR_STREAM(this->get_logger(), "K " << std::endl << ekf_slam.K_out << std::endl);
+                        RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
 
         for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
           if(sensed_obstacles.markers.at(j).action < 2){
@@ -278,18 +283,12 @@ private:
             // RCLCPP_ERROR_STREAM(this->get_logger(), "rj " << ekf_slam.rj_out);
             // RCLCPP_ERROR_STREAM(this->get_logger(), "phi_j " << ekf_slam.phi_j_out);
 
-            arma::colvec tmp_pose = ekf_slam.get_belief();
-            slam_pos.x = tmp_pose(1);
-            slam_pos.y = tmp_pose(2);
-            slam_pos.theta = tmp_pose(0);
+
             // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
             // RCLCPP_ERROR_STREAM(this->get_logger(), "sigma_t_pred_get " << std::endl << ekf_slam.sigma_t_pred_get << std::endl);
 
-            RCLCPP_ERROR_STREAM(this->get_logger(), "cov_out " << std::endl << ekf_slam.cov_out << std::endl);
             // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
 
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "K " << std::endl << ekf_slam.K_out << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
             // RCLCPP_ERROR_STREAM(this->get_logger(), "zout " << ekf_slam.z_out << std::endl);
             // RCLCPP_ERROR_STREAM(this->get_logger(), "zes " << ekf_slam.z_es << std::endl);
             // RCLCPP_ERROR_STREAM(this->get_logger(), "zdiff " << ekf_slam.z_diff << std::endl);
@@ -298,11 +297,14 @@ private:
             // RCLCPP_ERROR_STREAM(this->get_logger(), "obstacle_tracking " << ekf_slam.obstacle_tracking);
 
         }}
-
+        arma::colvec tmp_pose = ekf_slam.get_belief();
+        slam_pos.x = tmp_pose(1);
+        slam_pos.y = tmp_pose(2);
+        slam_pos.theta = tmp_pose(0);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.x " << slam_pos.x);
         // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.y " << slam_pos.y);
 
-        RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
+        // RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
         
 
     }

@@ -42,47 +42,30 @@ namespace turtlelib
         // Update previous u
         u_t_prev = {u_t.w, u_t.x, u_t.y};
 
-        arma::colvec tmp_delta_mat;
-       // arma::mat A{max_size,max_size, arma::fill::zeros};
-
-        // if(turtlelib::almost_equal(delta_theta, 0.0)){
-        //     // No rotation
-        //     tmp_delta_mat = arma::colvec{0.0, delta_x*std::cos(belief_t(0)), delta_x*std::sin(belief_t(0))};
-        //     A(1,0) = -delta_x*std::sin(belief_t(0));
-        //     A(2,0) = delta_x*std::cos(belief_t(0));
-        //     A = arma::eye<arma::mat>(max_size,max_size) + A;
-        // }
-        // else{
-        //     // if rotation and translation
-        //     tmp_delta_mat = arma::colvec{delta_theta, -(delta_x/delta_theta)*std::sin(belief_t(0))+(delta_x/delta_theta)*std::sin(belief_t(0)+delta_theta), (delta_x/delta_theta)*std::cos(belief_t(0))-(delta_x/delta_theta)*std::cos(belief_t(0)+delta_theta)};
-        //     A(1,0) = -(delta_x/delta_theta)*std::cos(belief_t(0))+(delta_x/delta_theta)*std::cos(belief_t(0)+delta_theta);
-        //     A(2,0) = -(delta_x/delta_theta)*std::sin(belief_t(0))+(delta_x/delta_theta)*std::sin(belief_t(0)+delta_theta);
-        //     A = arma::eye<arma::mat>(max_size,max_size) + A;
-        // }
+        // Construct A matrix
         arma::mat A{2*max_n+3, 2*max_n+3, arma::fill::eye};
         A(1,0) = -delta_y;
         A(2,0) = delta_x;
         A_out = A;
 
-        belief_t_predict(0) = belief_t(0) + delta_theta;
-        belief_t_predict(1) = belief_t(1) + delta_x;
-        belief_t_predict(2) = belief_t(2) + delta_y;
+        belief_t(0) = belief_t(0) + delta_theta;
+        belief_t(1) = belief_t(1) + delta_x;
+        belief_t(2) = belief_t(2) + delta_y;
 
         // Calcualate Q matrix
-        arma::mat Q_bar{max_size,max_size, arma::fill::zeros};
+        arma::mat Q_bar{max_size, max_size, arma::fill::zeros};
         Q_bar(0,0) = Q;
         Q_bar(1,1) = Q;
         Q_bar(2,2) = Q;
 
         // Calculate predicted covariance
-        sigma_t_predict = A*sigma_t*A.t() + Q_bar;
-        sigma_t_pred_get = sigma_t_predict;
+        sigma_t = A*sigma_t*A.t() + Q_bar;
+        sigma_t_pred_get = sigma_t;
+
     }
 
     void EKFSlam::update(arma::vec m){
         // m(0) = x, m(1) = y, m(2) = j
-
-
 
         // Measured sensor data
         auto const rj = std::sqrt((m(0))*(m(0))+(m(1))*(m(1)));
@@ -92,20 +75,20 @@ namespace turtlelib
 
         // Initialize obstacles I havent seen before
         if((obstacle_tracking(1, m(2))) < 1){
-            belief_t_predict(2*m(2)+3) = belief_t(1)+rj*std::cos(phi_j+belief_t(0));
-            belief_t_predict(2*m(2)+4) = belief_t(2)+rj*std::sin(phi_j+belief_t(0));
+            belief_t(2*m(2)+3) = belief_t(1)+rj*std::cos(phi_j+belief_t(0));
+            belief_t(2*m(2)+4) = belief_t(2)+rj*std::sin(phi_j+belief_t(0));
             obstacle_tracking(1, m(2)) = 1;
         }
         
         
         // Calculate H matrix intermediate values
-        auto const delta_x = belief_t_predict(2*m(2)+3) - belief_t_predict(1);
-        auto const delta_y = belief_t_predict(2*m(2)+4) - belief_t_predict(2);
+        auto const delta_x = belief_t(2*m(2)+3) - belief_t(1);
+        auto const delta_y = belief_t(2*m(2)+4) - belief_t(2);
         auto const d = delta_x*delta_x + delta_y*delta_y;
 
         // Theoretical sensor data
         auto const rj_estimate = std::sqrt(d);
-        auto const phi_j_estimate =turtlelib::normalize_angle(atan2(delta_y, delta_x)-belief_t_predict(0));
+        auto const phi_j_estimate =turtlelib::normalize_angle(atan2(delta_y, delta_x)-belief_t(0));
         phi_j_out = phi_j_estimate;
 
         arma::colvec z_estimate{rj_estimate, phi_j_estimate};
@@ -121,30 +104,30 @@ namespace turtlelib
 
         arma::mat H_tmp_3{2, static_cast<arma::uword>(2*(max_n-(m(2)+1))), arma::fill::zeros};
 
-        arma::mat join1 = arma::join_rows(H_tmp_0, H_tmp_1); 
-        arma::mat join2 = arma::join_rows(H_tmp_2, H_tmp_3); 
-        // arma::mat H = arma:: join_rows(join1, join2);
         arma::mat H = arma:: join_rows(H_tmp_0, H_tmp_1, H_tmp_2, H_tmp_3);
 
         H_output = H;
+
         // Compute Kalman Gain
         arma::mat R_mat{2,2, arma::fill::eye};
         R_mat *= R;
 
         // Ki = max_sizex2
-        arma::mat Ki = (sigma_t_predict*H.t())*((H*sigma_t_predict*H.t() + R_mat).i());
+        arma::mat Ki = (sigma_t*H.t())*((H*sigma_t*H.t() + R_mat).i());
         K_out = Ki;
         // Compute posterior state
         // Ki*(z_diff) = max_sizex1
         // belief = max_sizex1
-        belief_t = belief_t_predict + Ki*(z - z_estimate);
+        arma::mat z_calc = z - z_estimate;
+        z_calc(0) = turtlelib::normalize_angle(z_calc(0));
+        belief_t = belief_t + Ki*(z_calc);
         belief_t(0) = normalize_angle(belief_t(0));
         z_diff = z - z_estimate;
         z_es = z_estimate;
         z_out = z;
+
         // Compute posterior covariance
-        sigma_t = (arma::eye<arma::mat>(max_size, max_size) - Ki*H)*sigma_t_predict;
-        sigma_t_predict = sigma_t;
+        sigma_t = (arma::eye<arma::mat>(max_size, max_size) - Ki*H)*sigma_t;
         cov_out = sigma_t;
     }
 
@@ -164,7 +147,7 @@ namespace turtlelib
         }
 
     arma::colvec EKFSlam::get_belief_predict(){
-        return belief_t_predict;
+        return belief_t;
         }
 
     arma::colvec EKFSlam::get_mt_track(){
