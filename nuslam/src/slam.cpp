@@ -116,7 +116,7 @@ public:
       std::bind(&SlamNode::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
 
     // Define path header
-    visited_path.header.frame_id = "green/odom";
+    visited_path.header.frame_id = "map";
     visited_path.header.stamp = get_clock()->now();
 
     // Define path publisher
@@ -232,22 +232,22 @@ private:
     Tor.transform.rotation = tf2::toMsg(q);
 
     tf_broadcaster_->sendTransform(Tor);
+////////////
+    turtlelib::Transform2D Tor_tmp{{odom_pos.x, odom_pos.y}, odom_pos.theta}; // TF from green/odom frame to robot
+    turtlelib::Transform2D Tmr{{slam_pos.x, slam_pos.y}, slam_pos.theta}; // TF from green robot to map
+    turtlelib::Transform2D Tmo_calc = Tmr*Tor_tmp.inv(); 
 
-    turtlelib::Transform2D Tor_tmp{{odom_pos.x, odom_pos.y}, odom_pos.theta};
-    turtlelib::Transform2D Tmr{{slam_pos.x, slam_pos.y}, slam_pos.theta};
-    turtlelib::Transform2D Tmo_calc = Tmr*Tor_tmp.inv();
+    // // Transform and publish markers
+    // for(size_t j = 0; j < slam_obstacles.markers.size(); j++){
+    //   // T_rbot_obstacle
+    //   turtlelib::Transform2D slam_ob_robot_frame{{slam_obstacles.markers.at(j).pose.position.x,slam_obstacles.markers.at(j).pose.position.y}};
 
-    // Transform and publish markers
-    for(size_t j = 0; j < slam_obstacles.markers.size(); j++){
-      // T_rbot_obstacle
-      turtlelib::Transform2D slam_ob_robot_frame{{slam_obstacles.markers.at(j).pose.position.x,slam_obstacles.markers.at(j).pose.position.y}};
+    //   turtlelib::Transform2D T_ob2map = slam_ob_robot_frame*Tmr.inv();
+    //   slam_obstacles.markers.at(j).pose.position.x = T_ob2map.translation().x;
+    //   slam_obstacles.markers.at(j).pose.position.y = T_ob2map.translation().y;
+    // }
 
-      turtlelib::Transform2D T_ob2map = slam_ob_robot_frame*Tmr.inv();
-      slam_obstacles.markers.at(j).pose.position.x = T_ob2map.translation().x;
-      slam_obstacles.markers.at(j).pose.position.y = T_ob2map.translation().y;
-    }
-
-    slam_obstacles_pub_ -> publish(slam_obstacles);
+    // slam_obstacles_pub_ -> publish(slam_obstacles);
 
     ////////////////
     geometry_msgs::msg::TransformStamped Tmo;
@@ -278,6 +278,7 @@ private:
     void initialize_slam_obstacles(){
       slam_obstacles = sensed_obstacles;
       for(size_t i = 0; i < slam_obstacles.markers.size(); i ++){
+        slam_obstacles.markers.at(i).header.frame_id = "map";
         slam_obstacles.markers.at(i).action = 2;
         slam_obstacles.markers.at(i).color.r = 0;
         slam_obstacles.markers.at(i).color.g = 255;
@@ -308,6 +309,7 @@ private:
             slam_obstacles.markers.at(j).pose.position.y = tmp_belief(2*j+4);
             slam_obstacles.markers.at(j).action = 0;
         }}
+      slam_obstacles_pub_ -> publish(slam_obstacles);
 
         arma::colvec tmp_pose = ekf_slam.get_belief();
         slam_pos.x = tmp_pose(1);
