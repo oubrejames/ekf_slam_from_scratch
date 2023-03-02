@@ -20,13 +20,13 @@ public:
         // Define parameter to change basic sensor noise
         auto basic_sensor_variance_desc = rcl_interfaces::msg::ParameterDescriptor();
         basic_sensor_variance_desc.description = "Variance to change sensor noise for basic sensor";
-        declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
+        declare_parameter("basic_sensor_variance", 0.001, basic_sensor_variance_desc);
         basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
         // Define parameter to change maximum range of the sensor
         auto max_range_desc = rcl_interfaces::msg::ParameterDescriptor();
         max_range_desc.description = "Maximum range for basic sensor (m)";
-        declare_parameter("max_range", 0.5, max_range_desc);
+        declare_parameter("max_range", 0.75, max_range_desc);
         max_range = get_parameter("max_range").get_parameter_value().get<double>();
 
         // Create 5 Hz timer
@@ -45,7 +45,7 @@ public:
             "/nusim/obstacles", 10, std::bind(&BasicSensor::real_obstacles_cb, this, std::placeholders::_1));
 
         // Publisher to publish sensed obstacles
-        sensed_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker_array", 10);
+        sensed_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
 
         // temp point pub to get heading
          heading_sub_ = this->create_subscription<geometry_msgs::msg::Point>(

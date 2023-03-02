@@ -69,7 +69,7 @@
   <node if="$(eval '\'$(var robot)\' == \'localhost\'')" pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher"/>
 
 <!-- If robot=none -->
-  <node if="$(eval '\'$(var robot)\' == \'none\'')" name="nuwalls" pkg="nusim" exec="nusim">
+  <node if="$(eval '\'$(var robot)\' == \'none\'')" name="nuwall" pkg="nusim" exec="nusim">
     <param from="$(var world_config_file)"/>
     <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
     <param name="draw_only" value = "true"/>

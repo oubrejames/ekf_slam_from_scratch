@@ -86,11 +86,11 @@ public:
     // Initialize internal odom
     internal_odom = turtlelib::DiffDrive{track_width, wheel_radius};
     tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, current_pos.theta);
+    q.setRPY(0.0, 0.0, odom_pos.theta);
 
     // Populate odom position with current position
-    odom_msg.pose.pose.position.x = current_pos.x;
-    odom_msg.pose.pose.position.y = current_pos.y;
+    odom_msg.pose.pose.position.x = odom_pos.x;
+    odom_msg.pose.pose.position.y = odom_pos.y;
     odom_msg.pose.pose.position.z = 0.0;
     odom_msg.pose.pose.orientation = tf2::toMsg(q);
 
@@ -133,22 +133,23 @@ public:
     declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
     basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
-    ekf_slam = {0.001, basic_sensor_variance};
+    ekf_slam = {0.01, 0.1};
 
     // Create subcriber to get actual obstacle positions
     sensed_obstacles_sub_ = this->create_subscription<visualization_msgs::msg::MarkerArray>(
-      "basic_sensor/marker_array", 10, std::bind(&SlamNode::sensed_obstacles_cb, this, std::placeholders::_1));
+      "fake_sensor", 10, std::bind(&SlamNode::sensed_obstacles_cb, this, std::placeholders::_1));
+
+    // Publisher to publish sensed obstacles
+    slam_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker_array", 10);
+
   }
 
 private:
   void timer_callback()
   {
-  
-
       visited_path.header.stamp = get_clock()->now();
-      visited_path.poses.push_back(create_pose_stamped(current_pos.x, current_pos.y, current_pos.theta));
+      visited_path.poses.push_back(create_pose_stamped(slam_pos.x, slam_pos.y, slam_pos.theta));
       path_pub_->publish(visited_path);
-
   }
 
   geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
@@ -187,13 +188,13 @@ private:
     odom_msg.header.stamp = this->get_clock()->now();
 
     // Convert current orientation to quaternian
-    current_pos = internal_odom.get_current_pos();
+    odom_pos = internal_odom.get_current_pos();
     tf2::Quaternion q;
-    q.setRPY(0, 0, current_pos.theta);
+    q.setRPY(0, 0, odom_pos.theta);
 
     // Populate odom position with current position
-    odom_msg.pose.pose.position.x = current_pos.x;
-    odom_msg.pose.pose.position.y = current_pos.y;
+    odom_msg.pose.pose.position.x = odom_pos.x;
+    odom_msg.pose.pose.position.y = odom_pos.y;
     odom_msg.pose.pose.position.z = 0.0;
     odom_msg.pose.pose.orientation.x = q.x();
     odom_msg.pose.pose.orientation.y = q.y();
@@ -222,19 +223,32 @@ private:
     Tor.header.frame_id = odom_id;
     Tor.child_frame_id = body_id;
 
-    Tor.transform.translation.x =  current_pos.x;
-    Tor.transform.translation.y = current_pos.y;
+    Tor.transform.translation.x =  odom_pos.x;
+    Tor.transform.translation.y = odom_pos.y;
     Tor.transform.translation.z = 0.0;
 
     tf2::Quaternion q;
-    q.setRPY(0, 0, current_pos.theta);
+    q.setRPY(0, 0, odom_pos.theta);
     Tor.transform.rotation = tf2::toMsg(q);
 
     tf_broadcaster_->sendTransform(Tor);
 
-    turtlelib::Transform2D Tor_tmp{{current_pos.x, current_pos.y}, current_pos.theta};
+    turtlelib::Transform2D Tor_tmp{{odom_pos.x, odom_pos.y}, odom_pos.theta};
     turtlelib::Transform2D Tmr{{slam_pos.x, slam_pos.y}, slam_pos.theta};
     turtlelib::Transform2D Tmo_calc = Tmr*Tor_tmp.inv();
+
+    // Transform and publish markers
+    for(size_t j = 0; j < slam_obstacles.markers.size(); j++){
+      // T_rbot_obstacle
+      turtlelib::Transform2D slam_ob_robot_frame{{slam_obstacles.markers.at(j).pose.position.x,slam_obstacles.markers.at(j).pose.position.y}};
+
+      turtlelib::Transform2D T_ob2map = slam_ob_robot_frame*Tmr.inv();
+      slam_obstacles.markers.at(j).pose.position.x = T_ob2map.translation().x;
+      slam_obstacles.markers.at(j).pose.position.y = T_ob2map.translation().y;
+    }
+
+    slam_obstacles_pub_ -> publish(slam_obstacles);
+
     ////////////////
     geometry_msgs::msg::TransformStamped Tmo;
     Tmo.header.stamp = this->get_clock()->now();
@@ -261,51 +275,44 @@ private:
       {internal_odom.get_current_wheel_pos()}};
   }
 
+    void initialize_slam_obstacles(){
+      slam_obstacles = sensed_obstacles;
+      for(size_t i = 0; i < slam_obstacles.markers.size(); i ++){
+        slam_obstacles.markers.at(i).action = 2;
+        slam_obstacles.markers.at(i).color.r = 0;
+        slam_obstacles.markers.at(i).color.g = 255;
+        slam_obstacles.markers.at(i).color.b = 0;
+
+      }
+    }
+
     // Subscribe to get the sensed obstacle positions
     void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
         sensed_obstacles = msg;
-        current_pos2 = internal_odom.get_current_pos();
 
-        ekf_slam.predict({current_pos2.theta, current_pos2.x, current_pos2.y});
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "PREDICT thing " << ekf_slam.get_belief_predict());
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "sigma_t_pred_get " << std::endl << ekf_slam.sigma_t_pred_get << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "cov_out " << std::endl << ekf_slam.cov_out << std::endl);
+        if(map_init){
+          initialize_slam_obstacles();
+        }
 
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "K " << std::endl << ekf_slam.K_out << std::endl);
-                        RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
+        odom_pos2 = internal_odom.get_current_pos();
+
+        ekf_slam.predict({odom_pos2.theta, odom_pos2.x, odom_pos2.y});
 
         for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
           if(sensed_obstacles.markers.at(j).action < 2){
-            RCLCPP_ERROR_STREAM(this->get_logger(), "j " << j << " x " << sensed_obstacles.markers.at(j).pose.position.x << " x " << sensed_obstacles.markers.at(j).pose.position.y);
 
             ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<int>(j)});
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "m " << ekf_slam.M_output);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "rj " << ekf_slam.rj_out);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "phi_j " << ekf_slam.phi_j_out);
 
-
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "sigma_t_pred_get " << std::endl << ekf_slam.sigma_t_pred_get << std::endl);
-
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "A " << std::endl << ekf_slam.A_out << std::endl);
-
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "zout " << ekf_slam.z_out << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "zes " << ekf_slam.z_es << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "zdiff " << ekf_slam.z_diff << std::endl);
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "phi_j_es " << ekf_slam.phi_j_out << std::endl);
-
-            // RCLCPP_ERROR_STREAM(this->get_logger(), "obstacle_tracking " << ekf_slam.obstacle_tracking);
-
+            arma::colvec tmp_belief = ekf_slam.get_belief();
+            slam_obstacles.markers.at(j).pose.position.x = tmp_belief(2*j+3);
+            slam_obstacles.markers.at(j).pose.position.y = tmp_belief(2*j+4);
+            slam_obstacles.markers.at(j).action = 0;
         }}
+
         arma::colvec tmp_pose = ekf_slam.get_belief();
         slam_pos.x = tmp_pose(1);
         slam_pos.y = tmp_pose(2);
         slam_pos.theta = tmp_pose(0);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.x " << slam_pos.x);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "slam_pos.y " << slam_pos.y);
-
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "whole thing " << ekf_slam.get_belief());
-        
 
     }
 
@@ -321,8 +328,8 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster2_;
 
   rclcpp::Service<nuturtle_control::srv::Spawn>::SharedPtr initial_pose_server_;
-  turtlelib::RobotConfig current_pos = {0.0, 0.0, 0.0};
-    turtlelib::RobotConfig current_pos2 = {0.0, 0.0, 0.0};
+  turtlelib::RobotConfig odom_pos = {0.0, 0.0, 0.0};
+    turtlelib::RobotConfig odom_pos2 = {0.0, 0.0, 0.0};
   turtlelib::RobotConfig slam_pos = {0.0, 0.0, 0.0};
 
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
@@ -335,8 +342,10 @@ private:
   turtlelib::EKFSlam ekf_slam;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sensed_obstacles_sub_;
   double basic_sensor_variance = 0.0;
-  visualization_msgs::msg::MarkerArray sensed_obstacles;
+  visualization_msgs::msg::MarkerArray sensed_obstacles, slam_obstacles;
   turtlelib::Twist2D Vb = {0.0, 0.0, 0.0};
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr slam_obstacles_pub_;
+  bool map_init = true;
 };
 
 int main(int argc, char * argv[])

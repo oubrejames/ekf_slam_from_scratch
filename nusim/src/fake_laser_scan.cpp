@@ -337,7 +337,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_pub_;
 
     double obstacle_radius = 0.05; // Will have to subscribe to this later to make smarter AGHHHHHHHHH
-    double arena_x_len = 3.5; // Will have to make param to actually get
+    double arena_x_len = 5.0; // Will have to make param to actually get
     double arena_y_len = 5.0; // Will have to make param to actually get
 
     rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;

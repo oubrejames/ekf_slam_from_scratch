@@ -1,5 +1,18 @@
 <launch>
   <arg name="rviz_config" default="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
+  <arg name="input_noise" default="0.01"/>
+  <arg name="slip_fraction" default="0.01"/>
+  <arg name="basic_sensor_variance" default="0.001"/>
+  <arg name="max_range_basic" default="1.5"/>
+
+  <arg name="max_range_fake_laser" default="3.5"/>
+  <arg name="min_range_fake_laser" default="0.11999999731779099"/>
+  <arg name="resolution_fake_laser" default="1.5"/>
+  <arg name="noise_fake_laser" default="1.5"/>
+  <arg name="angle_increment" default="0.01745329238474369"/>
+
+
+
   <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
 
   <arg name="config_file" default="$(find-pkg-share nusim)/config/basic_world.yaml" />
@@ -8,10 +21,21 @@
   <node pkg="nusim" exec="nusim">
     <param from="$(var config_file)"/>
     <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+    <param name="slip_fraction" value = "$(var slip_fraction)"/>
+    <param name="input_noise" value = "$(var input_noise)"/>
   </node>
 
-  <node pkg="nusim" exec="basic_sensor" />
-  <node pkg="nusim" exec="fake_laser_scan" />
+  <node pkg="nusim" exec="basic_sensor" >
+    <param name="basic_sensor_variance" value = "$(var basic_sensor_variance)"/>
+    <param name="max_range" value = "$(var max_range_basic)"/>
+  </node>
+
+
+  <node pkg="nusim" exec="fake_laser_scan" >
+    <param name="max_range" value = "$(var max_range_fake_laser)"/>
+    <param name="min_range" value = "$(var min_range_fake_laser)"/>
+    <param name="angle_increment" value = "$(var angle_increment)"/>
+  </node>
 
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="red" />

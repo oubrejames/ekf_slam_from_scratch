@@ -86,7 +86,7 @@ public:
     // Define arena wall parameters
     auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
     arena_x_len_desc.description = "Length of arena in the x direction";
-    declare_parameter("~x_length", 3.5, arena_x_len_desc);
+    declare_parameter("~x_length", 5.0, arena_x_len_desc);
     arena_x_len = get_parameter("~x_length").get_parameter_value().get<double>();
 
     auto arena_y_len_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -224,7 +224,7 @@ public:
     // Add noise parameter
     auto input_noise_desc = rcl_interfaces::msg::ParameterDescriptor();
     input_noise_desc.description = "Input noise to simulate sensor noise";
-    this->declare_parameter("input_noise", 0.0, input_noise_desc);
+    this->declare_parameter("input_noise", 0.01, input_noise_desc);
     input_noise = this->get_parameter("input_noise").get_parameter_value().get<double>();
 
     // Add slip fraction

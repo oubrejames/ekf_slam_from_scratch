@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /ObstacleMarker1
         - /Odometry1/Shape1
         - /RedPath1/Topic1
       Splitter Ratio: 0.5
@@ -197,7 +198,7 @@ Visualization Manager:
           Value: true
         Value: true
       Enabled: true
-      Keep: 20
+      Keep: 5
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -391,7 +392,7 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: Basic_Sensor
       Namespaces:
         "": true
       Topic:
@@ -399,7 +400,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /basic_sensor/marker_array
+        Value: /fake_sensor
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -494,6 +495,46 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Map_Markers
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /slam_node/marker_array
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: GreenPath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /slam_node/path
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -540,7 +581,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.3983646631240845
+      Distance: 3.117906093597412
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

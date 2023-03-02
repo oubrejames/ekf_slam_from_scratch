@@ -14,7 +14,7 @@ namespace turtlelib{
 class EKFSlam
 {
 private:
-    double max_n = 3; // add to constructor
+    double max_n = 10; // add to constructor
     double max_size = 2*max_n+3; // add to constructor
 
     arma::colvec q_t{3, arma::fill::zeros};
