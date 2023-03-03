@@ -174,11 +174,6 @@ Vector2D Vector2D::normalize()
 
 double normalize_angle(double rad) {
       double deg = rad2deg(rad); // 180
-      // deg = fmod(deg + 180, 360); // 0
-      // if (deg < 0) {
-      //   deg += 360;
-      // }
-      // return deg2rad(deg-180); // Makes it negative
       return deg2rad(remainder(deg, 360.0));
     }
 
