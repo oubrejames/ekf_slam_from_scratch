@@ -293,6 +293,7 @@ private:
 
         if(map_init){
           initialize_slam_obstacles();
+          map_init = false;
         }
 
         odom_pos2 = internal_odom.get_current_pos();

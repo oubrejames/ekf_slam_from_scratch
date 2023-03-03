@@ -32,7 +32,15 @@ perform Extended Kalman Filter (EKF) SLAM.
       'obstacles/r':
           Radius of obstacles (double).
           (default: '0.038')
-    ```
+    
+      'input_noise':
+          Input variance to add noise applied to wheel velocities (double).
+          (default: '0.01')
+
+      'slip_fraction':
+          Slip fraction applied to wheels (double).
+          (default: '0.05')
+   ```
 
 # Defualt launch Rviz Simulation
 

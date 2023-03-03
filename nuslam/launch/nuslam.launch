@@ -6,6 +6,8 @@
   <arg name="wheel_right" default="wheel_right_joint"/>
   <arg if="$(eval '\'$(var robot)\' == \'nusim\'')" name="slam" default="nusim" />
   <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="slam" default="real" />
+  <arg name="input_noise" default="0.01"/>
+  <arg name="slip_fraction" default="0.05"/>
 
   <node pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id nusim/world --child-frame-id map"/>
 
@@ -18,6 +20,8 @@
         <arg name="robot" value="$(var robot)" />
         <arg name="cmd_src" value="$(var cmd_src)"/>
         <arg name="slam" value="$(var slam)"/>
+        <arg name="input_noise" value="$(var slam)"/>
+
   </include>
 
 <!-- Start slam node -->

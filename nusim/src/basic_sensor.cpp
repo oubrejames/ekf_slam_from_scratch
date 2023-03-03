@@ -20,7 +20,7 @@ public:
         // Define parameter to change basic sensor noise
         auto basic_sensor_variance_desc = rcl_interfaces::msg::ParameterDescriptor();
         basic_sensor_variance_desc.description = "Variance to change sensor noise for basic sensor";
-        declare_parameter("basic_sensor_variance", 0.001, basic_sensor_variance_desc);
+        declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
         basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
         // Define parameter to change maximum range of the sensor
