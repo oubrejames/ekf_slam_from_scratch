@@ -50,56 +50,56 @@ public:
     // Create frequency parameter, convert it to chrono ms for timer, and create timer
     auto hz_desc = rcl_interfaces::msg::ParameterDescriptor{};
     hz_desc.description = "Frequency of the  timer in Hz";
-    this->declare_parameter("frequency", 100.0, hz_desc);
-    int hz = this->get_parameter("frequency").get_parameter_value().get<double>();
+    declare_parameter("frequency", 100.0, hz_desc);
+    int hz = get_parameter("frequency").get_parameter_value().get<double>();
     auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (hz)));
-    timer_ = this->create_wall_timer(
+    timer_ = create_wall_timer(
       hz_in_ms, std::bind(&Odometry::timer_callback, this));
 
     // Get odometry parameters
     auto body_id_desc = rcl_interfaces::msg::ParameterDescriptor();
     body_id_desc.description = "Name of the body frame of the robot";
-    this->declare_parameter("body_id", "", body_id_desc);
-    body_id = this->get_parameter("body_id").get_parameter_value().get<std::string>();
+    declare_parameter("body_id", "", body_id_desc);
+    body_id = get_parameter("body_id").get_parameter_value().get<std::string>();
     if (body_id == "") {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "body_id not defined"); rclcpp::shutdown();
+      RCLCPP_ERROR_STREAM(get_logger(), "body_id not defined"); rclcpp::shutdown();
     }
 
     auto odom_id_desc = rcl_interfaces::msg::ParameterDescriptor();
     odom_id_desc.description = "Name of the odometetry frame of the robot";
-    this->declare_parameter("odom_id", "odom", odom_id_desc);
-    odom_id = this->get_parameter("odom_id").get_parameter_value().get<std::string>();
+    declare_parameter("odom_id", "odom", odom_id_desc);
+    odom_id = get_parameter("odom_id").get_parameter_value().get<std::string>();
 
     auto wheel_left_desc = rcl_interfaces::msg::ParameterDescriptor();
     wheel_left_desc.description = "Name of the left wheel joint of the robot";
-    this->declare_parameter("wheel_left", "", wheel_left_desc);
-    wheel_left = this->get_parameter("wheel_left").get_parameter_value().get<std::string>();
+    declare_parameter("wheel_left", "", wheel_left_desc);
+    wheel_left = get_parameter("wheel_left").get_parameter_value().get<std::string>();
     if (wheel_left == "") {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_left not defined"); rclcpp::shutdown();
+      RCLCPP_ERROR_STREAM(get_logger(), "wheel_left not defined"); rclcpp::shutdown();
     }
 
     auto wheel_right_desc = rcl_interfaces::msg::ParameterDescriptor();
     wheel_right_desc.description = "Name of the right wheel joint of the robot";
-    this->declare_parameter("wheel_right", "", wheel_right_desc);
-    wheel_right = this->get_parameter("wheel_right").get_parameter_value().get<std::string>();
+    declare_parameter("wheel_right", "", wheel_right_desc);
+    wheel_right = get_parameter("wheel_right").get_parameter_value().get<std::string>();
     if (wheel_right == "") {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "wheel_right not defined"); rclcpp::shutdown();
+      RCLCPP_ERROR_STREAM(get_logger(), "wheel_right not defined"); rclcpp::shutdown();
     }
 
     // Get turtle description parameters
     auto wheel_radius_desc = rcl_interfaces::msg::ParameterDescriptor();
     wheel_radius_desc.description = "Radius of turtlebot wheel";
-    this->declare_parameter("wheel_radius", -1.0, wheel_radius_desc);
-    wheel_radius = this->get_parameter("wheel_radius").get_parameter_value().get<double>();
+    declare_parameter("wheel_radius", -1.0, wheel_radius_desc);
+    wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
     auto track_width_desc = rcl_interfaces::msg::ParameterDescriptor();
     track_width_desc.description = "Trackwidth between turtlebot wheels";
-    this->declare_parameter("track_width", -1.0, track_width_desc);
-    track_width = this->get_parameter("track_width").get_parameter_value().get<double>();
+    declare_parameter("track_width", -1.0, track_width_desc);
+    track_width = get_parameter("track_width").get_parameter_value().get<double>();
 
     // Create publisher to publish odometry
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    odom_msg.header.stamp = this->get_clock()->now();
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+    odom_msg.header.stamp = get_clock()->now();
     odom_msg.header.frame_id = odom_id;
     odom_msg.child_frame_id = body_id;
 
@@ -127,11 +127,11 @@ public:
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // Create joint_states subscriber
-    joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+    joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states", 10, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
 
     // Define initial_pose service
-    initial_pose_server_ = this->create_service<nuturtle_control::srv::Spawn>(
+    initial_pose_server_ = create_service<nuturtle_control::srv::Spawn>(
       "initial_pose",
       std::bind(&Odometry::initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -140,7 +140,7 @@ public:
     visited_path.header.stamp = get_clock()->now();
 
     // Define path publisher
-    path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
+    path_pub_ = create_publisher<nav_msgs::msg::Path>(
       "~/path",
       10);
   }

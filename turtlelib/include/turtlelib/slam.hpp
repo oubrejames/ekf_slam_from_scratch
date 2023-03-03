@@ -30,6 +30,7 @@ private:
     arma::mat sigma_t_prev = sigma_t;
     arma::mat sigma_t_predict = arma::join_cols((arma::join_rows(sigma_tq,arma::zeros<arma::mat>(3,2*max_n))),(arma::join_rows(arma::zeros<arma::mat>(2*max_n,3),sigma_tm)));
     double R;
+    arma::mat obstacle_tracking{2, max_n, arma::fill::zeros}; // Matrix to keep track of if an object has been seen (j,n) j = obstacle idx, n = 1 or 0 corresponding to seen or not
 
 public:
     /// \brief Initialize state to all 0's
@@ -65,6 +66,10 @@ public:
     /// @brief getter for current estimated state prediction
     /// @return current estimated state prediction
     arma::colvec get_belief_predict();
+
+    /// @brief getter for obstacle id flags
+    /// @return obstacle id flags
+    arma::colvec get_mt_track();
 
 };
 

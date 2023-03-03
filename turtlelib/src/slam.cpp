@@ -126,4 +126,8 @@ namespace turtlelib
         return belief_t;
         }
 
+    arma::colvec EKFSlam::get_mt_track(){
+        return obstacle_tracking;
+    }
+
 }
