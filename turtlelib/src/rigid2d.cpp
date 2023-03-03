@@ -172,10 +172,11 @@ Vector2D Vector2D::normalize()
 //   } else {return rad;}
 // }
 
-double normalize_angle(double rad) {
-      double deg = rad2deg(rad); // 180
-      return deg2rad(remainder(deg, 360.0));
-    }
+double normalize_angle(double rad)
+{
+  double deg = rad2deg(rad);     // 180
+  return deg2rad(remainder(deg, 360.0));
+}
 
 Vector2D & Vector2D::operator+=(const Vector2D & rhs)
 {

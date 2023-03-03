@@ -37,9 +37,9 @@ ament_target_dependencies(turtle_control
                           turtlelib)
 target_link_libraries(turtle_control turtlelib::turtlelib "${cpp_typesupport_target}")
 
-rosidl_generate_interfaces(${PROJECT_NAME}_srv 
-                          "srv/Control.srv" 
-                          "srv/Spawn.srv" 
+rosidl_generate_interfaces(${PROJECT_NAME}_srv
+                          "srv/Control.srv"
+                          "srv/Spawn.srv"
                           LIBRARY_NAME ${PROJECT_NAME})
 
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")

@@ -148,17 +148,21 @@ public:
 private:
   void timer_callback()
   {
-  
+
     // Add point to path and publish
-    if (time_count % 100 == 0){
+    if (time_count % 100 == 0) {
       visited_path.header.stamp = get_clock()->now();
-      visited_path.poses.push_back(create_pose_stamped(current_pos.x, current_pos.y, current_pos.theta));
+      visited_path.poses.push_back(
+        create_pose_stamped(
+          current_pos.x, current_pos.y,
+          current_pos.theta));
       path_pub_->publish(visited_path);
     }
-    time_count ++;
+    time_count++;
   }
 
-  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
+  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta)
+  {
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header.frame_id = "red/base_footprint";
     pose_stamped.header.stamp = get_clock()->now();

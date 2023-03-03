@@ -113,7 +113,6 @@ public:
   }
 
 private:
-
   void velocity_cb(const geometry_msgs::msg::Twist & msg)
   {
     velocity_command = msg;

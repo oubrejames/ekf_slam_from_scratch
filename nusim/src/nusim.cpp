@@ -206,7 +206,7 @@ public:
 
     // Only create obstacle marker array if there are actually obstacles defines
     if (!obstacles_x.empty()) {
-      marker_array = make_obstacle_array( obstacles_x, obstacles_y);
+      marker_array = make_obstacle_array(obstacles_x, obstacles_y);
     }
 
     // Make arena
@@ -322,7 +322,7 @@ private:
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CUBE;
       marker.action = visualization_msgs::msg::Marker::ADD;
-      if(i % 2 == 0){
+      if (i % 2 == 0) {
         // Create Y markers
         marker.scale.x = 0.2;
         marker.scale.y = arena_y_len;
@@ -335,8 +335,7 @@ private:
         marker.pose.orientation.y = q.y();
         marker.pose.orientation.z = q.z();
         marker.pose.orientation.w = q.w();
-      }
-      else {
+      } else {
         // Create X markers
         marker.scale.x = arena_x_len;
         marker.scale.y = 0.2;
@@ -385,7 +384,7 @@ private:
 
   void timer_callback()
   {
-    if(!draw_only){
+    if (!draw_only) {
       // Create message and publish timestep
       auto time_step_msg = std_msgs::msg::UInt64();
       time_step_msg.data = timestep++;
@@ -418,7 +417,11 @@ private:
       double delta_wheel_pos_l = (dt_time * phi_l_rad_s);
 
       // Apply wheel slippage if slip fraction specified
-      if(slip_fraction > 0.0 && !turtlelib::almost_equal(delta_wheel_pos_l, 0.0) && !turtlelib::almost_equal(delta_wheel_pos_r, 0.0)){
+      if (slip_fraction > 0.0 &&
+        !turtlelib::almost_equal(
+          delta_wheel_pos_l,
+          0.0) && !turtlelib::almost_equal(delta_wheel_pos_r, 0.0))
+      {
         // Create a zero mean Gaussian distribution with a variance equal to the input nosie
         std::uniform_real_distribution<> uni_dist(-slip_fraction, slip_fraction);
 
@@ -428,33 +431,33 @@ private:
       }
 
       // Save previous pose
-      auto prev_pos = turtlebot.get_current_pos();;
+      auto prev_pos = turtlebot.get_current_pos();
 
       // Compute forward kinematics to update the robot's current position based off of wheel commands
       turtlebot.forward_kinematics({delta_wheel_pos_r, delta_wheel_pos_l});
 
       // Use getter to obtain robots current configuration
       current_pos = turtlebot.get_current_pos();
-    
+
       // Check if you're current movement makes you collide with obstacle or wall
-      if(!obstacle_collision(current_pos) && !wall_collision(current_pos)){
+      if (!obstacle_collision(current_pos) && !wall_collision(current_pos)) {
         // If you are not colliding with a wall or obstacle, update position as normal
         // Update turtlebot position for broadcasting its transformation
         turtle_x = current_pos.x;
         turtle_y = current_pos.y;
         turtle_theta = current_pos.theta;
-      }
-      else{
+      } else {
         // If you are colliding, do not update turtle bot TF and reset turtlebots location to prev
         turtlebot.set_current_pos(prev_pos);
       }
 
       // update sensor data
-      // Update the encoder readings by incrementing new position plus the old position and converting 
+      // Update the encoder readings by incrementing new position plus the old position and converting
       // it to encoder ticks
       // Update the previous wheel position
       sensor_readings.left_encoder = (delta_wheel_pos_l + prev_wheel_pos.l) * encoder_ticks_per_rad;
-      sensor_readings.right_encoder = (delta_wheel_pos_r + prev_wheel_pos.r) * encoder_ticks_per_rad;
+      sensor_readings.right_encoder = (delta_wheel_pos_r + prev_wheel_pos.r) *
+        encoder_ticks_per_rad;
       prev_wheel_pos.l += delta_wheel_pos_l;
       prev_wheel_pos.r += delta_wheel_pos_r;
 
@@ -463,43 +466,48 @@ private:
       sensor_data_pub_->publish(sensor_readings);
 
       // Add point to path and publish
-      if (timestep % 100 == 0){
+      if (timestep % 100 == 0) {
         visited_path.header.stamp = get_clock()->now();
         visited_path.poses.push_back(create_pose_stamped(turtle_x, turtle_y, turtle_theta));
         path_pub_->publish(visited_path);
       }
-    }
-    else{
+    } else {
       obstacle_publisher->publish(marker_array);
       wall_publisher->publish(arena_marker_array);
     }
   }
 
-  bool obstacle_collision(turtlelib::RobotConfig robot_position){
+  bool obstacle_collision(turtlelib::RobotConfig robot_position)
+  {
     // Loop through each of the sensed obstacles in the marker array
-    for(int i=0; i < (int)marker_array.markers.size(); i++){
-        // Check if the obstacle intersects with the collision radius of the robot
+    for (int i = 0; i < (int)marker_array.markers.size(); i++) {
+      // Check if the obstacle intersects with the collision radius of the robot
 
-        // Caclulate the straight line distance between center of robot to center of obstacle
-        double dist_btw_centers = std::sqrt(
-            (robot_position.x-marker_array.markers.at(i).pose.position.x)*(robot_position.x-marker_array.markers.at(i).pose.position.x)
-            + (robot_position.y-marker_array.markers.at(i).pose.position.y)*(robot_position.y-marker_array.markers.at(i).pose.position.y));
+      // Caclulate the straight line distance between center of robot to center of obstacle
+      double dist_btw_centers = std::sqrt(
+        (robot_position.x - marker_array.markers.at(i).pose.position.x) *
+        (robot_position.x - marker_array.markers.at(i).pose.position.x) +
+        (robot_position.y - marker_array.markers.at(i).pose.position.y) *
+        (robot_position.y - marker_array.markers.at(i).pose.position.y));
 
-        // If the distance between the robot center and obstacle center is less that the collision
-        // radius + the obstacle radius, you are colliding
-        if (dist_btw_centers <= collision_radius + obstacles_r){
-          return true;
-        }
+      // If the distance between the robot center and obstacle center is less that the collision
+      // radius + the obstacle radius, you are colliding
+      if (dist_btw_centers <= collision_radius + obstacles_r) {
+        return true;
+      }
     }
-  return false;
+    return false;
   }
 
-  bool wall_collision(turtlelib::RobotConfig robot_position){
+  bool wall_collision(turtlelib::RobotConfig robot_position)
+  {
     // If the robot's x or y position is greater than or equal to half of the length of the arena walls
     // minus half the width of the wall then you are colliding
     // Half because origin at 0,0
-    if ((abs(robot_position.x)+collision_radius >= arena_x_len/2-0.2/2) || (abs(robot_position.y)+collision_radius >= arena_y_len/2-0.2/2)){
-    return true;
+    if ((abs(robot_position.x) + collision_radius >= arena_x_len / 2 - 0.2 / 2) ||
+      (abs(robot_position.y) + collision_radius >= arena_y_len / 2 - 0.2 / 2))
+    {
+      return true;
     } else {return false;}
   }
 
@@ -510,7 +518,11 @@ private:
     phi_r_rad_s = static_cast<double>(msg.right_velocity) * motor_cmd_per_rad_sec;
 
     // Apply noise if there is any noise to apply and we are not sending stop commands
-    if(input_noise > 0.0 && !turtlelib::almost_equal(msg.left_velocity, 0.0) && !turtlelib::almost_equal(msg.right_velocity, 0.0)){
+    if (input_noise > 0.0 &&
+      !turtlelib::almost_equal(
+        msg.left_velocity,
+        0.0) && !turtlelib::almost_equal(msg.right_velocity, 0.0))
+    {
       // Create a zero mean Gaussian distribution with a variance equal to the input nosie
       std::normal_distribution<> gaus_dist(0.0, input_noise);
 
@@ -521,16 +533,17 @@ private:
 
   }
 
-    // This function was copied from
-    // https://nu-msr.github.io/navigation_site/lectures/gaussian.html
+  // This function was copied from
+  // https://nu-msr.github.io/navigation_site/lectures/gaussian.html
   std::mt19937 & get_random()
   {
-      static std::random_device rd{}; 
-      static std::mt19937 mt{rd()};
-      return mt;
+    static std::random_device rd{};
+    static std::mt19937 mt{rd()};
+    return mt;
   }
 
-  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
+  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta)
+  {
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header.frame_id = "red/base_footprint";
     pose_stamped.header.stamp = get_clock()->now();
@@ -548,7 +561,7 @@ private:
 
   size_t count_;
   turtlelib::DiffDrive turtlebot = {1.0, 1.0};
-  double wheel_radius = 0.0, track_width = 0.0, motor_cmd_per_rad_sec = 0.0; 
+  double wheel_radius = 0.0, track_width = 0.0, motor_cmd_per_rad_sec = 0.0;
   double encoder_ticks_per_rad = 0.0, collision_radius = 0.0, phi_r_rad_s = 0.0, phi_l_rad_s = 0.0;
   double dt_time = 0.0, arena_x_len = 5.0, arena_y_len = 5.0, wall_height = 0.25;
   int motor_cmd_max = 0;
@@ -573,9 +586,9 @@ private:
   turtlelib::RobotConfig current_pos;
   turtlelib::WheelPos prev_wheel_pos = {0.0, 0.0};
 
-    bool draw_only = false;
-    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr heading_pub_;
-    geometry_msgs::msg::Point heading;
+  bool draw_only = false;
+  rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr heading_pub_;
+  geometry_msgs::msg::Point heading;
 };
 
 int main(int argc, char * argv[])

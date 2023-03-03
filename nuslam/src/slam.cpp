@@ -110,7 +110,8 @@ public:
     auto basic_sensor_variance_desc = rcl_interfaces::msg::ParameterDescriptor();
     basic_sensor_variance_desc.description = "Variance to change sensor noise for basic sensor";
     declare_parameter("basic_sensor_variance", 0.01, basic_sensor_variance_desc);
-    basic_sensor_variance = get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
+    basic_sensor_variance =
+      get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
     // Create publisher to publish odometry
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
@@ -171,7 +172,8 @@ public:
       "fake_sensor", 10, std::bind(&SlamNode::sensed_obstacles_cb, this, std::placeholders::_1));
 
     // Publisher to publish sensed obstacles
-    slam_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker_array", 10);
+    slam_obstacles_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+      "~/marker_array", 10);
 
   }
 
@@ -179,12 +181,13 @@ private:
   void timer_callback()
   {
     // Publish path
-      visited_path.header.stamp = get_clock()->now();
-      visited_path.poses.push_back(create_pose_stamped(slam_pos.x, slam_pos.y, slam_pos.theta));
-      path_pub_->publish(visited_path);
+    visited_path.header.stamp = get_clock()->now();
+    visited_path.poses.push_back(create_pose_stamped(slam_pos.x, slam_pos.y, slam_pos.theta));
+    path_pub_->publish(visited_path);
   }
 
-  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta){
+  geometry_msgs::msg::PoseStamped create_pose_stamped(double x, double y, double theta)
+  {
     // Create a pose stamped message for populating the path of the robot
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header.frame_id = "green/base_footprint";
@@ -256,7 +259,7 @@ private:
     Tor.header.frame_id = odom_id;
     Tor.child_frame_id = body_id;
 
-    Tor.transform.translation.x =  odom_pos.x;
+    Tor.transform.translation.x = odom_pos.x;
     Tor.transform.translation.y = odom_pos.y;
     Tor.transform.translation.z = 0.0;
 
@@ -268,14 +271,14 @@ private:
 
     turtlelib::Transform2D Tor_tmp{{odom_pos.x, odom_pos.y}, odom_pos.theta}; // TF from green/odom frame to robot
     turtlelib::Transform2D Tmr{{slam_pos.x, slam_pos.y}, slam_pos.theta}; // TF from green robot to map
-    turtlelib::Transform2D Tmo_calc = Tmr*Tor_tmp.inv(); 
+    turtlelib::Transform2D Tmo_calc = Tmr * Tor_tmp.inv();
 
     geometry_msgs::msg::TransformStamped Tmo;
     Tmo.header.stamp = this->get_clock()->now();
     Tmo.header.frame_id = "map";
     Tmo.child_frame_id = odom_id;
 
-    Tmo.transform.translation.x =  Tmo_calc.translation().x;
+    Tmo.transform.translation.x = Tmo_calc.translation().x;
     Tmo.transform.translation.y = Tmo_calc.translation().y;
     Tmo.transform.translation.z = 0.0;
 
@@ -296,56 +299,61 @@ private:
       {internal_odom.get_current_wheel_pos()}};
   }
 
-    void initialize_slam_obstacles(){
-      // Create a new area of obstacles corresponding to the ones sensed in SLAM
-      slam_obstacles = sensed_obstacles;
-      for(size_t i = 0; i < slam_obstacles.markers.size(); i ++){
-        slam_obstacles.markers.at(i).header.frame_id = "map";
-        slam_obstacles.markers.at(i).action = 2;
-        slam_obstacles.markers.at(i).color.r = 0;
-        slam_obstacles.markers.at(i).color.g = 255;
-        slam_obstacles.markers.at(i).color.b = 0;
+  void initialize_slam_obstacles()
+  {
+    // Create a new area of obstacles corresponding to the ones sensed in SLAM
+    slam_obstacles = sensed_obstacles;
+    for (size_t i = 0; i < slam_obstacles.markers.size(); i++) {
+      slam_obstacles.markers.at(i).header.frame_id = "map";
+      slam_obstacles.markers.at(i).action = 2;
+      slam_obstacles.markers.at(i).color.r = 0;
+      slam_obstacles.markers.at(i).color.g = 255;
+      slam_obstacles.markers.at(i).color.b = 0;
+    }
+  }
+
+  void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg)
+  {
+    // Recieve sensed obstacle positions
+    sensed_obstacles = msg;
+
+    // If this is the first call, ninitialize the slam obstacles for the map
+    if (map_init) {
+      initialize_slam_obstacles();
+      map_init = false;
+    }
+
+    // Get current odometry estimate
+    odom_pos2 = internal_odom.get_current_pos();
+
+    // EKF SLAM Prediction
+    ekf_slam.predict({odom_pos2.theta, odom_pos2.x, odom_pos2.y});
+
+    // Loop through all the sensed obstacles and call an update if they are of action ADD (meaning they are sensed)
+    for (size_t j = 0; j < sensed_obstacles.markers.size(); j++) {
+      if (sensed_obstacles.markers.at(j).action < 2) {
+
+        // EKF SLAM update
+        ekf_slam.update(
+          {sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(
+              j).pose.position.y, static_cast<int>(j)});
+
+        // Update the map obstacle positions
+        arma::colvec tmp_belief = ekf_slam.get_belief();
+        slam_obstacles.markers.at(j).pose.position.x = tmp_belief(2 * j + 3);
+        slam_obstacles.markers.at(j).pose.position.y = tmp_belief(2 * j + 4);
+        slam_obstacles.markers.at(j).action = 0;
       }
     }
 
-    void sensed_obstacles_cb(const visualization_msgs::msg::MarkerArray & msg){
-        // Recieve sensed obstacle positions
-        sensed_obstacles = msg;
+    // Publish SLAM obstacles
+    slam_obstacles_pub_->publish(slam_obstacles);
 
-        // If this is the first call, ninitialize the slam obstacles for the map
-        if(map_init){
-          initialize_slam_obstacles();
-          map_init = false;
-        }
-
-        // Get current odometry estimate
-        odom_pos2 = internal_odom.get_current_pos();
-
-        // EKF SLAM Prediction
-        ekf_slam.predict({odom_pos2.theta, odom_pos2.x, odom_pos2.y});
-
-        // Loop through all the sensed obstacles and call an update if they are of action ADD (meaning they are sensed)
-        for(size_t j =0; j < sensed_obstacles.markers.size(); j++){
-          if(sensed_obstacles.markers.at(j).action < 2){
-            
-            // EKF SLAM update
-            ekf_slam.update({sensed_obstacles.markers.at(j).pose.position.x, sensed_obstacles.markers.at(j).pose.position.y, static_cast<int>(j)});
-
-            // Update the map obstacle positions
-            arma::colvec tmp_belief = ekf_slam.get_belief();
-            slam_obstacles.markers.at(j).pose.position.x = tmp_belief(2*j+3);
-            slam_obstacles.markers.at(j).pose.position.y = tmp_belief(2*j+4);
-            slam_obstacles.markers.at(j).action = 0;
-        }}
-      
-      // Publish SLAM obstacles
-      slam_obstacles_pub_ -> publish(slam_obstacles);
-
-      arma::colvec tmp_pose = ekf_slam.get_belief();
-      slam_pos.x = tmp_pose(1);
-      slam_pos.y = tmp_pose(2);
-      slam_pos.theta = tmp_pose(0);
-    }
+    arma::colvec tmp_pose = ekf_slam.get_belief();
+    slam_pos.x = tmp_pose(1);
+    slam_pos.y = tmp_pose(2);
+    slam_pos.theta = tmp_pose(0);
+  }
 
   size_t count_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sensed_obstacles_sub_;
