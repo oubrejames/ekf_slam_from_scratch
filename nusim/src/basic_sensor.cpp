@@ -1,3 +1,21 @@
+/// \file
+/// \brief This file simulates a basic sensor that publishes obstacles when they are within range of the Turtlebot
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param hz_in_ms (double): Frequency of the timer in Hz
+///     \param max_range (double): Maximum range for basic sensor (m)
+///     \param basic_sensor_variance (double): Variance to change sensor noise for basic sensor
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     /fake_sensor (visualization_msgs::msg::MarkerArray): Publishes to markers to correspinding to obstacles
+
+/// SUBSCRIBES:
+///     topic_name (topic_type): description of topic
+///     /nusim/obstacles (sensor_msgs::msg::JointState): Subscribes to the ground truth obstacles positions
+///     /heading (geometry_msgs::msg::Point): Subscribes to the heading of the Turtlebot
+
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <random>
@@ -112,8 +130,8 @@ private:
         sensed_obstacles_pub_->publish(sensed_obstacles);
     }
 
-    /// @brief SAY THAT I GOT THIS FROM MATT'S NOTES
-    /// @return 
+    // This function was copied from
+    // https://nu-msr.github.io/navigation_site/lectures/gaussian.html
     std::mt19937 & get_random()
     {
         // static variables inside a function are created once and persist for the remainder of the program
@@ -129,6 +147,7 @@ private:
         sensed_obstacles = msg;
     }
 
+    // Subscribe to Turtlebot heading
     void heading_cb(const geometry_msgs::msg::Point & msg){
         heading = msg.z;
     }

@@ -1,3 +1,28 @@
+/// \file
+/// \brief This file contains the odometry node which calculates odometry and publsihes odometry information
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param hz_in_ms (double): Frequency of the timer in Hz
+///     \param body_id (string): Name of the body frame of the robot
+///     \param odom_id (string): Name of the odometetry frame of the robot
+///     \param wheel_left (string): Name of the left wheel joint of the robot
+///     \param wheel_right (string): Name of the right wheel joint of the robot
+///     \param wheel_radius (double): Radius of turtlebot wheel
+///     \param track_width (double): Trackwidth between turtlebot wheels
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     /odom (nav_msgs::msg::Odometry): Publishes the odometry information of the robot
+///     ~/path (nav_msgs::msg::Path): Publishes the path of where the robot has driven
+///
+/// SUBSCRIBES:
+///     topic_name (topic_type): description of topic
+///     /joint_states (sensor_msgs::msg::JointState): Subcribes to the joint states of the robot
+///
+/// SERVERS:
+///     initial_pose (nuturtle_control::srv::Spawn): spawns the Turtlebot at a specified position
+
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"

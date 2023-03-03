@@ -1,3 +1,26 @@
+/// \file
+/// \brief This file contains the a node that simulates the lidar of the Turtlebot
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param angle_min (double): Minumum angle on laser scan
+///     \param angle_max (double): Maximum angle on laser scan
+///     \param angle_increment (double): The angle that the scanner is incrimenting by
+///     \param max_range (double): Maximum range for fake laser scanner (m)
+///     \param min_range (double): Minimum range for fake laser scanner (m)
+///     \param noise_fake_laser (double): Variance for a zero mean noise applied to the fake laser scanner
+///     \param arena_x_len (double): Length of arena in the x direction
+///     \param arena_y_len (double): Length of arena in the y direction
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     /fake_laser_scan (sensor_msgs::msg::LaserScan): Publishes the fake sensor measurements for the Turtlebot
+///
+/// SUBSCRIBES:
+///     topic_name (topic_type): description of topic
+///     /nusim/obstacles (visualization_msgs::msg::MarkerArray): Subscribes to markers representing the obstacles
+///     /heading (visualization_msgs::msg::MarkerArray): Subscribes to Turtlebot's heading
+
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <random>
@@ -57,6 +80,16 @@ public:
         declare_parameter("noise_fake_laser", 0.01, noise_fake_laser_desc);
         noise_fake_laser = get_parameter("noise_fake_laser").get_parameter_value().get<double>();
 
+        // Define arena wall parameters
+        auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
+        arena_x_len_desc.description = "Length of arena in the x direction";
+        declare_parameter("~x_length", 5.0, arena_x_len_desc);
+        arena_x_len = get_parameter("~x_length").get_parameter_value().get<double>();
+
+        auto arena_y_len_desc = rcl_interfaces::msg::ParameterDescriptor();
+        arena_y_len_desc.description = "Length of arena in the y direction";
+        declare_parameter("~y_length", 5.0, arena_y_len_desc);
+        arena_y_len = get_parameter("~y_length").get_parameter_value().get<double>();
 
         // Create 5 Hz timer
         auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (5.0)));
@@ -76,7 +109,7 @@ public:
         // Publisher to publish sensed obstacles
         laser_scan_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("fake_laser_scan", 10);
 
-        // temp point pub to get heading
+        // publisher to get heading
          heading_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
             "heading", 10, std::bind(&FakeLaser::heading_cb, this, std::placeholders::_1));
     }
@@ -86,11 +119,7 @@ private:
     // Timer callback going at 5 hz
     void timer_callback()
     {
-
         do_a_laser_scan();
-        // // Get a Gaussian distributin of noise
-        // std::normal_distribution<> gaus_dist(0.0, basic_sensor_variance);
-
     }
 
     void do_a_laser_scan(){
@@ -153,29 +182,8 @@ private:
                 }
             }
             laser_scan.ranges.push_back(range_to_push);
-            // If there is an intersection with this obstacle
-            // laser_scan.ranges.push_back(range);
-            // // If no intersections with obstacles check wall
-            // if (range == -999.0){
-            //     auto wall_reading = check_wall_intersect({x_max_range, y_max_range});
-
-            //     // If there is an intersection with a wall
-            //     if (std::get<2>(wall_reading)){
-            //         // Calculate range distance
-            //         range = std::sqrt((std::get<0>(wall_reading)*std::get<0>(wall_reading)+std::get<1>(wall_reading)*std::get<1>(wall_reading)));
-            //     }
-            // }
-            // Add ranges to laser scan message
-            // laser_scan.ranges.push_back(range);
-
-            // if(laser_scan.ranges.size() <1){
-            // laser_scan.ranges.push_back(range);}
-            // else{laser_scan.ranges.push_back(laser_scan.ranges.at(0));}
         }
-        // Publish laser scan
-
         laser_scan_pub_->publish(laser_scan);
-
     }
 
     double check_wall_intersect(std::tuple<double, double> laser, std::tuple<double, double> max){
@@ -235,16 +243,7 @@ private:
         return min_idx;
     }
 
-    /// @brief 
-    /// @param laser tuple consisting of the laser's position x = laser[0], y = laser[1]
-    /// @param max tuple consisting of the position at the laser's max range x = max[0], y = max[1]
-    /// @param obstacle tuple consisting of an obstacles position x = obstacle[0], y = obstacle[1]
-    /// @param obs_radius 
-    /// @return 
     double check_laser_intersect(std::tuple<double, double> laser, std::tuple<double, double> max, std::tuple<double, double> obstacle, double obs_radius){
-        // Intersection with obstacles calculate using the following method
-        // PUT LINK TO MATH WRITTEN OUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
         // Calculate possible x and y componenets for both plus and minus
         auto const m = (std::get<1>(max)-std::get<1>(laser))/(std::get<0>(max)-std::get<0>(laser));
 
@@ -304,20 +303,12 @@ private:
         return range;
     }
 
-    // From https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
-    template <typename T> int sgn(T val) {
-        return (T(0) < val) - (val < T(0));
-    }
-
-    /// @brief SAY THAT I GOT THIS FROM MATT'S NOTES
-    /// @return 
+    // This function was copied from
+    // https://nu-msr.github.io/navigation_site/lectures/gaussian.html
     std::mt19937 & get_random()
     {
-        // static variables inside a function are created once and persist for the remainder of the program
         static std::random_device rd{}; 
         static std::mt19937 mt{rd()};
-        // we return a reference to the pseudo-random number genrator object. This is always the
-        // same object every time get_random is called
         return mt;
     }
 
@@ -326,7 +317,7 @@ private:
         obstacle_array = msg;
     }
 
-///////////////////
+
     void heading_cb(const geometry_msgs::msg::Point & msg){
         heading = msg.z;
     }
@@ -334,7 +325,6 @@ private:
     size_t count_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacles_sub_;
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr sensed_obstacles_pub_;
     visualization_msgs::msg::MarkerArray obstacle_array;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -343,9 +333,8 @@ private:
     sensor_msgs::msg::LaserScan laser_scan;
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_pub_;
 
-    double obstacle_radius = 0.05; // Will have to subscribe to this later to make smarter AGHHHHHHHHH
-    double arena_x_len = 5.0; // Will have to make param to actually get
-    double arena_y_len = 5.0; // Will have to make param to actually get
+    double arena_x_len = 5.0;
+    double arena_y_len = 5.0;
 
     rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;
     double heading = 0.0, noise_fake_laser = 0.0;

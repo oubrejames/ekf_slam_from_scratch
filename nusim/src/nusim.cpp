@@ -1,7 +1,40 @@
-#include <chrono>
-#include <functional>
-#include <memory>
-#include <string>
+/// \file
+/// \brief This file contains the nusim node which is the main node for simulating the Turtlebot
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param wheel_radius (double): Radius of turtlebot wheel
+///     \param track_width (double): Trackwidth between turtlebot wheels
+///     \param motor_cmd_max (int): Maximium wheel velocity command in ticks/sec
+///     \param motor_cmd_per_rad_sec (double): Maximium wheel velocity command in ticks per rad/sec
+///     \param encoder_ticks_per_rad (double): Number of encoder ticks per radian
+///     \param collision_radius (double): Turtlebot's collision radius
+///     \param arena_x_len (double): Length of arena in the x direction
+///     \param arena_y_len (double): Length of arena in the y direction
+///     \param hz_in_ms (double): Frequency of the timer in Hz
+///     \param turtle_x0 (double): Initial x position of turtlebot
+///     \param turtle_y0 (double): Initial y position of turtlebot
+///     \param turtle_theta0 (double): Initial theta position of turtlebot
+///     \param obstacles_x (std::vector<double>): List of x coordinates of obstacles
+///     \param obstacles_y (std::vector<double>): List of y coordinates of obstacles
+///     \param obstacles_r (double): Radius of cyindrical of obstacles
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     ~/timestep (std_msgs::msg::UInt64): Publishes the current timestep of the node
+///     ~/obstacles (visualization_msgs::msg::MarkerArray): Publishes the obstacles for the simulated environment
+///     ~/walls (visualization_msgs::msg::MarkerArray): Publishes the walls for the simulated environment
+///     red/sensor_data (nuturtlebot_msgs::msg::SensorData): Publishes to encoder data
+///     ~/path (nav_msgs::msg::Path): Publishes the path of the robot
+///     heading (geometry_msgs::msg::Point): Publishes the robot's heading
+///
+/// SUBSCRIBES:
+///     topic_name (topic_type): description of topic
+///     red/wheel_cmd (nuturtlebot_msgs::msg::WheelCommands): Subscribes to the wheel velocities of the Turtlebot
+///
+/// SERVERS:
+///     ~/reset (std_srvs::srv::Empty): Reset timestep to 0 and return turtlebot to original location
+///     ~/teleport (nusim::srv::Teleport): Teleport the turtlebot from one location to another
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -66,7 +99,7 @@ public:
     }
 
     auto encoder_ticks_per_rad_desc = rcl_interfaces::msg::ParameterDescriptor();
-    encoder_ticks_per_rad_desc.description = "Ticks per second of the encoder";
+    encoder_ticks_per_rad_desc.description = "Number of encoder ticks per radian";
     declare_parameter("encoder_ticks_per_rad", -1.0, encoder_ticks_per_rad_desc);
     encoder_ticks_per_rad =
       get_parameter("encoder_ticks_per_rad").get_parameter_value().get<double>();
@@ -75,13 +108,12 @@ public:
     }
 
     auto collision_radius_desc = rcl_interfaces::msg::ParameterDescriptor();
-    collision_radius_desc.description = "Radius of turtlebot wheel";
+    collision_radius_desc.description = "Turtlebot's collision radius";
     declare_parameter("collision_radius", -1.0, collision_radius_desc);
     collision_radius = get_parameter("collision_radius").get_parameter_value().get<double>();
     if (collision_radius == -1.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "collision_radius not defined"); rclcpp::shutdown();
     }
-
 
     // Define arena wall parameters
     auto arena_x_len_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -94,10 +126,8 @@ public:
     declare_parameter("~y_length", 5.0, arena_y_len_desc);
     arena_y_len = get_parameter("~y_length").get_parameter_value().get<double>();
 
-
     // Define a DiffDrive object to represent the turtlebot
     turtlebot = turtlelib::DiffDrive{track_width, wheel_radius};
-
 
     // Publisher to publish current timestep
     time_publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
@@ -114,23 +144,19 @@ public:
     // Calculate dt for later calculations
     dt_time = 1.0 / (double)hz;
 
-
     // Define reset server
     reset_server_ = this->create_service<std_srvs::srv::Empty>(
       "~/reset",
       std::bind(&NusimNode::reset, this, std::placeholders::_1, std::placeholders::_2));
 
-
     // Define transform broadcaster to be used between nusim world and red robot
     tf_broadcaster_ =
       std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-
 
     // Define teleport service
     teleport_server_ = this->create_service<nusim::srv::Teleport>(
       "~/teleport",
       std::bind(&NusimNode::teleport, this, std::placeholders::_1, std::placeholders::_2));
-
 
     // Create parameters for turtlebot initial position
     auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -151,7 +177,6 @@ public:
     turtle_theta0 = get_parameter("theta0").get_parameter_value().get<double>();
     turtle_theta = turtle_theta0;
 
-
     // Create parameters for obstacle position and size
     auto ob_x_desc = rcl_interfaces::msg::ParameterDescriptor();
     ob_x_desc.description = "List of x coordinates of obstacles";
@@ -170,7 +195,6 @@ public:
     declare_parameter("obstacles/r", 0.05, ob_r_desc);
     obstacles_r = get_parameter("obstacles/r").get_parameter_value().get<double>();
 
-
     // Define a publisher to publish obstacle and wall markers
     obstacle_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/obstacles",
@@ -179,7 +203,6 @@ public:
     wall_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/walls",
       10);
-
 
     // Only create obstacle marker array if there are actually obstacles defines
     if (!obstacles_x.empty()) {
@@ -201,11 +224,9 @@ public:
       return;
     }
 
-
     // Create wheel command subscriber
     wheel_commands_sub_ = this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
       "red/wheel_cmd", 10, std::bind(&NusimNode::wheel_commands_cb, this, std::placeholders::_1));
-
 
     // Create publisher to publish sensor data
     sensor_data_pub_ = this->create_publisher<nuturtlebot_msgs::msg::SensorData>(
@@ -252,11 +273,6 @@ private:
   double obstacles_r;
   std::vector<double> obstacles_x, obstacles_y;
 
-
-  /// @brief create a marker array to publish obstacle cylinders
-  /// @param x_coords x coordinates of the obstacles
-  /// @param y_coords y coordinates of the obstacles
-  /// @return maker area containing obstacle markers
   visualization_msgs::msg::MarkerArray make_obstacle_array(
     std::vector<double> x_coords,
     std::vector<double> y_coords)
@@ -290,11 +306,6 @@ private:
     return mkr_array;
   }
 
-
-  /// @brief create a marker array to publish arena walls
-  /// @param x_coords x coordinates of the obstacles
-  /// @param y_coords y coordinates of the obstacles
-  /// @return maker area containing wall markers
   visualization_msgs::msg::MarkerArray make_wall_array(
     std::vector<double> x_coords,
     std::vector<double> y_coords)
@@ -352,9 +363,6 @@ private:
     return mkr_array;
   }
 
-  /// @brief Teleport the turtlebot from one location to another
-  /// @param req Custom srv containing a x,y,theta position
-  /// @param - service response (empty)
   void teleport(
     const std::shared_ptr<nusim::srv::Teleport::Request> req,
     std::shared_ptr<nusim::srv::Teleport::Response>)
@@ -365,9 +373,6 @@ private:
     turtle_theta = req->theta;
   }
 
-  /// @brief reset timestep to 0 and return turtlebot to original location
-  /// @param - service request (empty)
-  /// @param - service response (empty)
   void reset(
     const std::shared_ptr<std_srvs::srv::Empty::Request>,
     const std::shared_ptr<std_srvs::srv::Empty::Response>)
@@ -453,7 +458,6 @@ private:
       prev_wheel_pos.l += delta_wheel_pos_l;
       prev_wheel_pos.r += delta_wheel_pos_r;
 
-
       // publish sensor data
       sensor_readings.stamp = get_clock()->now();
       sensor_data_pub_->publish(sensor_readings);
@@ -517,15 +521,12 @@ private:
 
   }
 
-  /// @brief SAY THAT I GOT THIS FROM MATT'S NOTES
-  /// @return 
+    // This function was copied from
+    // https://nu-msr.github.io/navigation_site/lectures/gaussian.html
   std::mt19937 & get_random()
   {
-      // static variables inside a function are created once and persist for the remainder of the program
       static std::random_device rd{}; 
       static std::mt19937 mt{rd()};
-      // we return a reference to the pseudo-random number genrator object. This is always the
-      // same object every time get_random is called
       return mt;
   }
 

@@ -1,3 +1,20 @@
+/// \file
+/// \brief This file contains the a node that sends commands to move the robot in a circle
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param hz (double): Timer frequency in Hz
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     /cmd_vel (geometry_msgs::msg::Twist): Publishes the velocities to move the robot in a circle
+///
+/// SERVERS:
+///     service_name (service_type): description of the service
+///     stop (std_srvs::srv::Empty): Stops the robot from moving
+///     reverse (std_srvs::srv::Empty): Reverses the robots direction
+///     control (nuturtle_control::srv::Control): Sends commands to move the robot in a circles
+
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"

@@ -1,3 +1,26 @@
+/// \file
+/// \brief This file contains the nusim node which is the main node for simulating the Turtlebot
+///
+/// PARAMETERS:
+///     parameter_name (parameter_type): description of the parameter
+///     \param wheel_radius (double): Radius of turtlebot wheel
+///     \param track_width (double): Trackwidth between turtlebot wheels
+///     \param motor_cmd_max (int): Maximium wheel velocity command in ticks/sec
+///     \param motor_cmd_per_rad_sec (double): Maximium wheel velocity command in ticks per rad/sec
+///     \param encoder_ticks_per_rad (double): Number of encoder ticks per radian
+///     \param collision_radius (double): Turtlebot's collision radius
+///
+/// PUBLISHES:
+///     topic_name (topic_type): description of topic
+///     /wheel_cmd (nuturtlebot_msgs::msg::WheelCommands): Publishes wheel commands based on command velocities
+///     /joint_states (sensor_msgs::msg::JointState): Publishes the Turtlebot's joint states
+///
+/// SUBSCRIBES:
+///     topic_name (topic_type): description of topic
+///     /cmd_vel (geometry_msgs::msg::Twist): Subscribes to command velocities
+///     /sensor_data (nuturtlebot_msgs::msg::SensorData): Subscribes to the wheel encoder data
+///
+
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
@@ -90,8 +113,7 @@ public:
   }
 
 private:
-  /// @brief subscribe to the cmd_vel topic to get robot velocity commands (m/s)
-  /// @param msg the Twist from the cmd_vel topic
+
   void velocity_cb(const geometry_msgs::msg::Twist & msg)
   {
     velocity_command = msg;
@@ -128,8 +150,6 @@ private:
     wheel_cmd_pub_->publish(wheel_cmd_msg);
   }
 
-  /// @brief subscribe to the sensor_data topic and publish updated joint states
-  /// @param msg readings from wheel encoders
   void sensor_data_cb(const nuturtlebot_msgs::msg::SensorData & msg)
   {
     // if first iteration, make previous timestep 0
