@@ -29,18 +29,15 @@ DiffDrive::DiffDrive(double track_l, double wheel_r, RobotConfig pos)
   current_pos{pos},
   current_wheel_pos{0.0, 0.0} {}
 
-/// TODO: should this update? should this return
-/// if absolute value = u must subtract (current wheel pos - u)
-// if u is relative, we good
 Twist2D DiffDrive::forward_kinematics(const WheelPos u)
 {
   // Calculate the angular portion of the twist
   // [(u.r/4 - uy.l/4)*r^2]/l
-  double w = ((u.r - u.l) * (this->wheel_radius)) / (this->track_length);
+  const auto w = ((u.r - u.l) * (wheel_radius)) / (track_length);
 
   // Calculate the x portion of the twist
   // (u.r/4 + uy.l/4)*r^2
-  double x = 0.5 * (u.r + u.l) * this->wheel_radius;
+  const auto x = 0.5 * (u.r + u.l) * wheel_radius;
 
   // // Update wheel position
   current_wheel_pos.r += u.r;
@@ -52,8 +49,7 @@ Twist2D DiffDrive::forward_kinematics(const WheelPos u)
   return body_twist;
 }
 
-/// TODO: What angle is theta here
-/// should i be adding on to my current position
+
 void DiffDrive::update_robot_pos(const Twist2D Vb)
 {
   // Integrate body twist
@@ -72,10 +68,10 @@ WheelPos DiffDrive::inverse_kinematics(const Twist2D Vb) const
 
   if (almost_equal(Vb.y, 0.0)) {
     //phi.r = (l/2*theta+Vb.x)/r
-    phi.r = ((this->track_length / 2) * Vb.w + Vb.x) / (this->wheel_radius);
+    phi.r = ((track_length / 2) * Vb.w + Vb.x) / (wheel_radius);
 
     //phi.l = (Vb.x-theta*l/2)/r
-    phi.l = ((Vb.x - (this->track_length / 2) * Vb.w) / (this->wheel_radius));
+    phi.l = ((Vb.x - (track_length / 2) * Vb.w) / (wheel_radius));
   } else {
     throw std::logic_error("Given body twist causes slipping.");
   }
