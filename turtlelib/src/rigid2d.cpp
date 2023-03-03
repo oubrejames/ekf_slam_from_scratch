@@ -179,8 +179,8 @@ double normalize_angle(double rad) {
 
 Vector2D & Vector2D::operator+=(const Vector2D & rhs)
 {
-  this->x += rhs.x;
-  this->y += rhs.y;
+  x += rhs.x;
+  y += rhs.y;
   return *this;
 }
 
@@ -191,8 +191,8 @@ Vector2D operator+(Vector2D lhs, const Vector2D & rhs)
 
 Vector2D & Vector2D::operator-=(const Vector2D & rhs)
 {
-  this->x -= rhs.x;
-  this->y -= rhs.y;
+  x -= rhs.x;
+  y -= rhs.y;
   return *this;
 }
 
@@ -203,8 +203,8 @@ Vector2D operator-(Vector2D lhs, const Vector2D & rhs)
 
 Vector2D & Vector2D::operator*=(const double rhs)
 {
-  this->x *= rhs;
-  this->y *= rhs;
+  x *= rhs;
+  y *= rhs;
   return *this;
 }
 
@@ -225,7 +225,7 @@ double dot(Vector2D lhs_vect, Vector2D rhs_vect)
 
 double Vector2D::magnitude()
 {
-  return sqrt(this->x * this->x + this->y * this->y);
+  return sqrt(x * x + y * y);
 }
 
 double angle(Vector2D lhs_vect, Vector2D rhs_vect)
