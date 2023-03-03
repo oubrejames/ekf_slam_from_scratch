@@ -67,7 +67,7 @@
 
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="nusim">
     <param from="$(var world_config_file)"/>
-    <param name="input_noise" value = "$(var input_noise)"/>
+    <!-- <param name="input_noise" value = "$(var input_noise)"/> -->
     <param name="slip_fraction" value = "$(var slip_fraction)"/>
     <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
   </node>

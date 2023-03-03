@@ -20,7 +20,7 @@
         <arg name="robot" value="$(var robot)" />
         <arg name="cmd_src" value="$(var cmd_src)"/>
         <arg name="slam" value="$(var slam)"/>
-        <arg name="input_noise" value="$(var slam)"/>
+        <arg name="input_noise" value="$(var input_noise)"/>
 
   </include>
 
