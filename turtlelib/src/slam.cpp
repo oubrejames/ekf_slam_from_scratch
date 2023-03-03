@@ -89,7 +89,6 @@ namespace turtlelib
         // Theoretical sensor data
         auto const rj_estimate = std::sqrt(d);
         auto const phi_j_estimate =turtlelib::normalize_angle(atan2(delta_y, delta_x)-belief_t(0));
-        phi_j_out = phi_j_estimate;
 
         arma::colvec z_estimate{rj_estimate, phi_j_estimate};
 
@@ -119,12 +118,9 @@ namespace turtlelib
         // Ki*(z_diff) = max_sizex1
         // belief = max_sizex1
         arma::mat z_calc = z - z_estimate;
-        z_calc(0) = turtlelib::normalize_angle(z_calc(0));
+        //z_calc(0) = turtlelib::normalize_angle(z_calc(0));
         belief_t = belief_t + Ki*(z_calc);
-        belief_t(0) = normalize_angle(belief_t(0));
-        z_diff = z - z_estimate;
-        z_es = z_estimate;
-        z_out = z;
+        //belief_t(0) = normalize_angle(belief_t(0));
 
         // Compute posterior covariance
         sigma_t = (arma::eye<arma::mat>(max_size, max_size) - Ki*H)*sigma_t;

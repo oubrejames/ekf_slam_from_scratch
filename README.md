@@ -13,6 +13,16 @@ move the robot in predefined patterns
 # Demonstration
 ### EKF SLAM Simulation 
 
+Everything in red represents the ground truth of the robot. The red walls and obstacles represent the 
+"real" obstacles. The red robot is the "real" robot.
+
+Everything in green is a product of the SLAM algorithm. As obstacles get detected, they are added to 
+the map in green.
+
+The blue robot represents the vehicle's position based on its odometry.
+
+The yellow obstacles represent the sensor output of detected obstacles.
+
 [good_slam.webm](https://user-images.githubusercontent.com/46512429/222618383-79a02665-92ba-47cc-a9d8-d5245849359f.webm)
 
 ### EKF SLAM Simulation with Obstacle Collison and Significant Correction
