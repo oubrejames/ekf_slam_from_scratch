@@ -4,6 +4,11 @@ This package contains the simulator for Turtlebot SLAM. The `nusim` node which g
 Turtlebot in an environment containing obstacles. The Turtlebot will navigate this enivroment and
 perform Extended Kalman Filter (EKF) SLAM.
 
+# Nodes
+* `nusim` - main simulation node
+* `basic_sensor.cpp` - publishes x,y cordinates of obstacles relative to the robot within a certain range
+* `fake_laser_scan` - simulates the laser scan of the actual turtlebot and publishes fake laser scan messages
+
 # Launch File Details
 * To launch the Turtlebot in the simulator environment:
   `ros2 launch nusim nusim.launch.xml`
