@@ -45,6 +45,30 @@ perform Extended Kalman Filter (EKF) SLAM.
       'slip_fraction':
           Slip fraction applied to wheels (double).
           (default: '0.05')
+
+      'basic_sensor_variance':
+          Variance to change sensor noise for basic sensor (double).
+          (default: '0.01')
+
+      'max_range_basic':
+          Maximum range for basic sensor (m) (double).
+          (default: '0.75')
+
+      'max_range_fake_laser':
+          Maximum range for fake laser scanner (m) (double).
+          (default: '3.5')
+
+      'min_range_fake_laser':
+          Minimum range for fake laser scanner (m) (double).
+          (default: '0.11999999731779099')
+
+      'angle_increment':
+          The angle that the scanner is incrimenting by (double).
+          (default: '0.01745329238474369')
+
+      'noise_fake_laser':
+          Variance for a zero mean noise applied to the fake laser scanner (double).
+          (default: '0.01745329238474369')
    ```
 
 # Defualt launch Rviz Simulation

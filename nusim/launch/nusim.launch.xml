@@ -7,7 +7,6 @@
 
   <arg name="max_range_fake_laser" default="3.5"/>
   <arg name="min_range_fake_laser" default="0.11999999731779099"/>
-  <arg name="resolution_fake_laser" default="1.5"/>
   <arg name="noise_fake_laser" default="1.5"/>
   <arg name="angle_increment" default="0.01745329238474369"/>
 

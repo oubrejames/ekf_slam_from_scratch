@@ -51,6 +51,13 @@ public:
         declare_parameter("min_range", 0.11999999731779099, min_range_desc);
         min_range = get_parameter("min_range").get_parameter_value().get<double>();
 
+        // Define parameter to change noise of the sensor
+        auto noise_fake_laser_desc = rcl_interfaces::msg::ParameterDescriptor();
+        noise_fake_laser_desc.description = "Variance for a zero mean noise applied to the fake laser scanner";
+        declare_parameter("noise_fake_laser", 0.01, noise_fake_laser_desc);
+        noise_fake_laser = get_parameter("noise_fake_laser").get_parameter_value().get<double>();
+
+
         // Create 5 Hz timer
         auto hz_in_ms = std::chrono::milliseconds((long)(1000 / (5.0)));
         timer_ = create_wall_timer(
@@ -292,7 +299,7 @@ private:
         range = check_wall_intersect(laser, max);
     }
         // Get a Gaussian distributin of noise
-        std::normal_distribution<> gaus_dist(0.0, 0.01);
+        std::normal_distribution<> gaus_dist(0.0, noise_fake_laser);
         range += gaus_dist(get_random());
         return range;
     }
@@ -341,7 +348,7 @@ private:
     double arena_y_len = 5.0; // Will have to make param to actually get
 
     rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr heading_sub_;
-    double heading = 0.0;
+    double heading = 0.0, noise_fake_laser = 0.0;
 };
 
 int main(int argc, char * argv[])

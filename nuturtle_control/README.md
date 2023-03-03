@@ -21,7 +21,7 @@ and the real world.
   Arguments:
       'body_id':
           Name of robot's base frame (string).
-          (default: '')
+          (default: 'blue/base_footprint')
 
       'odom_id':
           Name of robot's odometry frame (string).
@@ -46,6 +46,26 @@ and the real world.
       'use_rviz':
           Flag for whether or not to use rviz.
           (default depends on `robot`)
+
+      'input_noise':
+          Input variance to add noise applied to wheel velocities (double).
+          (default: '0.01')
+
+      'slip_fraction':
+          Slip fraction applied to wheels (double).
+          (default: '0.05')
+
+      'world_config_file':
+          Path to configuration file containing world description (string).
+          (default: 'basic_world.yaml')
+
+      'slam':
+          Flag whether or not to run with SLAM (string).
+          (default: 'none')
+
+      'basic_sensor_variance':
+          Variance to change sensor noise for basic sensor (double).
+          (default: '0.01')
     ```
 
 # Services
