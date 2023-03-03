@@ -23,17 +23,7 @@ namespace turtlelib
     {}
 
     void EKFSlam::predict(Twist2D u_t){
-        // // Integrate the odometry twist to get the actual wheel positions
-        // auto const integrated_odom = turtlelib::integrate_twist(u_t);
 
-        // // Subtract prev odom from current to get the delta u
-        // auto const delta_x = integrated_odom.translation().x - u_t_prev(1);
-        // auto const delta_theta = integrated_odom.rotation() - u_t_prev(0);
-
-        // // Update previous u
-        // u_t_prev = {integrated_odom.rotation(), integrated_odom.translation().x, integrated_odom.translation().y};
-
-        // uT PREV SHOULD BE SLAM STATES CURRENT IS JUST ODOMETRY - KT
         // Subtract prev odom from current to get the delta u
         auto const delta_x = u_t.x - u_t_prev(1);
         auto const delta_theta = turtlelib::normalize_angle(u_t.w - u_t_prev(0));
@@ -46,7 +36,6 @@ namespace turtlelib
         arma::mat A{2*max_n+3, 2*max_n+3, arma::fill::eye};
         A(1,0) = -delta_y;
         A(2,0) = delta_x;
-        A_out = A;
 
         belief_t(0) = belief_t(0) + delta_theta;
         belief_t(1) = belief_t(1) + delta_x;
@@ -60,8 +49,6 @@ namespace turtlelib
 
         // Calculate predicted covariance
         sigma_t = A*sigma_t*A.t() + Q_bar;
-        sigma_t_pred_get = sigma_t;
-
     }
 
     void EKFSlam::update(arma::vec m){
@@ -71,7 +58,6 @@ namespace turtlelib
         auto const rj = std::sqrt((m(0))*(m(0))+(m(1))*(m(1)));
         auto const phi_j = (atan2(m(1), m(0)));
         arma::colvec z{rj, phi_j};
-        rj_out = rj;
 
         // Initialize obstacles I havent seen before
         if((obstacle_tracking(1, m(2))) < 1){
@@ -105,26 +91,24 @@ namespace turtlelib
 
         arma::mat H = arma:: join_rows(H_tmp_0, H_tmp_1, H_tmp_2, H_tmp_3);
 
-        H_output = H;
-
         // Compute Kalman Gain
         arma::mat R_mat{2,2, arma::fill::eye};
         R_mat *= R;
 
         // Ki = max_sizex2
         arma::mat Ki = (sigma_t*H.t())*((H*sigma_t*H.t() + R_mat).i());
-        K_out = Ki;
+
         // Compute posterior state
         // Ki*(z_diff) = max_sizex1
         // belief = max_sizex1
         arma::mat z_calc = z - z_estimate;
+
         //z_calc(0) = turtlelib::normalize_angle(z_calc(0));
         belief_t = belief_t + Ki*(z_calc);
         //belief_t(0) = normalize_angle(belief_t(0));
 
         // Compute posterior covariance
         sigma_t = (arma::eye<arma::mat>(max_size, max_size) - Ki*H)*sigma_t;
-        cov_out = sigma_t;
     }
 
     arma::colvec EKFSlam::get_qt(){
@@ -138,16 +122,8 @@ namespace turtlelib
         return belief_t;
         }
 
-    arma::colvec EKFSlam::get_h(){
-        return H_output;
-        }
-
     arma::colvec EKFSlam::get_belief_predict(){
         return belief_t;
         }
-
-    arma::colvec EKFSlam::get_mt_track(){
-        return obstacle_tracking;
-    }
 
 }
