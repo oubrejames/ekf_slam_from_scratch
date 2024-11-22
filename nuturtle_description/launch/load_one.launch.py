@@ -1,12 +1,11 @@
 from launch import LaunchDescription
 from launch.substitutions import Command, PathJoinSubstitution, LaunchConfiguration, \
-                                TextSubstitution
+                                TextSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
 from launch.actions import DeclareLaunchArgument, Shutdown
-from launch.conditions import LaunchConfigurationEquals
 from launch.actions import SetLaunchConfiguration
-
+from launch.conditions import IfCondition
 
 def generate_launch_description():
     return LaunchDescription([
@@ -36,7 +35,7 @@ def generate_launch_description():
                                  LaunchConfiguration('color')])}],
                         ),
 
-            DeclareLaunchArgument(
+            use_rviz_arg = DeclareLaunchArgument(
                 name='use_rviz',
                 default_value='true',
                 choices=[
@@ -54,7 +53,12 @@ def generate_launch_description():
                 package='rviz2',
                 executable='rviz2',
                 namespace=LaunchConfiguration('color'),
-                condition=(LaunchConfigurationEquals('use_rviz', 'true')),
+                condition=IfCondition(
+                            PythonExpression([
+                                use_rviz_arg,
+                                ' == True',
+                            ]),
+                ),
                 name='rviz2',
                 output='screen',
                 arguments=['-d', LaunchConfiguration('rvizconfig')],
@@ -73,6 +77,11 @@ def generate_launch_description():
                 package='joint_state_publisher',
                 executable='joint_state_publisher',
                 namespace=LaunchConfiguration('color'),
-                condition=(LaunchConfigurationEquals('use_jsp', 'true'))
+                condition=IfCondition(
+                            PythonExpression([
+                                use_jsp,
+                                ' == True',
+                            ]),
+                ),
                 ),
         ])
