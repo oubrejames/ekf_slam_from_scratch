@@ -6,10 +6,40 @@ from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
 from launch.actions import DeclareLaunchArgument, Shutdown
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
+import os 
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    return LaunchDescription([
-            DeclareLaunchArgument(
+    use_rviz = LaunchConfiguration('use_rviz')
+    use_jsp = LaunchConfiguration('use_jsp')
+    turtle_color = LaunchConfiguration('color')
+    # rviz_config = LaunchConfiguration("rviz_config")
+
+    # SetLaunchConfiguration(name='rviz_config',
+    #                        value=[FindPackageShare("nuturtle_description"),
+    #                               TextSubstitution(text='/config/basic_'),
+    #                               turtle_color,
+    #                               TextSubstitution(text='.rviz')])
+    
+
+
+    use_rviz_arg = DeclareLaunchArgument(
+        name='use_rviz',
+        default_value='True',
+        choices=[
+            'True',
+            'False'],
+        description='Flag to enable rviz')
+
+    use_jsp_arg = DeclareLaunchArgument(
+                name='use_jsp',
+                default_value='True',
+                choices=[
+                    'True',
+                    'False'],
+                description='Flag to enable joint_state_publisher')
+
+    turtle_color_arg = DeclareLaunchArgument(
                 name='color',
                 default_value='purple',
                 choices=[
@@ -17,71 +47,69 @@ def generate_launch_description():
                     'red',
                     'green',
                     'blue'],
-                description='Color of TurtleBot'),
+                description='Color of TurtleBot')
 
-            Node(
+    rviz_config = PathJoinSubstitution([
+        FindPackageShare('nuturtle_description'),
+        '/config/basic_',
+        turtle_color,
+        '.rviz'])
+
+    robot_state_publisher_node = Node(
                 package="robot_state_publisher",
                 executable="robot_state_publisher",
-                namespace=LaunchConfiguration('color'),
+                namespace=turtle_color,
                 parameters=[
                     {"frame_prefix":
-                        PathJoinSubstitution([(LaunchConfiguration('color')), '']),
+                        PathJoinSubstitution([turtle_color, '']),
                      "robot_description":
                         Command([ExecutableInPackage("xacro", "xacro"), " ",
                                  PathJoinSubstitution(
                                     [FindPackageShare("nuturtle_description"),
                                         "urdf/turtlebot3_burger.urdf.xacro"]),
                                  " color:=",
-                                 LaunchConfiguration('color')])}],
-                        ),
+                                 turtle_color])}],
+                        )
 
-            use_rviz_arg = DeclareLaunchArgument(
-                name='use_rviz',
-                default_value='true',
-                choices=[
-                    'true',
-                    'false'],
-                description='Flag to enable rviz'),
-
-            SetLaunchConfiguration(name='rvizconfig',
-                                   value=[FindPackageShare("nuturtle_description"),
-                                          TextSubstitution(text='/config/basic_'),
-                                          LaunchConfiguration('color'),
-                                          TextSubstitution(text='.rviz')]),
-
-            Node(
+    rviz_node = Node(
                 package='rviz2',
                 executable='rviz2',
-                namespace=LaunchConfiguration('color'),
+                namespace=turtle_color,
                 condition=IfCondition(
                             PythonExpression([
-                                use_rviz_arg,
-                                ' == True',
+                                use_rviz, 
                             ]),
                 ),
                 name='rviz2',
                 output='screen',
-                arguments=['-d', LaunchConfiguration('rvizconfig')],
+                arguments=['-d', rviz_config],
                 on_exit=Shutdown()
-                ),
+                )
 
-            DeclareLaunchArgument(
-                name='use_jsp',
-                default_value='true',
-                choices=[
-                    'true',
-                    'false'],
-                description='Flag to enable joint_state_publisher'),
-
-            Node(
+    jsp_node = Node(
                 package='joint_state_publisher',
                 executable='joint_state_publisher',
-                namespace=LaunchConfiguration('color'),
+                namespace=turtle_color,
                 condition=IfCondition(
                             PythonExpression([
                                 use_jsp,
-                                ' == True',
                             ]),
                 ),
-                ),
+                )
+
+
+    return LaunchDescription([
+        use_rviz_arg,
+        use_jsp_arg,
+        turtle_color_arg,
+        robot_state_publisher_node,
+        rviz_node,
+        jsp_node
+
+
+
+
+
         ])
+
+
