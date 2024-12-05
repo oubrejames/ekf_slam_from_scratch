@@ -36,8 +36,8 @@
 <!-- launch green boy-->
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="green" />
-        <arg name="use_jsp" value="true" />
-        <arg name="use_rviz" value="false" />
+        <arg name="use_jsp" value="True" />
+        <arg name="use_rviz" value="False" />
   </include> 
 
 <!--If robot=ROBOTNAM -> impliment this next hw-->

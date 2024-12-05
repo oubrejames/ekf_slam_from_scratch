@@ -17,14 +17,14 @@
   <node if="$(eval '\'$(var cmd_src)\' == \'teleop\'')" launch-prefix = "xterm -e" pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard"/>
 
 <!-- Launch RViz-->
-  <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="false" />
-  <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="true" />
+  <arg if="$(eval '\'$(var robot)\' == \'localhost\'')" name="use_rviz" default="False" />
+  <arg if="$(eval '\'$(var robot)\' != \'localhost\'')" name="use_rviz" default="True" />
   <arg if="$(eval '\'$(var slam)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuslam)/config/nusim_slam.rviz" />
   <arg if="$(eval '\'$(var slam)\' == \'real\'')" name="rviz_config" default="$(find-pkg-share nuslam)/config/real_slam.rviz" />
   <arg if="$(eval '\'$(var robot)\' == \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/blue_and_red.rviz" />
   <arg if="$(eval '\'$(var robot)\' != \'nusim\'')" name="rviz_config" default="$(find-pkg-share nuturtle_control)/config/real_robot.rviz" />
 
-  <node if="$(eval '\'$(var use_rviz)\' == \'true\'')" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
+  <node if="$(eval '\'$(var use_rviz)\' == \'True\'')" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
 
 <!-- General Launch -->
   <node pkg="nuturtle_control" exec="odometry" name="odometry">
@@ -40,8 +40,8 @@
 
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="blue" />
-        <arg name="use_rviz" value="false" />
-        <arg name="use_jsp" value="false" />
+        <arg name="use_rviz" value="False" />
+        <arg name="use_jsp" value="False" />
   </include> 
 
 
@@ -61,8 +61,8 @@
 
   <include if="$(eval '\'$(var robot)\' == \'nusim\'')" file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="red" />
-        <arg name="use_rviz" value="false" />
-        <arg name="use_jsp" value="true" />
+        <arg name="use_rviz" value="False" />
+        <arg name="use_jsp" value="True" />
   </include>
 
   <node if="$(eval '\'$(var robot)\' == \'nusim\'')" pkg="nusim" exec="nusim">
@@ -80,7 +80,7 @@
   <node if="$(eval '\'$(var robot)\' == \'none\'')" name="nuwall" pkg="nusim" exec="nusim">
     <param from="$(var world_config_file)"/>
     <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-    <param name="draw_only" value = "true"/>
+    <param name="draw_only" value = "True"/>
   </node>
 
 
