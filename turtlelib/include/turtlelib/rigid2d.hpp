@@ -120,6 +120,21 @@ std::ostream & operator<<(std::ostream & os, const Vector2D & v);
 /// \param v [out] - output vector
 std::istream & operator>>(std::istream & is, Vector2D & v);
 
+/// \brief Polar Vector [rng, brg]
+struct PolarVector2D
+{
+  /// \brief the range to a coordinate
+  double rng = 0.0;
+
+  /// \brief the bearing to a coordinate
+  double brg = 0.0;
+
+  /// \brief Find the coordinate from a specified point after applying the polar vector
+  /// \param point - the point to project from
+  /// \return the coordinate resulting from the projection
+  Vector2D project_to_coord(const Vector2D point);
+};
+
 /// \brief a rigid body transformation in 2 dimensions
 class Transform2D
 {
