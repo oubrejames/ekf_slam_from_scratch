@@ -34,6 +34,8 @@ include_directories(
 # rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(slam src/slam.cpp)
+add_executable(landmarks src/landmarks.cpp)
+
 ament_target_dependencies(slam
                           rclcpp
                           std_msgs
@@ -47,9 +49,27 @@ ament_target_dependencies(slam
                           tf2_geometry_msgs
                           turtlesim
                           nuturtle_control
-                          visualization_msgs)
+                          visualization_msgs
+                          )
+
+ament_target_dependencies(landmarks
+                          rclcpp
+                          std_msgs
+                          std_srvs
+                          nuturtlebot_msgs
+                          geometry_msgs
+                          sensor_msgs
+                          turtlelib
+                          nav_msgs
+                          tf2
+                          tf2_geometry_msgs
+                          turtlesim
+                          nuturtle_control
+                          visualization_msgs
+                          )
 
 target_link_libraries(slam turtlelib::turtlelib ${ARMADILLO_LIBRARIES} "${cpp_typesupport_target}")
+target_link_libraries(landmarks turtlelib::turtlelib ${ARMADILLO_LIBRARIES} "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -65,6 +85,7 @@ endif()
 
 install(TARGETS
   slam
+  landmarks
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY

@@ -40,7 +40,9 @@
         <arg name="use_rviz" value="False" />
   </include> 
 
-<!--If robot=ROBOTNAM -> impliment this next hw-->
+<!-- Start landmarks node -->
+  <node pkg="nuslam" exec="landmarks" name="landmarks_node">
+  </node>
 </launch>
 
 

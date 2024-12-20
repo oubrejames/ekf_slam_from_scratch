@@ -229,9 +229,9 @@ double Vector2D::magnitude()
   return sqrt(x * x + y * y);
 }
 
-Vector2D PolarVector2D::project_to_coord(const Vector2D point)
+Vector2D PolarVector2D::project_from_coord(const Vector2D point)
 {
-  return Vector2D{point.x + rng*std::sin(brg), point.y + rng*std::cos(brg)};
+  return Vector2D{rng*std::sin(brg), rng*std::cos(brg)};
 }
 
 

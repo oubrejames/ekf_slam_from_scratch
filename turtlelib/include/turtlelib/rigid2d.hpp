@@ -132,7 +132,7 @@ struct PolarVector2D
   /// \brief Find the coordinate from a specified point after applying the polar vector
   /// \param point - the point to project from
   /// \return the coordinate resulting from the projection
-  Vector2D project_to_coord(const Vector2D point);
+  Vector2D project_from_coord(const Vector2D point);
 };
 
 /// \brief a rigid body transformation in 2 dimensions
